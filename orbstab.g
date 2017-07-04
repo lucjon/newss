@@ -6,12 +6,11 @@
 #  orbit:  the orbit of alpha in G,
 #  moves:  the element moves[i] is a permutation such that (moves[i])^alpha = O[i],
 #  sv:  a Schreier vector for alpha in G,
-#  stab:  the stabiliser of alpha in G.
+#  stabilizer:  the stabiliser of alpha in G.
 # This corresponds to the procedures OrbitStabilizer, OrbitSv in §4.1 of Holt,
 # et al.
 NOrbitStabilizer := function (X, alpha)
-  local orbit, moves, sv, stab_gens, i, x, x_index, beta, beta_index, image,
-        location;
+  local orbit, moves, sv, stab_gens, i, x, x_index, beta, beta_index, image, location;
 
   orbit := [alpha];
   moves := [()];
@@ -52,7 +51,8 @@ NOrbitStabilizer := function (X, alpha)
     x_index := x_index + 1;
   od;
 
-  return rec(orbit := orbit, moves := moves, sv := sv, stab := Group(stab_gens));
+  return rec(orbit := orbit, moves := moves, sv := sv,
+             stabilizer := Group(stab_gens));
 end;
 
 # NOrbit(X_or_G, alpha)
@@ -67,6 +67,6 @@ end;
 # element alpha of \Omega, returns the stabilizer of alpha in G; i.e. the
 # subgroup of G whose elements fix alpha.
 NStabilizer := function (X, alpha)
-  return NOrbitStabilizer(X, alpha).stab;
+  return NOrbitStabilizer(X, alpha).stabilizer;
 end;
 
