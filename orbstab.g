@@ -10,7 +10,8 @@
 # This corresponds to the procedures OrbitStabilizer, OrbitSv in §4.1 of Holt,
 # et al.
 NOrbitStabilizer := function (X, alpha)
-  local orbit, moves, sv, stab_gens, i, x, x_index, beta, beta_index, image, location;
+  local orbit, moves, sv, stab_gens, i, x, x_index, beta, beta_index, image,
+        location;
 
   orbit := [alpha];
   moves := [()];
@@ -35,13 +36,13 @@ NOrbitStabilizer := function (X, alpha)
     beta_index := 1;
     for beta in orbit do
       image := beta ^ x;
-      location := Position(orbit, image);
 
-      if location = fail then
+      if sv[image] = 0 then
         Add(orbit, image);
         Add(moves, moves[beta_index] * x);
         sv[image] := x_index;
       else
+        location := Position(orbit, image);
         AddSet(stab_gens, moves[beta_index] * x * (moves[location])^(-1));
       fi;
 
