@@ -135,3 +135,18 @@ end;
 NSetStabilizer := function (X, A)
   return NOrbitStabilizer(X, A, OnSets, false).stabilizer;
 end;
+
+# Stabilizes(g, O)
+# Suppose G is a group acting on a set \Omega. Then given an element g of G and
+# a subset O of \Omega, determine whether G fixes O setwise.
+Stabilizes := function (g, O)
+  local o;
+
+  for o in O do
+    if not (o^g in O) then
+      return false;
+    fi;
+  od;
+
+  return true;
+end;
