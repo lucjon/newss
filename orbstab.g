@@ -12,7 +12,8 @@
 # et al. Note that this function can only compute the Schreier vector if \Omega
 # is a set of natural numbers.
 NOrbitStabilizer := function (X, alpha, action, compute_sv)
-  local orbit, moves, sv, stab_gens, i, x, x_index, beta, beta_index, image, in_orbit, location;
+  local orbit, moves, sv, stab_gens, i, x, x_index, beta, beta_index, image,
+        in_orbit, location, stabilizer;
 
   orbit := [alpha];
   moves := [()];
@@ -38,15 +39,15 @@ NOrbitStabilizer := function (X, alpha, action, compute_sv)
   fi;
   
   # Perform the orbit computation.
-  x_index := 1;
-  for x in X do
-    beta_index := 1;
-    for beta in orbit do
+  beta_index := 1;
+  for beta in orbit do
+    x_index := 1;
+    for x in X do
       image := action(beta, x);
 
       # Reuse Schreier vector for the orbit membership test if we're computing it.
       if compute_sv then
-        in_orbit := sv[image] = 0;
+        in_orbit := sv[image] <> 0;
       else
         location := Position(orbit, image);
         in_orbit := location <> fail;
@@ -67,14 +68,50 @@ NOrbitStabilizer := function (X, alpha, action, compute_sv)
         AddSet(stab_gens, moves[beta_index] * x * (moves[location])^(-1));
       fi;
 
-      beta_index := beta_index + 1;
+      x_index := x_index + 1;
     od;
     
-    x_index := x_index + 1;
+    beta_index := beta_index + 1;
   od;
 
+  if Size(stab_gens) = 0 then
+    stabilizer := TrivialGroup();
+  else
+    stabilizer := Group(stab_gens);
+  fi;
+
   return rec(orbit := orbit, moves := moves, sv := sv,
-             stabilizer := Group(stab_gens));
+             stabilizer := stabilizer);
+end;
+
+# SchreierVectorPermFromBasePoint(X_or_G, sv, beta)
+# Given a permutation group G with generating set X acting on \Omega, a
+# Schreier vector sv for the orbit of an element \alpha in G, and another
+# element beta in this orbit, returns a permutation u such that alpha ^ u =
+# beta. If beta is not in the orbit, returns false.
+SchreierVectorPermFromBasePoint := function (X, sv, beta)
+  local u, k, i;
+
+  # Bail out early if beta is not in the orbit.
+  if sv[beta] = 0 then
+    return false;
+  fi;
+
+  # Not sure if this is a terribly good idea since the order of the generators
+  # must be the same as used to construct sv.
+  if IsGroup(X) then
+    X := GeneratorsOfGroup(X);
+  fi;
+
+  u := ();
+  k := sv[beta];
+  while k <> -1 do
+    u := X[k] * u;
+    beta := beta ^ (X[k]^(-1));
+    k := sv[beta];
+  od;
+
+  return u;
 end;
 
 # NOrbit(X_or_G, alpha)
@@ -92,6 +129,9 @@ NStabilizer := function (X, alpha)
   return NOrbitStabilizer(X, alpha, OnPoints, false).stabilizer;
 end;
 
-# NSetStabiliser(X_or_G, A)
+# NSetStabilizer(X_or_G, A)
 # Given a permutation group G with generating set X acting on \Omega, and a
-# subset A of \Omega, return the setwise 
+# subset A of \Omega, return the setwise stabiliser of A in G.
+NSetStabilizer := function (X, A)
+  return NOrbitStabilizer(X, A, OnSets, false).stabilizer;
+end;
