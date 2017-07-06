@@ -100,3 +100,17 @@ StabilizerChainContains := function (bsgs, g)
   return StabilizerChainStrip(bsgs, g) = ();
 end;
 
+# StabilizerChainOrder(bsgs)
+# Return the order of the group described by the given BSGS structure.
+StabilizerChainOrder := function (bsgs)
+  local order, U;
+  ComputeChainForBSGS(bsgs);
+  order := 1;
+
+  for U in bsgs.orbits do
+    order := order * Size(Filtered(U, x -> x <> 0));
+  od;
+
+  return order;
+end;
+

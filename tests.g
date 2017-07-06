@@ -2,6 +2,12 @@
 Read("orbstab.g");
 Read("ss.g");
 
+# VerifySCOrder(G)
+# Check the order we compute for a group versus that computed by GAP.
+VerifySCOrder := function(G)
+  return Order(G) = StabilizerChainOrder(BSGSFromGAP(G));
+end;
+
 # VerifySCContains(G, H)
 # Given a group H which is a subset of G, check that every element of G is
 # correctly determined to be inside or outside H by the StabilizerChainContains
@@ -22,7 +28,13 @@ VerifySCContains := function (G, H)
   return true;
 end;
 
+# NUM_RANDOM_TEST_ELTS
+# An integer specifying how many random elements to pick from a large ambient
+# group to be tested with VerifyContainsPG.
 NUM_RANDOM_TEST_ELTS := 2^16;
+
+# VerifyContainsPG(G)
+# Run VerifySCContains on lots of elements inside and outside a given group G.
 VerifyContainsPG := function (G)
   local deg, Sn, X;
   deg := LargestMovedPoint(GeneratorsOfGroup(G));
@@ -39,6 +51,15 @@ VerifyContainsPG := function (G)
 end;
 
 
+# The groups to test.
+GROUPS := [
+  ["A_4", AlternatingGroup(4)],
+  ["HCGT ex 4.1", Group([(1,3,7)(2,5), (3,4,6,7)])],
+  ["Mathieu deg. 9", MathieuGroup(9)],
+  ["PrimitiveGroup(1024, 2)", PrimitiveGroup(1024, 2)],
+  ["Suzuki", AtlasGroup("Suz")]
+];
+
 DoTest := function (name, fn, arg)
   Print(name, ": ");
   if fn(arg) then
@@ -49,9 +70,14 @@ DoTest := function (name, fn, arg)
 end;
 
 # These functions basically test the StabilizerChainStrip function (ss.g).
-TestsContains := function ()
-  DoTest("A_4", VerifyContainsPG, AlternatingGroup(4));
-  DoTest("HCGT ex 4.1", VerifyContainsPG, Group([(1,3,7)(2,5), (3,4,6,7)]));
-  DoTest("Mathieu deg. 9", VerifyContainsPG, MathieuGroup(9));
-  DoTest("PrimitiveGroup(1024,2)", VerifyContainsPG, PrimitiveGroup(1024, 2));
+DoTests := function ()
+  local test, group;
+
+  for test in [VerifyContainsPG, VerifySCOrder] do
+    Print(NameFunction(test), ":\n");
+    for group in GROUPS do
+      DoTest(group[1], VerifyContainsPG, group[2]);
+    od;
+    Print("\n");
+  od;
 end;
