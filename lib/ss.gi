@@ -1,5 +1,4 @@
 # vim: ft=gap sts=2 et sw=2
-Read("orbstab.g");
 
 # BSGS(group, base, sgs)
 # Initialize a BSGS structure for a group, given a base and strong generating
@@ -20,24 +19,24 @@ Read("orbstab.g");
 # The fields marked * are present only if has_chain = true; see the function
 # ComputeChainFromBSGS. This function does not compute the stabilizer chain ---
 # structures initialized here have has_chain = false.
-BSGS := function (group, base, sgs)
+InstallGlobalFunction(BSGS, function (group, base, sgs)
   return rec(group := group, base := base, sgs := sgs, has_chain := false);
-end;
+end);
 
 # BSGSFromGAP(group)
 # For testing purposes, initialises a BSGS structure using the GAP builtin
 # functions.
-BSGSFromGAP := function (group)
+InstallGlobalFunction(BSGSFromGAP, function (group)
   local sc;
   sc := StabChain(group);
   return BSGS(group, BaseStabChain(sc), StrongGeneratorsStabChain(sc));
-end;
+end);
 
 # ComputeChainForBSGS(bsgs)
 # Given a BSGS structure, compute the basic stabilizers (i.e. the stabilizer
 # chain) and basic orbits. Returns nothing; the chain is stored in the BSGS
 # structure (see the function BSGS).
-ComputeChainForBSGS := function (bsgs)
+InstallGlobalFunction(ComputeChainForBSGS, function (bsgs)
   local stabilizer, base_subset, i, gens;
 
   # Don't do the work twice.
@@ -67,7 +66,7 @@ ComputeChainForBSGS := function (bsgs)
   od;
 
   bsgs.has_chain := true;
-end;
+end);
 
 
 # StabilizerChainStrip(bsgs, g)
@@ -75,7 +74,7 @@ end;
 # function SiftedPermutation. Here, bsgs is a BSGS structure for a group G and
 # g is an element of G. The result is () if and only if the permutation g is in
 # G.
-StabilizerChainStrip := function (bsgs, g)
+InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
   local h, i, beta, u;
   ComputeChainForBSGS(bsgs);
   h := g;
@@ -91,18 +90,18 @@ StabilizerChainStrip := function (bsgs, g)
   od;
 
   return h;
-end;
+end);
 
 # StabilizerChainContains(bsgs, g)
 # Returns true if the permutation g is in the group described by the BSGS
 # structure bsgs, otherwise returns false.
-StabilizerChainContains := function (bsgs, g)
+InstallGlobalFunction(StabilizerChainContains, function (bsgs, g)
   return StabilizerChainStrip(bsgs, g) = ();
-end;
+end);
 
 # StabilizerChainOrder(bsgs)
 # Return the order of the group described by the given BSGS structure.
-StabilizerChainOrder := function (bsgs)
+InstallGlobalFunction(StabilizerChainOrder, function (bsgs)
   local order, U;
   ComputeChainForBSGS(bsgs);
   order := 1;
@@ -112,5 +111,5 @@ StabilizerChainOrder := function (bsgs)
   od;
 
   return order;
-end;
+end);
 

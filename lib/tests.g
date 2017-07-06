@@ -1,6 +1,4 @@
 # vim: ft=gap sts=2 et sw=2
-Read("orbstab.g");
-Read("ss.g");
 
 # VerifySCOrder(G)
 # Check the order we compute for a group versus that computed by GAP.
@@ -13,7 +11,7 @@ end;
 # correctly determined to be inside or outside H by the StabilizerChainContains
 # function.
 VerifySCContains := function (G, H)
-  local H_sc, actually_in_H, think_in_H;
+  local H_sc, actually_in_H, think_in_H, x;
   H_sc := BSGSFromGAP(H);
 
   for x in G do
@@ -26,6 +24,7 @@ VerifySCContains := function (G, H)
   od;
 
   return true;
+
 end;
 
 # NUM_RANDOM_TEST_ELTS
