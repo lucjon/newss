@@ -243,9 +243,17 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
       return IsDoneIterator(iter!.orbit_iter) and iter!.gen_iter <> false and
              IsDoneIterator(iter!.gen_iter);
     end,
-    # XXX Wait till I figure out the exact semantics for this
     ShallowCopy := function (iter)
-      return iter;
+      return rec(
+        orbit_iter := ShallowCopy(iter!.orbit_iter),
+        gen_iter := ShallowCopy(iter!.gen_iter),
+        orbit_index := iter!.orbit_index,
+        orbit := iter!.orbit,
+        NextIterator := iter!.NextIterator,
+        IsDoneIterator := iter!.IsDoneIterator,
+        ShallowCopy := iter!.ShallowCopy,
+        PrintObj := iter!.PrintObj
+      );
     end,
     PrintObj := function (iter)
       Print("<iterator over Schreier generators [group ", i, "]>");
