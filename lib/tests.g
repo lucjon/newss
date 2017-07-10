@@ -62,7 +62,8 @@ GROUPS := [
   ["HCGT ex 4.1", Group([(1,3,7)(2,5), (3,4,6,7)])],
   ["Mathieu deg. 9", MathieuGroup(9)],
   ["PrimitiveGroup(1024, 2)", PrimitiveGroup(1024, 2)],
-  ["Suzuki", AtlasGroup("Suz")]
+  ["Suzuki", AtlasGroup("Suz")],
+  ["[2^4]S(5)", TransitiveGroup(10,37)]
 ];
 
 PickSomeGroups := function (nr)

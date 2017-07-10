@@ -153,7 +153,7 @@ end);
 # Given a BSGS structure, compute the basic stabilizer with the given
 # generators and the corresponding basic orbit for the i-th stabilizer group.
 InstallGlobalFunction(ComputeStabOrbForBSGS, function (bsgs, i)
-  local base_subset, gens, orbstab;
+  local base_subset, gens, orbstab, j;
   Info(NewssInfo, 3, "Computing staborb for ", bsgs, " index ", i);
 
   # We special case the first entry.
@@ -164,10 +164,20 @@ InstallGlobalFunction(ComputeStabOrbForBSGS, function (bsgs, i)
     bsgs.stabilizers[i] := Group(bsgs.stabgens[i]);
   fi;
 
-  # Then compute the orbit
+  # Then compute the orbit.
   orbstab := NOrbitStabilizer(bsgs.stabgens[i], bsgs.base[i], OnPoints, true);
   bsgs.orbits[i] := orbstab.sv;
   bsgs.orbitsizes[i] := Size(orbstab.orbit);
+
+  # We want to compute the orbit with respect to the generators of the current
+  # stabilizer. But we want the Schreier vector to be able to answer "not in
+  # the orbit" for a point greater than the greatest it acts on. (i.e. 4 in
+  # <(1,2,3)>). So pad the orbit with zeros in this case.
+  # I think orbit lengths are generally reasonably small, but we could do this
+  # with less storage if worthwhile.
+  for j in [Size(bsgs.orbits[i]) + 1 .. LargestMovedPoint(bsgs.group)] do
+    bsgs.orbits[i][j] := 0;
+  od;
 end);
 
 # ExtendBaseIfStabilized(bsgs)
