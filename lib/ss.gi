@@ -35,11 +35,13 @@ InstallGlobalFunction(BSGSFromGAP, function (group)
 end);
 
 # BSGSFromGroup(group)
-# Initialises a BSGS structure (without chain) from an existing group's
-# generating set. Note that this structure will have an empty base and the
-# generating set is unlikely to be an SGS. (See SchreierSims.)
+# Initialises a BSGS structure from an existing group's generating set, and
+# compute a chain for it using the Schreier-Sims algorithm (see SchreierSims).
 InstallGlobalFunction(BSGSFromGroup, function (group)
-  return BSGS(group, [], ShallowCopy(GeneratorsOfGroup(group)));
+  local B;
+  B := BSGS(group, [], ShallowCopy(GeneratorsOfGroup(group)));
+  SchreierSims(B);
+  return B;
 end);
 
 # SchreierSims(bsgs)
@@ -48,9 +50,13 @@ end);
 InstallGlobalFunction(SchreierSims, function (bsgs)
   local i, added_generator, stripped, g, l;
 
+  bsgs.sgs := List(bsgs.sgs);
   bsgs.stabgens := [];
   ExtendBaseIfStabilized(bsgs);
   ComputeChainForBSGS(bsgs);
+
+  # So Strip() etc., don't interfere
+  bsgs.has_chain := true;
 
   # The condition we need to verify for our structure to be a genuine BSGS is
   # that the stabiliser of the i-th base point in the i-th "stabiliser" is the
@@ -63,6 +69,7 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
   # procedure can still be used to check membership in the (i+1)th group.
   i := Size(bsgs.base);
   while i >= 1 do
+    Info(NewssInfo, 3, "Starting SS loop (index ", i, ")");
     added_generator := false;
 
     for g in SchreierGenerators(bsgs, i) do
@@ -72,6 +79,8 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
       # If the stripped permutation is not the identity, it was not in the next
       # group --- so we adjoin it.
       if stripped.residue <> () then
+        Info(NewssInfo, 3, "Adjoining generator ", g);
+
         # Additionally, if the strip procedure made it to the last iteration,
         # we know it fixes all the existing base points and that we need to
         # extend our basis again.
@@ -82,7 +91,7 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
         for l in [i + 1 .. stripped.level] do
           Add(bsgs.stabgens[l], stripped.residue);
           Add(bsgs.sgs, stripped.residue);
-          ComputeStabOrbForBSGS(bsgs, i);
+          ComputeStabOrbForBSGS(bsgs, l);
         od;
         i := stripped.level;
         added_generator := true;
@@ -97,7 +106,7 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
   od;
 
   # Once we finish the loop, we know we have a correct base, SGS and stabilizer chain.
-  bsgs.has_chain := true;
+  Info(NewssInfo, 2, "Computed stabiliser chain.");
   return bsgs;
 end);
 
@@ -142,6 +151,7 @@ end);
 # generators and the corresponding basic orbit for the i-th stabilizer group.
 InstallGlobalFunction(ComputeStabOrbForBSGS, function (bsgs, i)
   local base_subset, gens;
+  Info(NewssInfo, 3, "Computing staborb for ", bsgs, " index ", i);
 
   # We special case the first entry.
   if i = 1 then
@@ -153,7 +163,6 @@ InstallGlobalFunction(ComputeStabOrbForBSGS, function (bsgs, i)
 
   # Then compute the orbit
   bsgs.orbits[i] := NOrbitStabilizer(bsgs.stabgens[i], bsgs.base[i], OnPoints, true).sv;
-  Info(NewssInfo, 3, "computed staborb for ", bsgs, " index ", i);
 end);
 
 # ExtendBaseIfStabilized(bsgs)
@@ -182,6 +191,7 @@ InstallGlobalFunction(ExtendBase, function (bsgs, culprit)
   local x;
   # First, find an appropriate point to add (there must be one here)
   x := Difference(MovedPoints(culprit), bsgs.base)[1];
+  Info(NewssInfo, 3, "Extending base to include ", x);
   # Then do the bookkeeping
   Add(bsgs.base, x);
   Add(bsgs.stabgens, []);
@@ -198,7 +208,8 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
     orbit_index := 0,
     orbit := 0,
     NextIterator := function (iter)
-      local x, u_beta_x;
+      local x, u_beta_x, gen;
+
       if iter!.gen_iter = false or IsDoneIterator(iter!.gen_iter) then
         while not IsDoneIterator(iter!.orbit_iter) do
           iter!.orbit := NextIterator(iter!.orbit_iter);
@@ -214,15 +225,20 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
           return ();
         fi;
 
-        iter!.u_beta := SchreierVectorPermFromBasePoint(bsgs.sgs, bsgs.orbits[i],
+        iter!.u_beta := SchreierVectorPermFromBasePoint(bsgs.stabgens[i],
+                                                        bsgs.orbits[i],
                                                         iter!.orbit_index);
         iter!.gen_iter := Iterator(bsgs.sgs);
       fi;
 
       x := NextIterator(iter!.gen_iter);
-      u_beta_x := SchreierVectorPermFromBasePoint(bsgs.sgs, bsgs.orbits[i],
+      u_beta_x := SchreierVectorPermFromBasePoint(bsgs.stabgens[i],
+                                                  bsgs.orbits[i],
                                                   iter!.orbit_index ^ iter!.u_beta);
-      return iter!.u_beta * x * u_beta_x^(-1);
+
+      gen := iter!.u_beta * x * u_beta_x^(-1);
+      Info(NewssInfo, 3, "Yielding Schreier gen. ", gen, " for stab ", i, " = <", bsgs.stabgens[i], ">");
+      return gen;
     end,
     IsDoneIterator := function (iter)
       return IsDoneIterator(iter!.orbit_iter) and iter!.gen_iter <> false and
@@ -257,7 +273,7 @@ InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
       return rec(residue := h, level := i);
     fi;
     
-    u := SchreierVectorPermFromBasePoint(bsgs.sgs, bsgs.orbits[i], beta);
+    u := SchreierVectorPermFromBasePoint(bsgs.stabgens[i], bsgs.orbits[i], beta);
     h := h * u^(-1);
   od;
 

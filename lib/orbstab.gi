@@ -90,7 +90,7 @@ InstallGlobalFunction(ElementsOfSchreierVector, function (sv)
   return Filtered([1 .. Size(sv)], i -> sv[i] <> 0);
 end);
 
-# SchreierVectorPermFromBasePoint(X_or_G, sv, beta)
+# SchreierVectorPermFromBasePoint(X, sv, beta)
 # Given a permutation group G with generating set X acting on \Omega, a
 # Schreier vector sv for the orbit of an element \alpha in G, and another
 # element beta in this orbit, returns a permutation u such that alpha ^ u =
@@ -103,19 +103,24 @@ InstallGlobalFunction(SchreierVectorPermFromBasePoint, function (X, sv, beta)
     return false;
   fi;
 
-  # Not sure if this is a terribly good idea since the order of the generators
-  # must be the same as used to construct sv.
-  if IsGroup(X) then
-    X := GeneratorsOfGroup(X);
-  fi;
-
   u := ();
   k := sv[beta];
-  while k <> -1 do
+  i := 0;
+  while k <> -1 and i <= Size(sv) + 1 do
     u := X[k] * u;
     beta := beta ^ (X[k]^(-1));
     k := sv[beta];
+    i := i + 1;
   od;
+
+  # There shouldn't be any "cycles" in the vector --- so if we end up iterating
+  # more times than there are entries, we've hit a loop we're not going to
+  # escape from, and we've either got the wrong generating set or haven't been
+  # given a Schreier vector.
+  if i >= Size(sv) then
+    Error("cycle in Schreier vector trying to find mapping to ", beta,
+          " - are you supplying the correct generating set?");
+  fi;
 
   return u;
 end);

@@ -3,7 +3,7 @@
 # VerifySCOrder(G)
 # Check the order we compute for a group versus that computed by GAP.
 VerifySCOrder := function(G)
-  return Order(G) = StabilizerChainOrder(BSGSFromGAP(G));
+  return Order(G) = StabilizerChainOrder(BSGSFromGroup(G));
 end;
 
 # VerifySCContains(G, H)
@@ -12,7 +12,7 @@ end;
 # function.
 VerifySCContains := function (G, H)
   local H_sc, actually_in_H, think_in_H, x;
-  H_sc := BSGSFromGAP(H);
+  H_sc := BSGSFromGroup(H);
 
   for x in G do
     actually_in_H := x in H;
