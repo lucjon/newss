@@ -171,17 +171,11 @@ end);
 InstallGlobalFunction(ExtendBaseIfStabilized, function (bsgs)
   local s;
 
-  if Size(bsgs.base) = 0 then
-    if Size(bsgs.sgs) <> 0 then
-      ExtendBase(bsgs, bsgs.sgs[1]);
+  for s in bsgs.sgs do
+    if s <> () and Stabilizes(s, bsgs.base) then
+      ExtendBase(bsgs, s);
     fi;
-  else
-    for s in bsgs.sgs do
-      if s <> () and Stabilizes(s, bsgs.base) then
-        ExtendBase(bsgs, s);
-      fi;
-    od;
-  fi;
+  od;
 end);
 
 # ExtendBase(bsgs, culprit)
@@ -228,7 +222,7 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
         iter!.u_beta := SchreierVectorPermFromBasePoint(bsgs.stabgens[i],
                                                         bsgs.orbits[i],
                                                         iter!.orbit_index);
-        iter!.gen_iter := Iterator(bsgs.sgs);
+        iter!.gen_iter := Iterator(bsgs.stabgens[i]);
       fi;
 
       x := NextIterator(iter!.gen_iter);
