@@ -1,4 +1,7 @@
 # vim: ft=gap sts=2 et sw=2
+## tests.g
+## Various tests for the stabiliser chain algorithms in the package.
+## To run them all, read this file and execute DoAllTests().
 
 # VerifySCOrder(G)
 # Check the order we compute for a group versus that computed by GAP.
@@ -68,15 +71,18 @@ DoTest := function (name, fn, arg)
   fi;
 end;
 
-# These functions basically test the StabilizerChainStrip function (ss.g).
-DoTests := function ()
+DoTests := function (tests)
   local test, group;
 
-  for test in [VerifyContainsPG, VerifySCOrder] do
+  for test in tests do
     Print(NameFunction(test), ":\n");
     for group in GROUPS do
-      DoTest(group[1], VerifyContainsPG, group[2]);
+      DoTest(group[1], test, group[2]);
     od;
     Print("\n");
   od;
+end;
+
+DoAllTests := function ()
+  DoTests([VerifyContainsPG, VerifySCOrder]);
 end;
