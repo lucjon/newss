@@ -2,7 +2,15 @@
 
 DeclareGlobalFunction("BSGS");
 DeclareGlobalFunction("BSGSFromGAP");
+DeclareGlobalFunction("BSGSFromGroup");
 DeclareGlobalFunction("ComputeChainForBSGS");
+DeclareGlobalFunction("ComputeStabOrbForBSGS");
+DeclareGlobalFunction("EnsureBSGSChainComputed");
+DeclareGlobalFunction("ExtendBase");
+DeclareGlobalFunction("ExtendBaseIfStabilized");
+DeclareGlobalFunction("SchreierGenerators");
+DeclareGlobalFunction("SchreierSims");
 DeclareGlobalFunction("StabilizerChainStrip");
 DeclareGlobalFunction("StabilizerChainContains");
 DeclareGlobalFunction("StabilizerChainOrder");
+DeclareInfoClass("NewssInfo");

@@ -84,6 +84,12 @@ InstallGlobalFunction(NOrbitStabilizer, function (X, alpha, action, compute_sv)
              stabilizer := stabilizer);
 end);
 
+# ElementsOfSchreierVector(sv)
+# Return the elements contained in the given Schreier vector.
+InstallGlobalFunction(ElementsOfSchreierVector, function (sv)
+  return Filtered([1 .. Size(sv)], i -> sv[i] <> 0);
+end);
+
 # SchreierVectorPermFromBasePoint(X_or_G, sv, beta)
 # Given a permutation group G with generating set X acting on \Omega, a
 # Schreier vector sv for the orbit of an element \alpha in G, and another
