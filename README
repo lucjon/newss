@@ -1,0 +1,4 @@
+This repository contains a new, pure-GAP implementation of the Schreier-Sims
+algorithm for computing stabilizer chains for permutation groups, which does
+not rely on any of the GAP built-in stabilizer chain (or orbit/stabilizer)
+functions.
