@@ -50,7 +50,7 @@ end);
 # Attempt to extend the given BSGS structure into a genuine base and strong
 # generating set respectively for G using the Schreier–Sims algorithm.
 InstallGlobalFunction(SchreierSims, function (bsgs)
-  local i, added_generator, stripped, g, l;
+  local i, added_generator, stripped, iterators, g, l;
 
   bsgs.sgs := List(bsgs.sgs);
   bsgs.stabgens := [];
@@ -70,11 +70,17 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
   # (k being the size of the base). Since this holds, the StabilizerChainStrip
   # procedure can still be used to check membership in the (i+1)th group.
   i := Size(bsgs.base);
+
+  iterators := [];
   while i >= 1 do
     Info(NewssInfo, 3, "Starting SS loop (index ", i, ")");
     added_generator := false;
 
-    for g in SchreierGenerators(bsgs, i) do
+    if not IsBound(iterators[i]) then
+      iterators[i] := SchreierGenerators(bsgs, i);
+    fi;
+
+    for g in iterators[i] do
       if g = () then continue; fi;
       stripped := StabilizerChainStrip(bsgs, g);
 
@@ -94,9 +100,12 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
           Add(bsgs.stabgens[l], stripped.residue);
           Add(bsgs.sgs, stripped.residue);
           ComputeStabOrbForBSGS(bsgs, l);
+          # We might be able to avoid this as well.
+          iterators[l] := SchreierGenerators(bsgs, l);
         od;
         i := stripped.level;
         added_generator := true;
+        break;
       fi;
     od;
 
