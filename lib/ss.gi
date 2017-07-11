@@ -220,44 +220,49 @@ end);
 # stabilizer of the i-th base point in the i-th stabilizer group in the given
 # BSGS structure.
 InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
+  # Take this out here so it has a name; it's easier to read the profiling
+  # then.
+  local SchreierGenerators_Next;
+  SchreierGenerators_Next := function (iter)
+    local x, u_beta_x, gen;
+
+    if iter!.gen_iter = false or IsDoneIterator(iter!.gen_iter) then
+      while not IsDoneIterator(iter!.orbit_iter) do
+        iter!.orbit := NextIterator(iter!.orbit_iter);
+        iter!.orbit_index := iter!.orbit_index + 1;
+        if iter!.orbit <> 0 then
+          break;
+        fi;
+      od;
+
+      if IsDoneIterator(iter!.orbit_iter) then
+        # Quite messy. Unfortunately checking for this case properly in
+        # IsDoneIterator would get even messier.
+        return ();
+      fi;
+
+      iter!.u_beta := SchreierVectorPermFromBasePoint(bsgs.stabgens[i],
+                                                      bsgs.orbits[i],
+                                                      iter!.orbit_index);
+      iter!.gen_iter := Iterator(bsgs.stabgens[i]);
+    fi;
+
+    x := NextIterator(iter!.gen_iter);
+    u_beta_x := SchreierVectorPermFromBasePoint(bsgs.stabgens[i],
+                                                bsgs.orbits[i],
+                                                iter!.orbit_index ^ iter!.u_beta);
+
+    gen := iter!.u_beta * x * u_beta_x^(-1);
+    Info(NewssInfo, 3, "Yielding Schreier gen. ", gen, " for stab ", i, " = <", bsgs.stabgens[i], ">");
+    return gen;
+  end;
+
   return IteratorByFunctions(rec(
     orbit_iter := Iterator(bsgs.orbits[i]),
     gen_iter := false,
     orbit_index := 0,
     orbit := 0,
-    NextIterator := function (iter)
-      local x, u_beta_x, gen;
-
-      if iter!.gen_iter = false or IsDoneIterator(iter!.gen_iter) then
-        while not IsDoneIterator(iter!.orbit_iter) do
-          iter!.orbit := NextIterator(iter!.orbit_iter);
-          iter!.orbit_index := iter!.orbit_index + 1;
-          if iter!.orbit <> 0 then
-            break;
-          fi;
-        od;
-
-        if IsDoneIterator(iter!.orbit_iter) then
-          # Quite messy. Unfortunately checking for this case properly in
-          # IsDoneIterator would get even messier.
-          return ();
-        fi;
-
-        iter!.u_beta := SchreierVectorPermFromBasePoint(bsgs.stabgens[i],
-                                                        bsgs.orbits[i],
-                                                        iter!.orbit_index);
-        iter!.gen_iter := Iterator(bsgs.stabgens[i]);
-      fi;
-
-      x := NextIterator(iter!.gen_iter);
-      u_beta_x := SchreierVectorPermFromBasePoint(bsgs.stabgens[i],
-                                                  bsgs.orbits[i],
-                                                  iter!.orbit_index ^ iter!.u_beta);
-
-      gen := iter!.u_beta * x * u_beta_x^(-1);
-      Info(NewssInfo, 3, "Yielding Schreier gen. ", gen, " for stab ", i, " = <", bsgs.stabgens[i], ">");
-      return gen;
-    end,
+    NextIterator := SchreierGenerators_Next,
     IsDoneIterator := function (iter)
       return IsDoneIterator(iter!.orbit_iter) and iter!.gen_iter <> false and
              IsDoneIterator(iter!.gen_iter);
