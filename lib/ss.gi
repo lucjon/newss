@@ -301,7 +301,11 @@ end);
 # Returns true if the permutation g is in the group described by the BSGS
 # structure bsgs, otherwise returns false.
 InstallGlobalFunction(StabilizerChainContains, function (bsgs, g)
-  return StabilizerChainStrip(bsgs, g).residue = ();
+  if LargestMovedPoint(g) > LargestMovedPoint(bsgs.sgs) then
+    return false;
+  else
+    return StabilizerChainStrip(bsgs, g).residue = ();
+  fi;
 end);
 
 # StabilizerChainOrder(bsgs)
