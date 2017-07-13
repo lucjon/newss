@@ -121,7 +121,12 @@ DoTests := function (tests, constructor)
   od;
 end;
 
+# Put this here for now since BSGSFromGroup will eventually decide when to use
+# the random algorithm and when not.
+BSGSRandomFromGroup := G -> RandomSchreierSims(BSGS(G, [], ShallowCopy(GeneratorsOfGroup(G))), 8);
+
 TESTS := [VerifyContainsPG, VerifySCOrder];
 DoAllTests := function ()
-  DoTests(TESTS, BSGSFromGroup);
+  #DoTests(TESTS, BSGSFromGroup);
+  DoTests(TESTS, BSGSRandomFromGroup);
 end;

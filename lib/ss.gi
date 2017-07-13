@@ -96,9 +96,10 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
           ExtendBase(bsgs, stripped.residue);
         fi;
 
+        Add(bsgs.sgs, stripped.residue);
+
         for l in [i + 1 .. stripped.level] do
           Add(bsgs.stabgens[l], stripped.residue);
-          Add(bsgs.sgs, stripped.residue);
           ComputeStabOrbForBSGS(bsgs, l);
           # We might be able to avoid this as well.
           iterators[l] := SchreierGenerators(bsgs, l);
@@ -120,6 +121,47 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
   Info(NewssInfo, 2, "Computed stabiliser chain.");
   return bsgs;
 end);
+
+
+# RandomSchreierSims(bsgs, w)
+# As in SchreierSims(), compute a base and stong generating set for the given
+# BSGS structure, along with a stabilizer chain, with the proviso that the
+# chain could be incomplete with probability 2^{-w}.
+InstallGlobalFunction(RandomSchreierSims, function (bsgs, w)
+  local no_sifted_this_round, g, stripped, l;
+
+  bsgs.sgs := List(bsgs.sgs);
+  bsgs.stabgens := [];
+  ExtendBaseIfStabilized(bsgs);
+  ComputeChainForBSGS(bsgs);
+  bsgs.has_chain := true;
+
+  no_sifted_this_round := 0;
+
+  while no_sifted_this_round < w do
+    g := PseudoRandom(bsgs.group);
+    stripped := StabilizerChainStrip(bsgs, g);
+
+    if stripped.residue <> () then
+      if stripped.level > Size(bsgs.base) then
+        ExtendBase(bsgs, stripped.residue);
+      fi;
+
+      Add(bsgs.sgs, stripped.residue);
+
+      for l in [2 .. stripped.level] do
+        Add(bsgs.stabgens[l], stripped.residue);
+        ComputeStabOrbForBSGS(bsgs, l);
+      od;
+      no_sifted_this_round := 0;
+    else
+      no_sifted_this_round := no_sifted_this_round + 1;
+    fi;
+  od;
+
+  return bsgs;
+end);
+
 
 # EnsureBSGSChainComputed(bsgs)
 # Given a BSGS structure, compute the basic stabilizers and basic orbits if

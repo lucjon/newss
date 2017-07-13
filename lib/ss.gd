@@ -8,6 +8,7 @@ DeclareGlobalFunction("ComputeStabOrbForBSGS");
 DeclareGlobalFunction("EnsureBSGSChainComputed");
 DeclareGlobalFunction("ExtendBase");
 DeclareGlobalFunction("ExtendBaseIfStabilized");
+DeclareGlobalFunction("RandomSchreierSims");
 DeclareGlobalFunction("SchreierGenerators");
 DeclareGlobalFunction("SchreierSims");
 DeclareGlobalFunction("StabilizerChainStrip");
