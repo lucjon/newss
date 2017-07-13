@@ -80,9 +80,7 @@ PickSomeGroups := function (nr)
     if count > 0 then
       index := PseudoRandom([1 .. count]);
       group := sources[j](bound, index);
-      Add(GROUPS, [Concatenation(NameFunction(sources[j]), "(", String(bound),
-                                 ", ", String(index), ")"),
-                   group]);
+      Add(GROUPS, [Name(group), group]);
       i := i + 1;
     fi;
   od;
@@ -91,23 +89,40 @@ end;
 
 # The test harness functions.
 DoTest := function (name, fn, arg)
+  local t, result;
+
+  t := Runtime();
+  result := fn(arg);
+  t := Runtime() - t;
+
   Print(name, ": ");
-  if fn(arg) then
+  if result then
     Print("ok.\n");
   else
     Print("fail.\n");
   fi;
+  
+  return rec(group := name, test := NameFunction(fn), success := result, time := t);
 end;
 
+RESULTS_FILENAME := "tests.csv";
+
 DoTests := function (tests, constructor)
-  local test, group, add, stabchains, i;
+  local test, group, add, stabchains, i, results, t;
+
+  results := [];
 
   Print("Computing stabilizer chains [", NameFunction(constructor), "]:\n");
   add := function (L, x) Add(L, x); return true; end;
   stabchains := [];
   for group in GROUPS do
     Print(group[1]);
+    t := Runtime();
     Add(stabchains, constructor(group[2]));
+    Add(results, rec(group := group[1],
+                     test := NameFunction(constructor),
+                     success := true,
+                     time := Runtime() - t));
     Print("\n");
   od;
   Print("\n");
@@ -115,15 +130,19 @@ DoTests := function (tests, constructor)
   for test in tests do
     Print(NameFunction(test), ":\n");
     for i in [1 .. Size(GROUPS)] do
-      DoTest(GROUPS[i][1], test, stabchains[i]);
+      Add(results, DoTest(GROUPS[i][1], test, stabchains[i]));
     od;
     Print("\n");
   od;
+
+  PrintCSV(RESULTS_FILENAME, results);
 end;
 
 # Put this here for now since BSGSFromGroup will eventually decide when to use
 # the random algorithm and when not.
-BSGSRandomFromGroup := G -> RandomSchreierSims(BSGS(G, [], ShallowCopy(GeneratorsOfGroup(G))), 8);
+BSGSRandomFromGroup := function (G)
+  return RandomSchreierSims(BSGS(G, [], ShallowCopy(GeneratorsOfGroup(G))), 8);
+end;
 
 TESTS := [VerifyContainsPG, VerifySCOrder];
 DoAllTests := function ()

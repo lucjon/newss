@@ -1,0 +1,9 @@
+#!/bin/bash
+count=${1:-100}
+gap <<EOF
+LoadPackage("newss");;
+ReadPackage("newss", "lib/tests.g");;
+RESULTS_FILENAME := "tests-$(git rev-parse --short HEAD).csv";;
+PickSomeGroups($count);
+DoAllTests();
+EOF
