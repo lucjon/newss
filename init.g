@@ -2,3 +2,4 @@
 
 ReadPackage("newss", "lib/orbstab.gd");
 ReadPackage("newss", "lib/ss.gd");
+ReadPackage("newss", "lib/group.gd");

@@ -11,6 +11,4 @@ DeclareGlobalFunction("ExtendBaseIfStabilized");
 DeclareGlobalFunction("SchreierGenerators");
 DeclareGlobalFunction("SchreierSims");
 DeclareGlobalFunction("StabilizerChainStrip");
-DeclareGlobalFunction("StabilizerChainContains");
-DeclareGlobalFunction("StabilizerChainOrder");
 DeclareInfoClass("NewssInfo");
