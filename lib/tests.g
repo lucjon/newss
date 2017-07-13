@@ -61,6 +61,7 @@ GROUPS := [
   ["A_4", AlternatingGroup(4)],
   ["HCGT ex 4.1", Group([(1,3,7)(2,5), (3,4,6,7)])],
   ["Mathieu deg. 9", MathieuGroup(9)],
+  ["S11", SymmetricGroup(11)],
   ["PrimitiveGroup(1024, 2)", PrimitiveGroup(1024, 2)],
   ["Suzuki", AtlasGroup("Suz")],
   ["[2^4]S(5)", TransitiveGroup(10,37)]
@@ -138,14 +139,7 @@ DoTests := function (tests, constructor)
   PrintCSV(RESULTS_FILENAME, results);
 end;
 
-# Put this here for now since BSGSFromGroup will eventually decide when to use
-# the random algorithm and when not.
-BSGSRandomFromGroup := function (G)
-  return RandomSchreierSims(BSGS(G, [], ShallowCopy(GeneratorsOfGroup(G))), 8);
-end;
-
 TESTS := [VerifyContainsPG, VerifySCOrder];
 DoAllTests := function ()
-  #DoTests(TESTS, BSGSFromGroup);
-  DoTests(TESTS, BSGSRandomFromGroup);
+  DoTests(TESTS, BSGSFromGroup);
 end;

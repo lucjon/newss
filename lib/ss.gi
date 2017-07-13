@@ -36,13 +36,32 @@ InstallGlobalFunction(BSGSFromGAP, function (group)
   return BSGS(group, BaseStabChain(sc), StrongGeneratorsStabChain(sc));
 end);
 
+# BSGS_MIN_DEGREE_RANDOM (integer)
+# The minimum degree of permutation group to use the randomised Schreier-Sims
+# algorithm on; i.e., if the degree of the group is less than this, use the
+# deterministic algorithm, and otherwise use the randomised algorithm.
+BSGS_MIN_DEGREE_RANDOM := 10;
+
+# BSGS_RANDOM_SS_THRESHOLD (integer)
+# The number of unchanged sifted elements to require before finishing the
+# randomised Schreier-Sims algorithm; i.e. RandomSchreierSims with this value
+# will return an incomplete stabilizer chain with probability 2^{-w}, where w
+# is this number BSGS_RANDOM_SS_THRESHOLD.
+BSGS_RANDOM_SS_THRESHOLD := 8;
+
 # BSGSFromGroup(group)
 # Initialises a BSGS structure from an existing group's generating set, and
 # compute a chain for it using the Schreier-Sims algorithm (see SchreierSims).
 InstallGlobalFunction(BSGSFromGroup, function (group)
   local B;
+
   B := BSGS(group, [], ShallowCopy(GeneratorsOfGroup(group)));
-  SchreierSims(B);
+
+  if LargestMovedPoint(group) <= BSGS_MIN_DEGREE_RANDOM or
+     not RandomSchreierSims(B, BSGS_RANDOM_SS_THRESHOLD).verified then
+    SchreierSims(B);
+  fi;
+
   return B;
 end);
 
@@ -53,7 +72,9 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
   local i, added_generator, stripped, iterators, g, l;
 
   bsgs.sgs := List(bsgs.sgs);
-  bsgs.stabgens := [];
+  if not IsBound(bsgs.stabgens) then
+    bsgs.stabgens := [];
+  fi;
   ExtendBaseIfStabilized(bsgs);
   ComputeChainForBSGS(bsgs);
 
@@ -128,7 +149,7 @@ end);
 # BSGS structure, along with a stabilizer chain, with the proviso that the
 # chain could be incomplete with probability 2^{-w}.
 InstallGlobalFunction(RandomSchreierSims, function (bsgs, w)
-  local no_sifted_this_round, g, stripped, l;
+  local no_sifted_this_round, g, stripped, l, verified;
 
   bsgs.sgs := List(bsgs.sgs);
   bsgs.stabgens := [];
@@ -137,6 +158,7 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs, w)
   bsgs.has_chain := true;
 
   no_sifted_this_round := 0;
+  verified := false;
 
   while no_sifted_this_round < w do
     g := PseudoRandom(bsgs.group);
@@ -157,9 +179,15 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs, w)
     else
       no_sifted_this_round := no_sifted_this_round + 1;
     fi;
+
+    # We know we're correct if the orders match.
+    if HasSize(bsgs.group) and Product(bsgs.orbitsizes) = HasSize(bsgs.group) then
+      verified := true;
+      break;
+    fi;
   od;
 
-  return bsgs;
+  return rec(bsgs := bsgs, verified := verified);
 end);
 
 
