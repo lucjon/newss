@@ -1,9 +1,15 @@
 #!/bin/bash
 count=${1:-100}
+if [ -z "$2" ]; then
+	filename=tests-$(git rev-parse --short HEAD).csv
+else
+	filename="$2"
+fi
+
 gap <<EOF
 LoadPackage("newss");;
 ReadPackage("newss", "lib/tests.g");;
-RESULTS_FILENAME := "tests-$(git rev-parse --short HEAD).csv";;
+RESULTS_FILENAME := "$filename";;
 PickSomeGroups($count);
 DoAllTests();
 EOF
