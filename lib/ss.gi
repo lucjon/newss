@@ -355,13 +355,13 @@ InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
   h := g;
 
   for i in [1 .. Size(bsgs.base)] do
-    beta := bsgs.base[i] ^ h;
+    beta := bsgs.base[i] / h;
     if not IsBound(bsgs.orbits[i][beta]) then
       return rec(residue := h, level := i);
     fi;
     
     u := SchreierVectorPermFromBasePoint(bsgs.stabgens[i], bsgs.orbits[i], beta);
-    h := h * u^(-1);
+    h := u * h;
   od;
 
   return rec(residue := h, level := i + 1);

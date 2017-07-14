@@ -98,7 +98,7 @@ InstallGlobalFunction(SchreierVectorPermFromBasePoint, function (X, sv, beta)
   k := sv[beta];
   while k <> -1 do
     u := X[k] * u;
-    beta := beta ^ (X[k]^(-1));
+    beta := beta / X[k];
     k := sv[beta];
   od;
 
