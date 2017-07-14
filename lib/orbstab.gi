@@ -87,7 +87,7 @@ end);
 # element beta in this orbit, returns a permutation u such that alpha ^ u =
 # beta. If beta is not in the orbit, returns false.
 InstallGlobalFunction(SchreierVectorPermFromBasePoint, function (X, sv, beta)
-  local u, k, i;
+  local u, k;
 
   # Bail out early if beta is not in the orbit.
   if not IsBound(sv[beta]) then
@@ -96,22 +96,11 @@ InstallGlobalFunction(SchreierVectorPermFromBasePoint, function (X, sv, beta)
 
   u := ();
   k := sv[beta];
-  i := 0;
-  while k <> -1 and i <= Size(sv) + 1 do
+  while k <> -1 do
     u := X[k] * u;
     beta := beta ^ (X[k]^(-1));
     k := sv[beta];
-    i := i + 1;
   od;
-
-  # There shouldn't be any "cycles" in the vector --- so if we end up iterating
-  # more times than there are entries, we've hit a loop we're not going to
-  # escape from, and we've either got the wrong generating set or haven't been
-  # given a Schreier vector.
-  if i >= Size(sv) then
-    Error("cycle in Schreier vector trying to find mapping to ", beta,
-          " - are you supplying the correct generating set?");
-  fi;
 
   return u;
 end);
