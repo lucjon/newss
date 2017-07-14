@@ -247,16 +247,6 @@ InstallGlobalFunction(ComputeStabOrbForBSGS, function (bsgs, i)
   orbstab := NOrbitStabilizer(bsgs.stabgens[i], bsgs.base[i], OnPoints, true);
   bsgs.orbits[i] := orbstab.sv;
   bsgs.orbitsizes[i] := Size(orbstab.orbit);
-
-  # We want to compute the orbit with respect to the generators of the current
-  # stabilizer. But we want the Schreier vector to be able to answer "not in
-  # the orbit" for a point greater than the greatest it acts on. (i.e. 4 in
-  # <(1,2,3)>). So pad the orbit with zeros in this case.
-  # I think orbit lengths are generally reasonably small, but we could do this
-  # with less storage if worthwhile.
-  for j in [Size(bsgs.orbits[i]) + 1 .. LargestMovedPoint(bsgs.group)] do
-    bsgs.orbits[i][j] := 0;
-  od;
 end);
 
 # ExtendBaseIfStabilized(bsgs)
@@ -297,15 +287,14 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
     local x, u_beta_x, gen;
 
     if iter!.gen_iter = false or IsDoneIterator(iter!.gen_iter) then
-      while not IsDoneIterator(iter!.orbit_iter) do
-        iter!.orbit := NextIterator(iter!.orbit_iter);
+      while iter!.orbit_index <= Size(bsgs.orbits[i]) do
         iter!.orbit_index := iter!.orbit_index + 1;
-        if iter!.orbit <> 0 then
+        if IsBound(bsgs.orbits[i][iter!.orbit_index]) then
           break;
         fi;
       od;
 
-      if IsDoneIterator(iter!.orbit_iter) then
+      if iter!.orbit_index > Size(bsgs.orbits[i]) then
         # Quite messy. Unfortunately checking for this case properly in
         # IsDoneIterator would get even messier.
         return ();
@@ -328,18 +317,15 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
   end;
 
   return IteratorByFunctions(rec(
-    orbit_iter := Iterator(bsgs.orbits[i]),
     gen_iter := false,
     orbit_index := 0,
-    orbit := 0,
     NextIterator := SchreierGenerators_Next,
     IsDoneIterator := function (iter)
-      return IsDoneIterator(iter!.orbit_iter) and iter!.gen_iter <> false and
-             IsDoneIterator(iter!.gen_iter);
+      return iter!.orbit_index > Size(bsgs.orbits[i]) and
+             iter!.gen_iter <> false and IsDoneIterator(iter!.gen_iter);
     end,
     ShallowCopy := function (iter)
       return rec(
-        orbit_iter := ShallowCopy(iter!.orbit_iter),
         gen_iter := ShallowCopy(iter!.gen_iter),
         orbit_index := iter!.orbit_index,
         orbit := iter!.orbit,
@@ -370,7 +356,7 @@ InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
 
   for i in [1 .. Size(bsgs.base)] do
     beta := bsgs.base[i] ^ h;
-    if bsgs.orbits[i][beta] = 0 then
+    if not IsBound(bsgs.orbits[i][beta]) then
       return rec(residue := h, level := i);
     fi;
     

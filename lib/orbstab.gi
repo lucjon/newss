@@ -32,9 +32,6 @@ InstallGlobalFunction(NOrbitStabilizer, function (X, alpha, action, compute_sv)
 
   # Now initialize the Schreier vector
   if compute_sv then
-    for i in [1 .. LargestMovedPoint(X)] do
-      sv[i] := 0;
-    od;
     sv[alpha] := -1;
   fi;
   
@@ -47,7 +44,7 @@ InstallGlobalFunction(NOrbitStabilizer, function (X, alpha, action, compute_sv)
 
       # Reuse Schreier vector for the orbit membership test if we're computing it.
       if compute_sv then
-        in_orbit := sv[image] <> 0;
+        in_orbit := IsBound(sv[image]);
       else
         location := Position(orbit, image);
         in_orbit := location <> fail;
@@ -84,12 +81,6 @@ InstallGlobalFunction(NOrbitStabilizer, function (X, alpha, action, compute_sv)
              stabilizer := stabilizer);
 end);
 
-# ElementsOfSchreierVector(sv)
-# Return the elements contained in the given Schreier vector.
-InstallGlobalFunction(ElementsOfSchreierVector, function (sv)
-  return Filtered([1 .. Size(sv)], i -> sv[i] <> 0);
-end);
-
 # SchreierVectorPermFromBasePoint(X, sv, beta)
 # Given a permutation group G with generating set X acting on \Omega, a
 # Schreier vector sv for the orbit of an element \alpha in G, and another
@@ -99,7 +90,7 @@ InstallGlobalFunction(SchreierVectorPermFromBasePoint, function (X, sv, beta)
   local u, k, i;
 
   # Bail out early if beta is not in the orbit.
-  if sv[beta] = 0 then
+  if not IsBound(sv[beta]) then
     return false;
   fi;
 
