@@ -1,16 +1,5 @@
 # vim: ft=gap sts=2 et sw=2
 
-# NOrbitStabilizer(X_or_G, alpha, action, compute_sv)
-# Given a a permutation group G with generating set X acting on \Omega (by a
-# function action), and an element alpha of \Omega, compute a record with the
-# following members:
-#  orbit:  the orbit of alpha in G,
-#  moves:  the element moves[i] is a permutation such that (moves[i])^alpha = O[i],
-#  sv:  a Schreier vector for alpha in G (if compute_sv is true),
-#  stabilizer:  the stabiliser of alpha in G.
-# This corresponds to the procedures OrbitStabilizer, OrbitSv in §4.1 of Holt,
-# et al. Note that this function can only compute the Schreier vector if \Omega
-# is a set of natural numbers.
 InstallGlobalFunction(NOrbitStabilizer, function (X, alpha, action, compute_sv)
   local orbit, moves, sv, stab_gens, i, x, x_index, beta, beta_index, image,
         in_orbit, location, stabilizer;
@@ -81,11 +70,6 @@ InstallGlobalFunction(NOrbitStabilizer, function (X, alpha, action, compute_sv)
              stabilizer := stabilizer);
 end);
 
-# SchreierVectorPermFromBasePoint(X, sv, beta)
-# Given a permutation group G with generating set X acting on \Omega, a
-# Schreier vector sv for the orbit of an element \alpha in G, and another
-# element beta in this orbit, returns a permutation u such that alpha ^ u =
-# beta. If beta is not in the orbit, returns false.
 InstallGlobalFunction(SchreierVectorPermFromBasePoint, function (X, sv, beta)
   local u, k;
 
@@ -105,31 +89,18 @@ InstallGlobalFunction(SchreierVectorPermFromBasePoint, function (X, sv, beta)
   return u;
 end);
 
-# NOrbit(X_or_G, alpha)
-# Given a permutation group G with generating set X acting on \Omega, and an
-# element alpha of \Omega, computes the orbit of alpha in G.
 InstallGlobalFunction(NOrbit, function (X, alpha)
   return NOrbitStabilizer(X, alpha, OnPoints, false).orbit;
 end);
 
-# NStabilizer(X_or_G, alpha)
-# Given a permutation group G with generating set X acting on \Omega, and an
-# element alpha of \Omega, returns the stabilizer of alpha in G; i.e. the
-# subgroup of G whose elements fix alpha.
 InstallGlobalFunction(NStabilizer, function (X, alpha)
   return NOrbitStabilizer(X, alpha, OnPoints, false).stabilizer;
 end);
 
-# NSetStabilizer(X_or_G, A)
-# Given a permutation group G with generating set X acting on \Omega, and a
-# subset A of \Omega, return the setwise stabiliser of A in G.
 InstallGlobalFunction(NSetStabilizer, function (X, A)
   return NOrbitStabilizer(X, A, OnSets, false).stabilizer;
 end);
 
-# Stabilizes(g, O)
-# Suppose G is a group acting on a set \Omega. Then given an element g of G and
-# a subset O of \Omega, determine whether G fixes O pointwise.
 InstallGlobalFunction(Stabilizes, function (g, O)
   local o;
 

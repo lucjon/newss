@@ -1,62 +1,18 @@
 # vim: ft=gap sts=2 et sw=2
 
-# BSGS(group, base, sgs)
-# Initialize a BSGS structure for a group, given a base and strong generating
-# set for it. A BSGS structure is a record containing the following fields:
-#
-#   group:        The group G for which base and sgs are a base and SGS,
-#   sgs:          A strong generating set for G,
-#   base:         A base for G relative to sgs,
-#   has_chain:    true if a stabiliser chain has been computed yet for this base
-#                 and SGS, otherwise false.
-#   initial_gens: An immutable list containing the first generating set given
-#                 for the group, whether it was a strong generating set or not,
-#                 e.g. the initial generators given before SchreierSims is
-#                 called.
-#   *stabilizers: The stabilizer chain corresponding to base and sgs, i.e. a
-#                 sequence of subgroups [G^(1), G^(2), ..., G^(k+1)] where
-#                     1 = G^(k+1) <= G^(k) <= ... <= G^(1) = G,
-#                 with k being the size of sgs.
-#   *stabgens:    A list whose i-th element is a list of generators for the
-#                 i-th stabilizer group.
-#   *orbits:      A list whose i-th element is a Schreier vector for the orbit of
-#                 base[i] in G^(i) = stabilizers[i].
-#   *orbitsizes:  A list whose i-th element is the number of elements in the orbit
-#                 of base[i] in G^(i).
-#
-# The fields marked * are present only if has_chain = true; see the function 
-# ComputeChainFromBSGS. This function does not compute the stabilizer chain --- 
-# structures initialized here have has_chain = false. 
 InstallGlobalFunction(BSGS, function (group, base, sgs)
   return rec(group := group, base := base, sgs := sgs,
              initial_gens := Immutable(Set(sgs)), has_chain := false);
 end);
 
-# BSGSFromGAP(group)
-# For testing purposes, initialises a BSGS structure using the GAP builtin
-# functions.
 InstallGlobalFunction(BSGSFromGAP, function (group)
   local sc;
   sc := StabChain(group);
   return BSGS(group, BaseStabChain(sc), StrongGeneratorsStabChain(sc));
 end);
 
-# BSGS_MIN_DEGREE_RANDOM (integer)
-# The minimum degree of permutation group to use the randomised Schreier-Sims
-# algorithm on; i.e., if the degree of the group is less than this, use the
-# deterministic algorithm, and otherwise use the randomised algorithm.
-BSGS_MIN_DEGREE_RANDOM := 10;
-
-# BSGS_RANDOM_SS_THRESHOLD (integer)
-# The number of unchanged sifted elements to require before finishing the
-# randomised Schreier-Sims algorithm; i.e. RandomSchreierSims with this value
-# will return an incomplete stabilizer chain with probability 2^{-w}, where w
-# is this number BSGS_RANDOM_SS_THRESHOLD.
-BSGS_RANDOM_SS_THRESHOLD := 8;
-
-# BSGSFromGroup(group)
-# Initialises a BSGS structure from an existing group's generating set, and
-# compute a chain for it using the Schreier-Sims algorithm (see SchreierSims).
+BindGlobal(BSGS_MIN_DEGREE_RANDOM, 10);
+BindGlobal(BSGS_RANDOM_SS_THRESHOLD, 8);
 InstallGlobalFunction(BSGSFromGroup, function (group)
   local B;
 
@@ -71,8 +27,6 @@ InstallGlobalFunction(BSGSFromGroup, function (group)
 end);
 
 # SchreierSims(bsgs)
-# Attempt to extend the given BSGS structure into a genuine base and strong
-# generating set respectively for G using the Schreier–Sims algorithm.
 InstallGlobalFunction(SchreierSims, function (bsgs)
   local i, added_generator, stripped, iterators, g, l;
 
@@ -150,9 +104,6 @@ end);
 
 
 # RandomSchreierSims(bsgs, w)
-# As in SchreierSims(), compute a base and stong generating set for the given
-# BSGS structure, along with a stabilizer chain, with the proviso that the
-# chain could be incomplete with probability 2^{-w}.
 InstallGlobalFunction(RandomSchreierSims, function (bsgs, w)
   local no_sifted_this_round, g, stripped, l, verified;
 
@@ -207,10 +158,6 @@ InstallGlobalFunction(EnsureBSGSChainComputed, function (bsgs)
   fi;
 end);
 
-# ComputeChainForBSGS(bsgs)
-# Given a BSGS structure, compute the basic stabilizers (i.e. the stabilizer
-# chain) and basic orbits. Returns nothing; the chain is stored in the BSGS
-# structure (see the function BSGS).
 InstallGlobalFunction(ComputeChainForBSGS, function (bsgs)
   local stabilizer, base_subset, i, gens;
 
@@ -280,10 +227,6 @@ InstallGlobalFunction(ExtendBase, function (bsgs, culprit)
   Add(bsgs.stabgens, []);
 end);
 
-# SchreierGenerators(bsgs, i)
-# Returns an iterator the (possibly trivial) Schreier generators for the
-# stabilizer of the i-th base point in the i-th stabilizer group in the given
-# BSGS structure.
 InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
   # Take this out here so it has a name; it's easier to read the profiling
   # then.
@@ -347,13 +290,6 @@ end);
 
 
 # StabilizerChainStrip(bsgs, g)
-# Corresponds to the procedure Strip in §4.4.1 of Holt et al. or the builtin
-# function SiftedPermutation. Here, bsgs is a BSGS structure for a group G and
-# g is an element of Sym(\Omega), where G acts on \Omega. The result is a
-# record containing the fields:
-#   residue:    The permutation after the strip operation. This is () if and
-#               only if g is truly an element of G.
-#   level:      The iteration at which the stripping stopped.
 InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
   local h, i, beta, u;
   EnsureBSGSChainComputed(bsgs);
@@ -373,11 +309,6 @@ InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
 end);
 
 
-# RemoveRedundantGenerators(bsgs)
-# Attempts to remove redundant generators from the given BSGS structure with
-# stabilizer chain, to produce a smaller strong generating set. If the
-# keep_initial_gens parameter is true, then do not attempt to remove any
-# generator in the BSGS structure's initial_gens set (see BSGS).
 InstallGlobalFunction(RemoveRedundantGenerators, function (bsgs, keep_initial_gens)
   local i, new_gens, generator, sv, have_shrunk, j, k;
 
