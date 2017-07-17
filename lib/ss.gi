@@ -11,8 +11,11 @@ InstallGlobalFunction(BSGSFromGAP, function (group)
   return BSGS(group, BaseStabChain(sc), StrongGeneratorsStabChain(sc));
 end);
 
-BindGlobal(BSGS_MIN_DEGREE_RANDOM, 10);
-BindGlobal(BSGS_RANDOM_SS_THRESHOLD, 8);
+MakeReadWriteGlobal("BSGS_MIN_DEGREE_RANDOM");
+MakeReadWriteGlobal("BSGS_RANDOM_SS_THRESHOLD");
+BSGS_MIN_DEGREE_RANDOM := 10;
+BSGS_RANDOM_SS_THRESHOLD := 8;
+
 InstallGlobalFunction(BSGSFromGroup, function (group)
   local B;
 

@@ -66,7 +66,7 @@ DeclareGlobalFunction("SchreierSims");
 #! @Arguments bsgs, i
 #! @Returns an iterator over the relevant Schreier generators
 #! @Description
-#! Compute the (possibly trivial) Schreier generators for thestabilizer of the
+#! Compute the (possibly trivial) Schreier generators for the stabilizer of the
 #! $i$-th base point in the $i$-th stabilizer group in the given BSGS structure.
 DeclareGlobalFunction("SchreierGenerators");
 
@@ -77,14 +77,16 @@ DeclareGlobalFunction("SchreierGenerators");
 #! The minimum degree of permutation group to use the randomised Schreier-Sims
 #! algorithm on; i.e., if the group acts on fewer points than this, use the
 #! deterministic algorithm (<Ref Func="SchreierSims"/>), and otherwise use the
-#! randomised algorithm (<Ref Func="RandomSchreierSims"/>).
+#! randomised algorithm (<Ref Func="RandomSchreierSims"/>). The default value
+#! for this setting is 10.
 DeclareGlobalVariable("BSGS_MIN_DEGREE_RANDOM");
 
 #! @Description
 #! The number of unchanged sifted elements to require before finishing the
 #! randomised Schreier-Sims algorithm; i.e. <Ref Func="RandomSchreierSims"/> 
 #! with this value will return an incomplete stabilizer chain with probability
-#! $2^{-w}$, where $w$ is this number <C>BSGS_RANDOM_SS_THRESHOLD</C>.
+#! $2^{-w}$, where $w$ is this number <C>BSGS_RANDOM_SS_THRESHOLD</C>. The
+#! default value for this setting is 8.
 DeclareGlobalVariable("BSGS_RANDOM_SS_THRESHOLD");
 
 #! @Arguments bsgs, w
