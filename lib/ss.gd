@@ -9,6 +9,7 @@ DeclareGlobalFunction("EnsureBSGSChainComputed");
 DeclareGlobalFunction("ExtendBase");
 DeclareGlobalFunction("ExtendBaseIfStabilized");
 DeclareGlobalFunction("RandomSchreierSims");
+DeclareGlobalFunction("RemoveRedundantGenerators");
 DeclareGlobalFunction("SchreierGenerators");
 DeclareGlobalFunction("SchreierSims");
 DeclareGlobalFunction("StabilizerChainStrip");

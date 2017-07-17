@@ -9,6 +9,10 @@
 #   base:         A base for G relative to sgs,
 #   has_chain:    true if a stabiliser chain has been computed yet for this base
 #                 and SGS, otherwise false.
+#   initial_gens: An immutable list containing the first generating set given
+#                 for the group, whether it was a strong generating set or not,
+#                 e.g. the initial generators given before SchreierSims is
+#                 called.
 #   *stabilizers: The stabilizer chain corresponding to base and sgs, i.e. a
 #                 sequence of subgroups [G^(1), G^(2), ..., G^(k+1)] where
 #                     1 = G^(k+1) <= G^(k) <= ... <= G^(1) = G,
@@ -24,7 +28,8 @@
 # ComputeChainFromBSGS. This function does not compute the stabilizer chain --- 
 # structures initialized here have has_chain = false. 
 InstallGlobalFunction(BSGS, function (group, base, sgs)
-  return rec(group := group, base := base, sgs := sgs, has_chain := false);
+  return rec(group := group, base := base, sgs := sgs,
+             initial_gens := Immutable(Set(sgs)), has_chain := false);
 end);
 
 # BSGSFromGAP(group)
@@ -365,4 +370,46 @@ InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
   od;
 
   return rec(residue := h, level := i + 1);
+end);
+
+
+# RemoveRedundantGenerators(bsgs)
+# Attempts to remove redundant generators from the given BSGS structure with
+# stabilizer chain, to produce a smaller strong generating set. If the
+# keep_initial_gens parameter is true, then do not attempt to remove any
+# generator in the BSGS structure's initial_gens set (see BSGS).
+InstallGlobalFunction(RemoveRedundantGenerators, function (bsgs, keep_initial_gens)
+  local i, new_gens, generator, sv, have_shrunk, j, k;
+
+  i := Size(bsgs.base) - 1;
+  while i >= 1 do
+    new_gens := Difference(bsgs.stabgens[i], bsgs.stabgens[i + 1]);
+    for j in [1 .. Size(new_gens)] do
+      generator := Remove(new_gens, j);
+
+      if keep_initial_gens and generator in bsgs.initial_gens then
+        continue;
+      fi;
+
+      sv := NOrbitStabilizer(new_gens, bsgs.base[i], OnPoints, true).sv;
+
+      have_shrunk := false;
+      for j in [1 .. Size(bsgs.orbits[i])] do
+        if IsBound(bsgs.orbits[j]) and not IsBound(sv[j]) then
+          have_shrunk := true;
+          break;
+        fi;
+      od;
+
+      if have_shrunk then
+        Add(new_gens, generator, j);
+      else
+        Remove(bsgs.sgs, Position(bsgs.sgs, generator));
+      fi;
+    od;
+
+    i := i - 1;
+  od;
+
+  return bsgs;
 end);
