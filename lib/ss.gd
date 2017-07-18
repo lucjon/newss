@@ -91,12 +91,27 @@ DeclareGlobalVariable("BSGS_MIN_DEGREE_RANDOM");
 DeclareGlobalVariable("BSGS_RANDOM_SS_THRESHOLD");
 
 #! @Arguments bsgs, w
-#! @Returns a BSGS structure with stabilizer chain
+#! @Returns a record with a BSGS structure and chain
 #! @Description
 #! As in <Ref Func="SchreierSims"/>, compute a base and stong generating set
 #! for the given BSGS structure, along with a stabilizer chain, with the
-#! proviso that the chain could be incomplete. (See
-#! <Ref Var="BSGS_RANDOM_SS_THRESHOLD"/>.)
+#! proviso that the chain could be incomplete, with probability $2^{-w}$.
+#! (The variable <Ref Var="BSGS_RANDOM_SS_THRESHOLD"/> controls the default
+#! value for this parameter $w$, when the function is called by
+#! <Ref Func="BSGSFromGroup"/>.) The function returns a record with
+#! the fields
+#! * **bsgs**:     The given BSGS structure, with a (possibly incomplete)
+#!                 stabilizer chain
+#! * **verified**: Sometimes, in the process of computing the chain, we are
+#!                 able to verify that the chain is correct, obviating
+#!                 the need for another run of <Ref Func="SchreierSims"/> or
+#!                 some other verification procedure. In particular, if we
+#!                 know the order of the group beforehand, this can be done.
+#!                 This field is a boolean which is <K>true</K> if we did
+#!                 indeed verify that the resulting chain is correct. A value
+#!                 of <K>false</K> does not necessarily mean that the resulting
+#!                 chain is incorrect (the probability of correctness remains
+#!                 $2^{-w}$) but that it has not been proven either way.
 DeclareGlobalFunction("RandomSchreierSims");
 
 #! @Arguments bsgs
