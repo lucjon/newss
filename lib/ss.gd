@@ -133,6 +133,9 @@ DeclareGlobalFunction("RemoveRedundantGenerators");
 #! * **residue**:    The permutation after the strip operation. This is () if
 #!                    and only if $g$ is truly an element of $G$.
 #! * **level**:      The iteration at which the stripping stopped.
+#! Note that unlike in e.g. <Ref Func="StabilizerChainContains" />, we do not
+#! check to see if <C>bsgs</C> has a full stabilizer chain computed, as this
+#! function is called many times in tight loops.
 DeclareGlobalFunction("StabilizerChainStrip");
 
 DeclareGlobalFunction("ComputeStabOrbForBSGS");

@@ -29,7 +29,6 @@ InstallGlobalFunction(BSGSFromGroup, function (group)
   return B;
 end);
 
-# SchreierSims(bsgs)
 InstallGlobalFunction(SchreierSims, function (bsgs)
   local i, added_generator, stripped, iterators, g, l;
 
@@ -140,7 +139,7 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs, w)
     fi;
 
     # We know we're correct if the orders match.
-    if HasSize(bsgs.group) and Product(bsgs.orbitsizes) = HasSize(bsgs.group) then
+    if HasSize(bsgs.group) and Product(bsgs.orbitsizes) = Size(bsgs.group) then
       verified := true;
       break;
     fi;
@@ -295,7 +294,6 @@ end);
 # StabilizerChainStrip(bsgs, g)
 InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
   local h, i, beta, u;
-  EnsureBSGSChainComputed(bsgs);
   h := g;
 
   for i in [1 .. Size(bsgs.base)] do
