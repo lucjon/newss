@@ -19,21 +19,22 @@
 #! * **initial_gens**: An immutable list containing the first generating set given
 #!                     for the group, whether it was a strong generating set or not,
 #!                     e.g. the initial generators given before
-#                      <Ref Func="SchreierSims"/> is called.
+#!                     <Ref Func="SchreierSims"/> or
+#!                     <Ref Func="RemoveRedundantGenerators"/> is called.
 #! * ***stabilizers**: The stabilizer chain corresponding to base and sgs, i.e. a
 #!                     sequence of subgroups $[G^{(1)}, G^{(2)}, ..., G^{(k+1)}]$
 #!                     where
-#!                        $$1 = G^{(k+1)} \le G^{(k)} \le ... \le G^{(1)} = G,$$
+#!                        $$1 = G^{(k+1)} \le G^{(k)} \le \cdots \le G^{(1)} = G,$$
 #!                     with $k$ being the size of <C>sgs</C>.
 #! * ***stabgens**:    A list whose $i$-th element is a list of generators for the
 #!                     $i$-th stabilizer group.
 #! * ***orbits**:      A list whose $i$-th element is a Schreier vector for the orbit of
-#!                     <C>base[i]</C> in $G^{(i)} =$<C>stabilizers[i]</C>.
+#!                     <C>base[i]</C> in $G^{(i)} =$ <C>stabilizers[i]</C>.
 #! * ***orbitsizes**:  A list whose $i$-th element is the number of elements in the orbit
 #!                     of <C>base[i]</C> in $G^{(i)}$.
 #!
-#! The fields marked * are present only if <C>has_chain = true</C>; see the function 
-#! <Ref Func="ComputeChainForBSGS"/>. This function does not compute the
+#! The fields marked * are present only if <C>has_chain = </C><K>true</K>; see the
+#! function <Ref Func="ComputeChainForBSGS"/>. This function does not compute the
 #! stabilizer chain --- structures initialized here have <C>has_chain</C> =
 #! <K>false</K>. 
 DeclareGlobalFunction("BSGS");
