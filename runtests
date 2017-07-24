@@ -16,7 +16,7 @@ gap <<EOF
 LoadPackage("newss");;
 ReadPackage("newss", "lib/tests.g");;
 RESULTS_FILENAME := "$testdir/$filename";;
-PickSomeGroups($count);
+${3:-PickSomeGroups}($count);
 $(if [ "$profile" == "yes" ]; then cat <<EOP
 Print("Profiling...");
 NUM_RANDOM_TEST_ELTS := 2^14;

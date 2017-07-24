@@ -67,26 +67,68 @@ GROUPS := [
   ["[2^4]S(5)", TransitiveGroup(10,37)]
 ];
 
-PickSomeGroups := function (nr)
-  local bounds, counts, sources, count, bound, index, group, i, j;
-  bounds := [50, 30];
+PickGroupOfDegree := function (degree)
+  local counts, sources, first_type, type, count, index, group;
   counts := [NrPrimitiveGroups, NrTransitiveGroups];
   sources := [PrimitiveGroup, TransitiveGroup];
+
+  first_type := PseudoRandom([1 .. Size(sources)]);
+  type := first_type;
+  count := counts[type](degree);
+  repeat
+    if count > 0 and count <> fail then
+      index := PseudoRandom([1 .. count]);
+      group := sources[type](degree, index);
+      if HasName(group) then
+        if StartsWith(Name(group), "S(") or
+           StartsWith(Name(group), "A(") or
+           StartsWith(Name(group), "Sym(") then
+          return fail;
+        fi;
+        return [Name(group), group];
+      else
+        return [Concatenation(NameFunction(sources[type]),
+                              "(", String(degree), ", ",
+                              String(index), ")"), group];
+      fi;
+    fi;
+    type := ((type + 1) mod Size(sources)) + 1;
+  until type = first_type;
+
+  return fail;
+end;
+
+PickSomeGroups := function (nr)
+  local bounds, i, j, degree, group;
+  bounds := [768, 30];
   i := 1;
 
   while i <= nr do
-    j := PseudoRandom([1 .. Size(sources)]);
-    bound := PseudoRandom([1 .. bounds[j]]);
-    count := counts[j](bound);
-    if count > 0 then
-      index := PseudoRandom([1 .. count]);
-      group := sources[j](bound, index);
-      Add(GROUPS, [Name(group), group]);
+    j := PseudoRandom([1 .. Size(bounds)]);
+    degree := PseudoRandom([1 .. bounds[j]]);
+    group := PickGroupOfDegree(degree);
+    if group <> fail then
+      Add(GROUPS, group);
       i := i + 1;
+    fi;
+
+    if i mod 25 = 0 then
+      Print("found ", i, " groups so far.\n");
     fi;
   od;
 end;
 
+PickGroupsByDegree := function (max_degree, per_degree)
+  local g, degree, i;
+  for degree in [2 .. max_degree] do
+    for i in [1 .. per_degree] do
+      g := PickGroupOfDegree(degree);
+      if g <> fail then
+        Add(GROUPS, [Name(g), g]);
+      fi;
+    od;
+  od;
+end;
 
 # The test harness functions.
 DoTest := function (name, fn, arg)
@@ -103,7 +145,11 @@ DoTest := function (name, fn, arg)
     Print("fail.\n");
   fi;
   
-  return rec(group := name, test := NameFunction(fn), success := result, time := t);
+  return rec(group := name,
+             group_degree := NrMovedPoints(arg.group),
+             test := NameFunction(fn),
+             success := result,
+             time := t);
 end;
 
 RESULTS_FILENAME := "tests.csv";
@@ -121,6 +167,8 @@ DoTests := function (tests, constructor)
     t := Runtime();
     Add(stabchains, constructor(group[2]));
     Add(results, rec(group := group[1],
+                     group_degree := NrMovedPoints(group[2]),
+                     group_order := 0,
                      test := NameFunction(constructor),
                      success := true,
                      time := Runtime() - t));
@@ -138,6 +186,36 @@ DoTests := function (tests, constructor)
 
   PrintCSV(RESULTS_FILENAME, results);
 end;
+
+
+GAPShowdown := function (filename)
+  local results, t, our_stabchain, our_time, gap_stabchain, gap_time, size, which, group, G;
+  results := [];
+
+  for group in GROUPS do
+    Print(group[1], "\n");
+
+    G := Group(GeneratorsOfGroup(group[2]));
+    SetSize(G, Size(group[2]));
+
+    t := Runtime();
+    our_stabchain := BSGSFromGroup(G);
+    our_time := Runtime() - t;
+
+    t := Runtime();
+    gap_stabchain := StabChain(G);
+    gap_time := Runtime() - t;
+
+    Add(results, rec(degree := NrMovedPoints(group[2]),
+                     gap_time := gap_time,
+                     our_time := our_time,
+                     size := Size(group[2]),
+                     which := group[1]));
+  od;
+
+  PrintCSV(filename, results);
+end;
+
 
 TESTS := [VerifyContainsPG, VerifySCOrder];
 DoAllTests := function ()
