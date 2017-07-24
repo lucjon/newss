@@ -1,5 +1,60 @@
 # vim: ft=gap sts=2 et sw=2
 
+# The algorithm is split into a few different parts, each with multiple
+# possible implementations, which can be varied depending on e.g. what is known
+# about the group we are working with. A `strategy' is a record describing
+# which implementation of each algorithm should be used.
+# This file is laid out as follows:
+#   *  Definitions of strategies and high level user functions
+#        These high level functions create and wrap strategies.
+#   *  Functions for manipulating stabiliser chains
+#
+#   *  Implementations of each algorithm
+#        SchreierSims(bsgs)
+#          The main Schreier-Sims algorithm.
+#        Verify(bsgs)
+#          The verification routine, which generally ensures the resulting
+#          stabiliser chain is correct.
+#        ExtendBaseForLevel(bsgs, level, culprit)
+#          Finds a new base point when adding a new generator at the given
+#          level (or 0 if we are starting from an empty base). If known, the
+#          argument culprit is a permutation which fixes all the existing base
+#          points; otherwise it has the value false.
+#
+#   *  Helper functions common to many implementations
+#
+# Only the functions in the first two categories should be considered `public'.
+
+
+###
+### Strategy definitions and high-level functions
+###
+
+MakeReadWriteGlobal("BSGS_MIN_DEGREE_RANDOM");
+BSGS_MIN_DEGREE_RANDOM := 10;
+
+NEWSS_DEFAULT_OPTIONS := rec(
+  SchreierSims := RandomSchreierSims,
+  Verify := NEWSS_VerifyByDeterministic,
+  ExtendBaseForLevel := NEWSS_FirstMovedPoint,
+
+  fall_back_to_deterministic := true,
+  sift_threshold := 8
+);
+
+NEWSS_DETERMINISTIC_OPTIONS := rec(
+  SchreierSims := SchreierSims,
+  Verify := ReturnTrue,
+  ExtendBaseForLevel := NEWSS_FirstMovedPoint,
+
+  # We need this here since a user could specify a random algorithm in their
+  # options, even in the case where we would have picked a deterministic one,
+  # but might not provide these parameters
+  fall_back_to_deterministic := NEWSS_DEFAULT_OPTIONS.fall_back_to_deterministic,
+  sift_threshold := NEWSS_DEFAULT_OPTIONS.sift_threshold
+);
+
+
 InstallGlobalFunction(BSGS, function (group, base, sgs)
   return rec(group := group, base := base, sgs := sgs,
              initial_gens := Immutable(Set(sgs)), has_chain := false);
@@ -11,23 +66,114 @@ InstallGlobalFunction(BSGSFromGAP, function (group)
   return BSGS(group, BaseStabChain(sc), StrongGeneratorsStabChain(sc));
 end);
 
-MakeReadWriteGlobal("BSGS_MIN_DEGREE_RANDOM");
-MakeReadWriteGlobal("BSGS_RANDOM_SS_THRESHOLD");
-BSGS_MIN_DEGREE_RANDOM := 10;
-BSGS_RANDOM_SS_THRESHOLD := 8;
+InstallGlobalFunction(BSGSFromGroup, function (arg)
+  local group, B, base_options, options, key;
 
-InstallGlobalFunction(BSGSFromGroup, function (group)
-  local B;
+  if Size(arg) = 0 then
+    Error("No group given to BSGSFromGroup");
+  fi;
+
+  group := arg[1];
+
+  if Size(GeneratorsOfGroup(group)) = 0 then
+    # We have the trivial group, but our implementations get a little upset
+    # about not having any generators. It's easiest to special case this.
+    # (Interestingly enough, the transitive groups library likes to call this S1.)
+    B := BSGS(group, [], [()]);
+    B.stabgens := [[]];
+    B.orbits := [];
+    B.orbitsizes := [];
+    B.have_chain := true;
+    return B;
+  fi;
+
+  # First choose a strategy based on heuristics.
+  if NrMovedPoints(group) <= BSGS_MIN_DEGREE_RANDOM then
+    base_options := ShallowCopy(NEWSS_DETERMINISTIC_OPTIONS);
+  else
+    base_options := ShallowCopy(NEWSS_DEFAULT_OPTIONS);
+  fi;
+
+  if HasSize(group) then
+    base_options.Verify := NEWSS_VerifyByOrder;
+  fi;
+
+  # If they have given us a strategy, use it, filling in any missing fields
+  # from the heuristically-determined one.
+  if Size(arg) > 1 then
+    options := ShallowCopy(arg[2]);
+    for key in RecNames(base_options) do
+      if not IsBound(options.(key)) then
+        options.(key) := base_options.(key);
+      fi;
+    od;
+  else
+    options := base_options;
+  fi;
 
   B := BSGS(group, [], ShallowCopy(GeneratorsOfGroup(group)));
+  B.options := options;
 
-  if LargestMovedPoint(group) <= BSGS_MIN_DEGREE_RANDOM or
-     not RandomSchreierSims(B, BSGS_RANDOM_SS_THRESHOLD).verified then
-    SchreierSims(B);
+  options.SchreierSims(B);
+
+  if not options.Verify(B) and options.fall_back_to_deterministic then
+    # If we can't verify the chain is complete, then run the deterministic
+    # algorithm to make sure we don't return an incomplete chain.
+    NEWSS_DETERMINISTIC_OPTIONS.SchreierSims(B);
   fi;
 
   return B;
 end);
+
+
+###
+### Functions for manipulating stabiliser chains
+###
+
+InstallGlobalFunction(RemoveRedundantGenerators, function (bsgs, keep_initial_gens)
+  local i, new_gens, generator, sv, have_shrunk, j, k;
+
+  i := Size(bsgs.base) - 1;
+  while i >= 1 do
+    new_gens := Difference(bsgs.stabgens[i], bsgs.stabgens[i + 1]);
+    for j in [1 .. Size(new_gens)] do
+      generator := Remove(new_gens, j);
+
+      if keep_initial_gens and generator in bsgs.initial_gens then
+        continue;
+      fi;
+
+      sv := NOrbitStabilizer(new_gens, bsgs.base[i], OnPoints, true).sv;
+
+      have_shrunk := false;
+      for j in [1 .. Size(bsgs.orbits[i])] do
+        if IsBound(bsgs.orbits[j]) and not IsBound(sv[j]) then
+          have_shrunk := true;
+          break;
+        fi;
+      od;
+
+      if have_shrunk then
+        Add(new_gens, generator, j);
+      else
+        Remove(bsgs.sgs, Position(bsgs.sgs, generator));
+      fi;
+    od;
+
+    i := i - 1;
+  od;
+
+  return bsgs;
+end);
+
+
+###
+### Implementations of algorithms
+###
+
+##
+## SchreierSims
+##
 
 InstallGlobalFunction(SchreierSims, function (bsgs)
   local i, added_generator, stripped, iterators, g, l;
@@ -36,7 +182,11 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
   if not IsBound(bsgs.stabgens) then
     bsgs.stabgens := [];
   fi;
-  ExtendBaseIfStabilized(bsgs);
+
+  if Size(bsgs.base) = 0 then
+    bsgs.options.ExtendBaseForLevel(bsgs, 0, false);
+  fi;
+
   ComputeChainForBSGS(bsgs);
 
   # So Strip() etc., don't interfere
@@ -71,14 +221,14 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
       if stripped.residue <> () then
         Info(NewssInfo, 3, "Adjoining generator ", g);
 
+        Add(bsgs.sgs, stripped.residue);
+
         # Additionally, if the strip procedure made it to the last iteration,
         # we know it fixes all the existing base points and that we need to
         # extend our basis again.
         if stripped.level > Size(bsgs.base) then
-          ExtendBase(bsgs, stripped.residue);
+          bsgs.options.ExtendBaseForLevel(bsgs, i, stripped.residue);
         fi;
-
-        Add(bsgs.sgs, stripped.residue);
 
         for l in [i + 1 .. stripped.level] do
           Add(bsgs.stabgens[l], stripped.residue);
@@ -105,29 +255,33 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
 end);
 
 
-# RandomSchreierSims(bsgs, w)
-InstallGlobalFunction(RandomSchreierSims, function (bsgs, w)
-  local no_sifted_this_round, g, stripped, l, verified;
+InstallGlobalFunction(RandomSchreierSims, function (bsgs)
+  local no_sifted_this_round, can_verify_order, verified, g, stripped, l;
 
   bsgs.sgs := List(bsgs.sgs);
   bsgs.stabgens := [];
-  ExtendBaseIfStabilized(bsgs);
+
+  if Size(bsgs.base) = 0 then
+    bsgs.options.ExtendBaseForLevel(bsgs, 0, false);
+  fi;
+
   ComputeChainForBSGS(bsgs);
   bsgs.has_chain := true;
 
   no_sifted_this_round := 0;
+  can_verify_order := HasSize(bsgs.group);
   verified := false;
 
-  while no_sifted_this_round < w do
+  while no_sifted_this_round < bsgs.options.sift_threshold do
     g := PseudoRandom(bsgs.group);
     stripped := StabilizerChainStrip(bsgs, g);
 
     if stripped.residue <> () then
-      if stripped.level > Size(bsgs.base) then
-        ExtendBase(bsgs, stripped.residue);
-      fi;
-
       Add(bsgs.sgs, stripped.residue);
+
+      if stripped.level > Size(bsgs.base) then
+        bsgs.options.ExtendBaseForLevel(bsgs, stripped.level, stripped.residue);
+      fi;
 
       for l in [2 .. stripped.level] do
         Add(bsgs.stabgens[l], stripped.residue);
@@ -139,15 +293,71 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs, w)
     fi;
 
     # We know we're correct if the orders match.
-    if HasSize(bsgs.group) and Product(bsgs.orbitsizes) = Size(bsgs.group) then
-      verified := true;
+    if can_verify_order and Product(bsgs.orbitsizes) = Size(bsgs.group) then
       break;
     fi;
   od;
 
-  return rec(bsgs := bsgs, verified := verified);
+  return bsgs;
 end);
 
+##
+## Verify
+##
+
+InstallGlobalFunction(NEWSS_VerifyByOrder, function (bsgs)
+  return HasSize(bsgs.group) and Product(bsgs.orbitsizes) = Size(bsgs.group);
+end);
+
+InstallGlobalFunction(NEWSS_VerifyByDeterministic, function (bsgs)
+  NEWSS_DETERMINISTIC_OPTIONS.SchreierSims(bsgs);
+  return true;
+end);
+
+##
+## ExtendBaseForLevel
+##
+
+InstallGlobalFunction(NEWSS_FirstMovedPoint, function (bsgs, level, culprit)
+  local i, point;
+
+  if culprit = false then
+    if level = 0 then
+      # If we have an empty generating set we deserve to bail out here.
+      culprit := bsgs.sgs[1];
+    else
+      i := Size(bsgs.sgs);
+      culprit := bsgs.sgs[i];
+
+      while Stabilizes(culprit, Reversed(bsgs.base)) and i > 0 do
+        i := i - 1;
+        culprit := bsgs.sgs[i];
+      od;
+
+      if i = 0 then
+        Error("could not find a generator which does not fix the base");
+      fi;
+    fi;
+  fi;
+
+  point := First(MovedPoints(culprit), pt -> not (pt in bsgs.base));
+
+  if point = fail then
+    Error("could not find point not fixed by culprit");
+  fi;
+
+  Add(bsgs.base, point);
+  if level > 0 then
+    Add(bsgs.stabgens, []);
+  fi;
+
+  return point;
+end);
+
+
+###
+### Helper functions
+###
 
 # EnsureBSGSChainComputed(bsgs)
 # Given a BSGS structure, compute the basic stabilizers and basic orbits if
@@ -295,6 +505,7 @@ end);
 InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
   local h, i, beta, u;
   h := g;
+  i := 0;
 
   for i in [1 .. Size(bsgs.base)] do
     beta := bsgs.base[i] / h;
@@ -309,39 +520,3 @@ InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
   return rec(residue := h, level := i + 1);
 end);
 
-
-InstallGlobalFunction(RemoveRedundantGenerators, function (bsgs, keep_initial_gens)
-  local i, new_gens, generator, sv, have_shrunk, j, k;
-
-  i := Size(bsgs.base) - 1;
-  while i >= 1 do
-    new_gens := Difference(bsgs.stabgens[i], bsgs.stabgens[i + 1]);
-    for j in [1 .. Size(new_gens)] do
-      generator := Remove(new_gens, j);
-
-      if keep_initial_gens and generator in bsgs.initial_gens then
-        continue;
-      fi;
-
-      sv := NOrbitStabilizer(new_gens, bsgs.base[i], OnPoints, true).sv;
-
-      have_shrunk := false;
-      for j in [1 .. Size(bsgs.orbits[i])] do
-        if IsBound(bsgs.orbits[j]) and not IsBound(sv[j]) then
-          have_shrunk := true;
-          break;
-        fi;
-      od;
-
-      if have_shrunk then
-        Add(new_gens, generator, j);
-      else
-        Remove(bsgs.sgs, Position(bsgs.sgs, generator));
-      fi;
-    od;
-
-    i := i - 1;
-  od;
-
-  return bsgs;
-end);

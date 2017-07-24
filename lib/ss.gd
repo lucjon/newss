@@ -153,8 +153,12 @@ DeclareGlobalFunction("RemoveRedundantGenerators");
 #! function is called many times in tight loops.
 DeclareGlobalFunction("StabilizerChainStrip");
 
+DeclareGlobalFunction("ChooseSchreierSims");
 DeclareGlobalFunction("ComputeStabOrbForBSGS");
 DeclareGlobalFunction("EnsureBSGSChainComputed");
 DeclareGlobalFunction("ExtendBase");
 DeclareGlobalFunction("ExtendBaseIfStabilized");
+DeclareGlobalFunction("NEWSS_FirstMovedPoint");
+DeclareGlobalFunction("NEWSS_VerifyByDeterministic");
+DeclareGlobalFunction("NEWSS_VerifyByOrder");
 DeclareInfoClass("NewssInfo");
