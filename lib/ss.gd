@@ -86,6 +86,12 @@ DeclareGlobalFunction("BSGSFromGroup");
 #!   generators which must be sifted to the identity for the chain to be
 #!   considered complete. If this parameter has the value $w$, the result of the
 #!   randomized Schreier-Sims algorithm is correct with probability $2^{-w}$.
+#! * **perm_representation**. The package can represent permutations either
+#!   purely as &GAP; permutation objects, or as permutation words (see section
+#!   <Ref Sect="Chapter_Miscellany_Section_Permutation_words"/>), which is
+#!   faster for small-base groups; specify either
+#!   <C>NEWSS_PERM_REPRESENTATION</C> or <C>NEWSS_PERMWORD_REPRESENTATION</C>
+#!   respectively to override the default.
 #!
 #! All of these fields are optional; if any are missing, they are taken from
 #! whichever of the following default options structures are chosen by
@@ -109,6 +115,26 @@ DeclareGlobalVariable("NEWSS_DETERMINISTIC_OPTIONS");
 #! maximum degree for which <C>NEWSS_DETERMINISTIC_OPTIONS</C> will be used by
 #! default.
 DeclareGlobalVariable("NEWSS_MIN_DEGREE_RANDOM");
+
+#! @Description
+#! Represent permutations as plain &GAP; permutation objects. This record has
+#! fields <C>PermFromBasePoint</C>, <C>Strip</C>, <C>AsPerm</C> and
+#! <C>LiftPerm</C>. The first two methods correspond to the functions
+#! <Ref Func="SchreierVectorPermFromBasePoint"/> and
+#! <Ref Func="StabilizerChainStrip"/>, and the latter two convert to and from
+#! native &GAP; permutation objects (although these are no-ops in this case).
+#! For now, it also has fields <C>MulPerm</C>, <C>InvPerm</C> and
+#! <C>ImagePerm</C> which perform the obvious functions, although a better way
+#! of dealing with these would be to do away with these fields and instead
+#! create a new &GAP; type for permutation words with the appropriate operations
+#! installed, so that the native syntax can be used.
+DeclareGlobalVariable("NEWSS_PERM_REPRESENTATION");
+
+#! @Description
+#! Represent permutations as permutation words. See
+#! <Ref Var="NEWSS_PERM_REPRESENTATION"/> for the list of fields this record
+#! contains.
+DeclareGlobalVariable("NEWSS_PERMWORD_REPRESENTATION");
 
 
 #! @Section Manipulating stabilizer chains
@@ -218,6 +244,14 @@ DeclareGlobalFunction("NEWSS_VerifyByDeterministic");
 #! check to see if <C>bsgs</C> has a full stabilizer chain computed, as this
 #! function is called many times in tight loops.
 DeclareGlobalFunction("StabilizerChainStrip");
+
+#! @Arguments bsgs, g
+#! @Returns a record describing the strip result
+#! @Description Performs the same strip computation as
+#! <Ref Func="StabilizerChainStrip"/>, except that the input and resulting
+#! residue permutations are permutation words; see
+#! <Ref Sect="Chapter_Miscellany_Section_Permutation_words"/>.
+DeclareGlobalFunction("StabilizerChainStripWord");
 
 DeclareGlobalFunction("ComputeStabOrbForBSGS");
 DeclareGlobalFunction("EnsureBSGSChainComputed");

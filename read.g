@@ -3,6 +3,7 @@
 ReadPackage("newss", "lib/ss.gi");
 ReadPackage("newss", "lib/orbstab.gi");
 ReadPackage("newss", "lib/group.gi");
+ReadPackage("newss", "lib/permword.gi");
 
 rlnewss := function ()
   RereadPackage("newss", "lib/ss.gd");
@@ -11,4 +12,6 @@ rlnewss := function ()
   RereadPackage("newss", "lib/orbstab.gi");
   RereadPackage("newss", "lib/group.gd");
   RereadPackage("newss", "lib/group.gi");
+  RereadPackage("newss", "lib/permword.gd");
+  RereadPackage("newss", "lib/permword.gi");
 end;

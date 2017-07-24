@@ -63,3 +63,15 @@ DeclareGlobalFunction("Stabilizes");
 #! that <C>alpha ^ u = beta</C>. If beta is not in the orbit, returns
 #! <K>false</K>.
 DeclareGlobalFunction("SchreierVectorPermFromBasePoint");
+
+#! @Arguments X, sv, beta
+#! @Returns a permutation word $u$ such that the successive image of $\beta_i$
+#! under each permutation in $u$ is <C>beta</C>.
+#! @Description
+#! Given a permutation group $G$ with generating set $X$ acting on $\Omega$, a
+#! Schreier vector <C>sv</C> for the orbit of an element $\alpha$ in $G$, and
+#! another element <C>beta</C> in this orbit, returns a permutation word $u$ such
+#! that the image of <C>alpha</C> under <C>u</C> is <C>beta</C> --- see section
+#! <Ref Sect="Chapter_Miscellany_Section_Permutation_words"/> on permutation words.
+#! If <C>beta</C> is not in the given orbit, return <K>false</K>.
+DeclareGlobalFunction("SchreierVectorWordFromBasePoint");

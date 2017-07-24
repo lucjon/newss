@@ -33,11 +33,33 @@
 MakeReadWriteGlobal("NEWSS_MIN_DEGREE_RANDOM");
 NEWSS_MIN_DEGREE_RANDOM := 10;
 
+InstallValue(NEWSS_PERMWORD_REPRESENTATION, rec(
+  PermFromBasePoint := SchreierVectorWordFromBasePoint,
+  Strip := StabilizerChainStripWord,
+  AsPerm := PermWordAsPerm,
+  MulPerm := Concatenation,
+  InvPerm := PermWordInverse,
+  LiftPerm := x -> [x],
+  ImagePerm := PermWordImage
+));
+
+InstallValue(NEWSS_PERM_REPRESENTATION, rec(
+  PermFromBasePoint := SchreierVectorPermFromBasePoint,
+  Strip := StabilizerChainStrip,
+  AsPerm := IdFunc,
+  MulPerm := function (arg) return Product(arg); end,
+  InvPerm := Inverse,
+  LiftPerm := IdFunc,
+  ImagePerm := OnPoints
+));
+  
+
 InstallValue(NEWSS_DEFAULT_OPTIONS, rec(
   SchreierSims := RandomSchreierSims,
   Verify := NEWSS_VerifyByDeterministic,
   ExtendBaseForLevel := NEWSS_FirstMovedPoint,
 
+  perm_representation := NEWSS_PERMWORD_REPRESENTATION,
   fall_back_to_deterministic := true,
   sift_threshold := 8,
   orbits_to_consider := 3
@@ -51,6 +73,7 @@ InstallValue(NEWSS_DETERMINISTIC_OPTIONS, rec(
   # We need this here since a user could specify a random algorithm in their
   # options, even in the case where we would have picked a deterministic one,
   # but might not provide these parameters
+  perm_representation := NEWSS_PERMWORD_REPRESENTATION,
   fall_back_to_deterministic := NEWSS_DEFAULT_OPTIONS.fall_back_to_deterministic,
   sift_threshold := NEWSS_DEFAULT_OPTIONS.sift_threshold,
   orbits_to_consider := NEWSS_DEFAULT_OPTIONS.orbits_to_consider
@@ -68,8 +91,17 @@ InstallGlobalFunction(BSGSFromGAP, function (group)
   return BSGS(group, BaseStabChain(sc), StrongGeneratorsStabChain(sc));
 end);
 
+NEWSS_UpdateRecord := function (base, new)
+  local name;
+  for name in RecNames(new) do
+    if not IsBound(base.(name)) then
+      base.(name) := new.(name);
+    fi;
+  od;
+end;
+
 InstallGlobalFunction(BSGSFromGroup, function (arg)
-  local group, B, base_options, options, key;
+  local group, B;
 
   if Size(arg) = 0 then
     Error("No group given to BSGSFromGroup");
@@ -90,38 +122,34 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
   fi;
 
   # First choose a strategy based on heuristics.
+  B := BSGS(group, [], ShallowCopy(GeneratorsOfGroup(group)));
+
   if NrMovedPoints(group) <= NEWSS_MIN_DEGREE_RANDOM then
-    base_options := ShallowCopy(NEWSS_DETERMINISTIC_OPTIONS);
+    B.options := ShallowCopy(NEWSS_DETERMINISTIC_OPTIONS);
   else
-    base_options := ShallowCopy(NEWSS_DEFAULT_OPTIONS);
+    B.options := ShallowCopy(NEWSS_DEFAULT_OPTIONS);
   fi;
 
   if HasSize(group) then
-    base_options.Verify := NEWSS_VerifyByOrder;
+    B.options.Verify := NEWSS_VerifyByOrder;
   fi;
 
   # If they have given us a strategy, use it, filling in any missing fields
   # from the heuristically-determined one.
   if Size(arg) > 1 then
-    options := ShallowCopy(arg[2]);
-    for key in RecNames(base_options) do
-      if not IsBound(options.(key)) then
-        options.(key) := base_options.(key);
-      fi;
-    od;
-  else
-    options := base_options;
+    NEWSS_UpdateRecord(arg[2], B.options);
+    B.options := arg[2];
   fi;
 
-  B := BSGS(group, [], ShallowCopy(GeneratorsOfGroup(group)));
-  B.options := options;
+  NEWSS_UpdateRecord(B.options, B.options.perm_representation);
+  B.options.SchreierSims(B);
 
-  options.SchreierSims(B);
-
-  if not options.Verify(B) and options.fall_back_to_deterministic then
+  if not B.options.Verify(B) and B.options.fall_back_to_deterministic then
     # If we can't verify the chain is complete, then run the deterministic
     # algorithm to make sure we don't return an incomplete chain.
+    Info(NewssInfo, 2, "Verification failed, performing determinstic pass");
     NEWSS_DETERMINISTIC_OPTIONS.SchreierSims(B);
+    Info(NewssInfo, 2, "Finished deterministic pass");
   fi;
 
   return B;
@@ -178,7 +206,7 @@ end);
 ##
 
 InstallGlobalFunction(SchreierSims, function (bsgs)
-  local i, added_generator, stripped, iterators, g, l;
+  local i, added_generator, stripped, iterators, g, l, need_to_adjoin, perm;
 
   bsgs.sgs := List(bsgs.sgs);
   if not IsBound(bsgs.stabgens) then
@@ -216,24 +244,25 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
 
     for g in iterators[i] do
       if g = () then continue; fi;
-      stripped := StabilizerChainStrip(bsgs, g);
+      stripped := bsgs.options.Strip(bsgs, g);
 
       # If the stripped permutation is not the identity, it was not in the next
       # group --- so we adjoin it.
-      if stripped.residue <> () then
+      perm := bsgs.options.AsPerm(stripped.residue);
+      if perm <> () then
         Info(NewssInfo, 3, "Adjoining generator ", g);
 
-        Add(bsgs.sgs, stripped.residue);
+        Add(bsgs.sgs, perm);
 
         # Additionally, if the strip procedure made it to the last iteration,
         # we know it fixes all the existing base points and that we need to
         # extend our basis again.
         if stripped.level > Size(bsgs.base) then
-          bsgs.options.ExtendBaseForLevel(bsgs, i, stripped.residue);
+          bsgs.options.ExtendBaseForLevel(bsgs, i, perm);
         fi;
 
         for l in [i + 1 .. stripped.level] do
-          Add(bsgs.stabgens[l], stripped.residue);
+          Add(bsgs.stabgens[l], perm);
           ComputeStabOrbForBSGS(bsgs, l);
           # We might be able to avoid this as well.
           iterators[l] := SchreierGenerators(bsgs, l);
@@ -458,7 +487,7 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
   # then.
   local SchreierGenerators_Next;
   SchreierGenerators_Next := function (iter)
-    local x, u_beta_x, gen;
+    local x, u_beta_x, gen, image;
 
     if iter!.gen_iter = false or IsDoneIterator(iter!.gen_iter) then
       while iter!.orbit_index <= Size(bsgs.orbits[i]) do
@@ -474,18 +503,19 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
         return ();
       fi;
 
-      iter!.u_beta := SchreierVectorPermFromBasePoint(bsgs.stabgens[i],
-                                                      bsgs.orbits[i],
-                                                      iter!.orbit_index);
+      iter!.u_beta := bsgs.options.PermFromBasePoint(bsgs.stabgens[i],
+                                                     bsgs.orbits[i],
+                                                     iter!.orbit_index);
       iter!.gen_iter := Iterator(bsgs.stabgens[i]);
     fi;
 
-    x := NextIterator(iter!.gen_iter);
-    u_beta_x := SchreierVectorPermFromBasePoint(bsgs.stabgens[i],
-                                                bsgs.orbits[i],
-                                                iter!.orbit_index ^ iter!.u_beta);
+    x := bsgs.options.LiftPerm(NextIterator(iter!.gen_iter));
+    image := bsgs.options.ImagePerm(iter!.orbit_index, iter!.u_beta);
+    u_beta_x := bsgs.options.PermFromBasePoint(bsgs.stabgens[i],
+                                               bsgs.orbits[i],
+                                               image);
 
-    gen := iter!.u_beta * x * u_beta_x^(-1);
+    gen := bsgs.options.MulPerm(iter!.u_beta, x, bsgs.options.InvPerm(u_beta_x));
     Info(NewssInfo, 3, "Yielding Schreier gen. ", gen, " for stab ", i, " = <", bsgs.stabgens[i], ">");
     return gen;
   end;
@@ -515,7 +545,6 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
 end);
 
 
-# StabilizerChainStrip(bsgs, g)
 InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
   local h, i, beta, u;
   h := g;
@@ -534,3 +563,28 @@ InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
   return rec(residue := h, level := i + 1);
 end);
 
+
+InstallGlobalFunction(StabilizerChainStripWord, function (bsgs, g)
+  local h, i, beta, u;
+  h := g;
+  i := 0;
+
+  if not IsList(h) then
+    h := [h];
+  fi;
+
+#  Print("\nSCSW(", h, ")\n");
+
+  for i in [1 .. Size(bsgs.base)] do
+    beta := PermWordPreImage(h, bsgs.base[i]);
+    if not IsBound(bsgs.orbits[i][beta]) then
+      return rec(residue := h, level := i);
+    fi;
+    
+    u := SchreierVectorWordFromBasePoint(bsgs.stabgens[i], bsgs.orbits[i], beta);
+    h := Concatenation(u, ShallowCopy(h));
+#    Print("SCSW end iter ", i, ", beta = ", beta, ", u = ", u, ", h = ", h, "\n");
+  od;
+
+  return rec(residue := h, level := i + 1);
+end);

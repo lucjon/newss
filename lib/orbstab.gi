@@ -89,6 +89,24 @@ InstallGlobalFunction(SchreierVectorPermFromBasePoint, function (X, sv, beta)
   return u;
 end);
 
+InstallGlobalFunction(SchreierVectorWordFromBasePoint, function (X, sv, beta)
+  local u, k;
+
+  if not IsBound(sv[beta]) then
+    return false;
+  fi;
+
+  u := [];
+  k := sv[beta];
+  while k <> -1 do
+    Add(u, X[k], 1);
+    beta := beta / X[k];
+    k := sv[beta];
+  od;
+
+  return u;
+end);
+
 InstallGlobalFunction(NOrbit, function (X, alpha)
   return NOrbitStabilizer(X, alpha, OnPoints, false).orbit;
 end);
