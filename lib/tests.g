@@ -187,6 +187,26 @@ DoTests := function (tests, constructor)
   PrintCSV(RESULTS_FILENAME, results);
 end;
 
+LoadAtlasGroups := function ()
+  local handle, str, G;
+  handle := InputTextFile("atlasnames.txt");
+
+  while true do
+    str := Chomp(ReadLine(handle));
+    if str <> fail and str <> "" then
+      Print("Loading ", str, "\n");
+      G := AtlasGroup(str);
+      if IsPermGroup(G) then
+        Add(GROUPS, [str, AtlasGroup(str)]);
+      else
+        Print("(skipping)\n");
+      fi;
+    else
+      break;
+    fi;
+  od;
+  CloseStream(handle);
+end;
 
 GAPShowdown := function (filename)
   local results, t, our_stabchain, our_time, gap_stabchain, gap_time, size, which, group, G;
