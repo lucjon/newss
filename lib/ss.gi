@@ -137,11 +137,13 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
   # If they have given us a strategy, use it, filling in any missing fields
   # from the heuristically-determined one.
   if Size(arg) > 1 then
+    arg[2] := ShallowCopy(arg[2]);
     NEWSS_UpdateRecord(arg[2], B.options);
     B.options := arg[2];
   fi;
 
   NEWSS_UpdateRecord(B.options, B.options.perm_representation);
+  Info(NewssInfo, 2, "Selected ", NameFunction(B.options.SchreierSims), " for stabilizer chain computation");
   B.options.SchreierSims(B);
 
   if not B.options.Verify(B) and B.options.fall_back_to_deterministic then
