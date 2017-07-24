@@ -159,6 +159,7 @@ DeclareGlobalFunction("EnsureBSGSChainComputed");
 DeclareGlobalFunction("ExtendBase");
 DeclareGlobalFunction("ExtendBaseIfStabilized");
 DeclareGlobalFunction("NEWSS_FirstMovedPoint");
+DeclareGlobalFunction("NEWSS_PickFromOrbits");
 DeclareGlobalFunction("NEWSS_VerifyByDeterministic");
 DeclareGlobalFunction("NEWSS_VerifyByOrder");
 DeclareInfoClass("NewssInfo");

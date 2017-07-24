@@ -36,22 +36,24 @@ BSGS_MIN_DEGREE_RANDOM := 10;
 NEWSS_DEFAULT_OPTIONS := rec(
   SchreierSims := RandomSchreierSims,
   Verify := NEWSS_VerifyByDeterministic,
-  ExtendBaseForLevel := NEWSS_FirstMovedPoint,
+  ExtendBaseForLevel := NEWSS_FirstMovedPoints,
 
   fall_back_to_deterministic := true,
-  sift_threshold := 8
+  sift_threshold := 8,
+  orbits_to_consider := 3
 );
 
 NEWSS_DETERMINISTIC_OPTIONS := rec(
   SchreierSims := SchreierSims,
   Verify := ReturnTrue,
-  ExtendBaseForLevel := NEWSS_FirstMovedPoint,
+  ExtendBaseForLevel := NEWSS_PickFromOrbits,
 
   # We need this here since a user could specify a random algorithm in their
   # options, even in the case where we would have picked a deterministic one,
   # but might not provide these parameters
   fall_back_to_deterministic := NEWSS_DEFAULT_OPTIONS.fall_back_to_deterministic,
-  sift_threshold := NEWSS_DEFAULT_OPTIONS.sift_threshold
+  sift_threshold := NEWSS_DEFAULT_OPTIONS.sift_threshold,
+  orbits_to_consider := NEWSS_DEFAULT_OPTIONS.orbits_to_consider
 );
 
 
@@ -350,6 +352,43 @@ InstallGlobalFunction(NEWSS_FirstMovedPoint, function (bsgs, level, culprit)
   if level > 0 then
     Add(bsgs.stabgens, []);
   fi;
+
+  return point;
+end);
+
+InstallGlobalFunction(NEWSS_PickFromOrbits, function (bsgs, level, culprit)
+  local point, orbit_level, min_level, i;
+
+  if culprit = false or not IsBound(bsgs.orbits) or Size(bsgs.orbits) < level then
+    return NEWSS_FirstMovedPoint(bsgs, level, culprit);
+  fi;
+
+  point := 0;
+  orbit_level := level;
+  min_level := Maximum(1, level - bsgs.options.orbits_to_consider - 1);
+
+  repeat
+    for i in [1 .. Size(bsgs.orbits[orbit_level])] do
+      if IsBound(bsgs.orbits[orbit_level][i]) and bsgs.orbits[orbit_level][i] <> -1 then
+        if i ^ culprit <> i then
+          point := i;
+          break;
+        fi;
+      fi;
+    od;
+
+    if point <> 0 then
+      break;
+    fi;
+    orbit_level := orbit_level - 1;
+  until orbit_level < min_level;
+
+  if point = 0 then
+    point := First(MovedPoints(culprit), pt -> not (pt in bsgs.base));
+  fi;
+
+  Add(bsgs.base, point);
+  Add(bsgs.stabgens, []);
 
   return point;
 end);
