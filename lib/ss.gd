@@ -46,73 +46,72 @@ DeclareGlobalFunction("BSGS");
 #! using the &GAP; builtin functions.
 DeclareGlobalFunction("BSGSFromGAP");
 
-#! @Arguments group
+#! @Arguments group[, options]
 #! @Returns a BSGS structure with full stabilizer chain
 #! @Description
 #! Initialises a BSGS structure from an existing group's generating set, and
 #! compute a chain for it using the Schreier-Sims algorithm (see 
-#! <Ref Func="SchreierSims"/>).
+#! <Ref Func="SchreierSims"/>). For more information on the options which can
+#! be passed in, see the section
+#! <Ref Sect="Chapter_Stabilizer_Chains_Section_Options_for_stabilizer_chain_creation"/>.
 DeclareGlobalFunction("BSGSFromGroup");
 
 
-#! @Section The Schreier-Sims algorithm
+#! @Section Options for stabilizer chain creation
+#! 
+#! Various aspects of the creation of stabilizer chains can be controlled by
+#! supplying an `options' record to <Ref Func="BSGSFromGroup"/>. There are two
+#! kinds of field in the record: some are functions, which specify which
+#! implementations of particular algorithms to use, and the rest are parameters
+#! which affect things like the probability of error in the computation.
+#! The following options of the former type can be specified:
+#!
+#! * **<C>SchreierSims</C>**. Usually either <Ref Func="SchreierSims"/> or
+#!   <Ref Func="RandomSchreierSims"/>, depending on whether the determinstic
+#!   or randomized algorithm should be used. See
+#!   <Ref Sect="Chapter_Stabilizer_Chains_Section_Implementations_of_the_Schreier-Sims_algorithm"/>.
+#! * **<C>Verify</C>**. The function used to verify the stabilizer chain once
+#!   computed. See
+#!   <Ref Sect="Chapter_Stabilizer_Chains_Section_Verification_procedures"/>.
+#! * **<C>ExtendBaseForLevel</C>**. The function used to select new base points
+#!   when a Schreier generator is found which fixes all the existing ones.
+#!
+#! The following tuning parameters can be specified:
+#!
+#! * **fall_back_to_deterministic**. If <K>true</K>, then the deterministic
+#!   algorithm will be run on the stabilizer chain if it is found to be
+#!   incomplete by the Verify procedure. Note that if this parameter is
+#!   <K>false</K>, the resulting stabilizer chain may be incorrect!
+#! * **sift_threshold**. In the randomized algorithm, the number of potential
+#!   generators which must be sifted to the identity for the chain to be
+#!   considered complete. If this parameter has the value $w$, the result of the
+#!   randomized Schreier-Sims algorithm is correct with probability $2^{-w}$.
+#!
+#! All of these fields are optional; if any are missing, they are taken from
+#! whichever of the following default options structures are chosen by
+#! <Ref Func="BSGSFromGroup"/> for the group supplied.
 
-#! @Arguments bsgs
-#! @Returns a BSGS structure with stabilizer chain
 #! @Description
-#! Attempt to extend the given BSGS structure into a genuine base and strong
-#! generating set respectively for $G$ using the Schreier–Sims algorithm.
-DeclareGlobalFunction("SchreierSims");
-
-#! @Arguments bsgs, i
-#! @Returns an iterator over the relevant Schreier generators
-#! @Description
-#! Compute the (possibly trivial) Schreier generators for the stabilizer of the
-#! $i$-th base point in the $i$-th stabilizer group in the given BSGS structure.
-DeclareGlobalFunction("SchreierGenerators");
-
-
-#! @Section The randomized Schreier-Sims algorithm
+#! The default set of options used by <Ref Func="BSGSFromGroup"/> to compute
+#! the stabilizer chain of most groups. It uses the randomized Schreier-Sims
+#! algorithm, with a sift threshold of 8, and verifies the result with a pass
+#! of the deterministic algorithm.
+DeclareGlobalVariable("NEWSS_DEFAULT_OPTIONS");
 
 #! @Description
-#! The minimum degree of permutation group to use the randomised Schreier-Sims
-#! algorithm on; i.e., if the group acts on fewer points than this, use the
-#! deterministic algorithm (<Ref Func="SchreierSims"/>), and otherwise use the
-#! randomised algorithm (<Ref Func="RandomSchreierSims"/>). The default value
-#! for this setting is 10.
-DeclareGlobalVariable("BSGS_MIN_DEGREE_RANDOM");
+#! The default set of options used by <Ref Func="BSGSFromGroup"/> to compute
+#! the stabilizer chain of small-degree groups. It uses the deterministic
+#! Schreier-Sims algorithm, but otherwise the same parameters as usual.
+DeclareGlobalVariable("NEWSS_DETERMINISTIC_OPTIONS");
 
 #! @Description
-#! The number of unchanged sifted elements to require before finishing the
-#! randomised Schreier-Sims algorithm; i.e. <Ref Func="RandomSchreierSims"/> 
-#! with this value will return an incomplete stabilizer chain with probability
-#! $2^{-w}$, where $w$ is this number <C>BSGS_RANDOM_SS_THRESHOLD</C>. The
-#! default value for this setting is 8.
-DeclareGlobalVariable("BSGS_RANDOM_SS_THRESHOLD");
+#! The maximum degree of permutation group to consider `small', i.e. the
+#! maximum degree for which <C>NEWSS_DETERMINISTIC_OPTIONS</C> will be used by
+#! default.
+DeclareGlobalVariable("NEWSS_MIN_DEGREE_RANDOM");
 
-#! @Arguments bsgs, w
-#! @Returns a record with a BSGS structure and chain
-#! @Description
-#! As in <Ref Func="SchreierSims"/>, compute a base and stong generating set
-#! for the given BSGS structure, along with a stabilizer chain, with the
-#! proviso that the chain could be incomplete, with probability $2^{-w}$.
-#! (The variable <Ref Var="BSGS_RANDOM_SS_THRESHOLD"/> controls the default
-#! value for this parameter $w$, when the function is called by
-#! <Ref Func="BSGSFromGroup"/>.) The function returns a record with
-#! the fields
-#! * **bsgs**:     The given BSGS structure, with a (possibly incomplete)
-#!                 stabilizer chain
-#! * **verified**: Sometimes, in the process of computing the chain, we are
-#!                 able to verify that the chain is correct, obviating
-#!                 the need for another run of <Ref Func="SchreierSims"/> or
-#!                 some other verification procedure. In particular, if we
-#!                 know the order of the group beforehand, this can be done.
-#!                 This field is a boolean which is <K>true</K> if we did
-#!                 indeed verify that the resulting chain is correct. A value
-#!                 of <K>false</K> does not necessarily mean that the resulting
-#!                 chain is incorrect (the probability of correctness remains
-#!                 $2^{-w}$) but that it has not been proven either way.
-DeclareGlobalFunction("RandomSchreierSims");
+
+#! @Section Manipulating stabilizer chains
 
 #! @Arguments bsgs
 #! @Returns nothing
@@ -121,9 +120,6 @@ DeclareGlobalFunction("RandomSchreierSims");
 #! chain) and basic orbits. Returns nothing; the chain is stored in the BSGS
 #! structure (see the function <Ref Func="BSGS"/>).
 DeclareGlobalFunction("ComputeChainForBSGS");
-
-
-#! @Section Manipulating stabilizer chains
 
 #! @Arguments bsgs, keep_initial_gens
 #! @Returns a BSGS structure
@@ -134,6 +130,76 @@ DeclareGlobalFunction("ComputeChainForBSGS");
 #! remove any generator in the BSGS structure's <C>initial_gens</C> set (see
 #! <Ref Func="BSGS"/>).
 DeclareGlobalFunction("RemoveRedundantGenerators");
+
+
+#! @Section Implementations of the Schreier-Sims algorithm
+
+#! @Arguments bsgs
+#! @Returns a BSGS structure with stabilizer chain
+#! @Description
+#! Attempt to extend the given BSGS structure into a genuine base and strong
+#! generating set respectively for $G$ using the deterministic Schreier–Sims
+#! algorithm.
+DeclareGlobalFunction("SchreierSims");
+
+#! @Arguments bsgs, i
+#! @Returns an iterator over the relevant Schreier generators
+#! @Description
+#! Compute the (possibly trivial) Schreier generators for the stabilizer of the
+#! $i$-th base point in the $i$-th stabilizer group in the given BSGS structure.
+DeclareGlobalFunction("SchreierGenerators");
+
+#! @Arguments bsgs
+#! @Returns a BSGS structure
+#! @Description
+#! As in <Ref Func="SchreierSims"/>, compute a base and stong generating set
+#! for the given BSGS structure, along with a stabilizer chain, with the
+#! proviso that the chain could be incomplete, with probability $2^{-w}$. Here,
+#! $w$ is the value of the <C>sift_threshold</C> option.
+DeclareGlobalFunction("RandomSchreierSims");
+
+
+#! @Description
+#! The number of unchanged sifted elements to require before finishing the
+#! randomised Schreier-Sims algorithm; i.e. <Ref Func="RandomSchreierSims"/> 
+#! with this value will return an incomplete stabilizer chain with probability
+#! $2^{-w}$, where $w$ is this number <C>BSGS_RANDOM_SS_THRESHOLD</C>. The
+#! default value for this setting is 8.
+DeclareGlobalVariable("BSGS_RANDOM_SS_THRESHOLD");
+
+
+#! @Section Verification procedures
+#!
+#! Depending on the prior knowledge we have about the group for which the
+#! stabilizer chain is being computed, more efficient procedures to verify the
+#! correctness of the stabilizer chain may be available. By default, the package
+#! makes the following choice:
+#! * If we are using the deterministic algorithm, perform no verification at
+#!   all. In this case, the <C>ReturnTrue</C> procedure is used.
+#! * If we are using the randomized algorithm and we know the order of the
+#!   group a priori, we use <Ref Func="NEWSS_VerifyByOrder"/>. You can inform
+#!   GAP, and hence the package, of a group's order by using the builtin
+#!   <Ref Func="SetSize"/> function.
+#! * Otherwise, we use <Ref Func="NEWSS_VerifyByDeterministic"/>.
+
+#! @Arguments bsgs
+#! @Returns <K>true</K> if the stabilizer chain is complete, otherwise
+#! <K>false</K>
+#! @Description
+#! Verify the stabilizer chain against the expected order of the group by
+#! calculating the order of the group using the size of the computed orbits.
+DeclareGlobalFunction("NEWSS_VerifyByOrder");
+
+#! @Arguments bsgs
+#! @Returns <K>true</K> if the stabilizer chain is complete, otherwise
+#! <K>false</K>
+#! @Description
+#! Verify the stabilizer chain by running the deterministic Schreier-Sims
+#! algorithm on the chain. When the deterministic algorithm is given a
+#! candidate base and strong generating set, it runs much more quickly than
+#! it does from scratch.
+DeclareGlobalFunction("NEWSS_VerifyByDeterministic");
+
 
 #! @Chapter Computing with Stabilizer Chains
 #! @Section Permutations
@@ -153,13 +219,8 @@ DeclareGlobalFunction("RemoveRedundantGenerators");
 #! function is called many times in tight loops.
 DeclareGlobalFunction("StabilizerChainStrip");
 
-DeclareGlobalFunction("ChooseSchreierSims");
 DeclareGlobalFunction("ComputeStabOrbForBSGS");
 DeclareGlobalFunction("EnsureBSGSChainComputed");
-DeclareGlobalFunction("ExtendBase");
-DeclareGlobalFunction("ExtendBaseIfStabilized");
 DeclareGlobalFunction("NEWSS_FirstMovedPoint");
 DeclareGlobalFunction("NEWSS_PickFromOrbits");
-DeclareGlobalFunction("NEWSS_VerifyByDeterministic");
-DeclareGlobalFunction("NEWSS_VerifyByOrder");
 DeclareInfoClass("NewssInfo");

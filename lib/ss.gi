@@ -30,20 +30,20 @@
 ### Strategy definitions and high-level functions
 ###
 
-MakeReadWriteGlobal("BSGS_MIN_DEGREE_RANDOM");
-BSGS_MIN_DEGREE_RANDOM := 10;
+MakeReadWriteGlobal("NEWSS_MIN_DEGREE_RANDOM");
+NEWSS_MIN_DEGREE_RANDOM := 10;
 
-NEWSS_DEFAULT_OPTIONS := rec(
+InstallValue(NEWSS_DEFAULT_OPTIONS, rec(
   SchreierSims := RandomSchreierSims,
   Verify := NEWSS_VerifyByDeterministic,
-  ExtendBaseForLevel := NEWSS_FirstMovedPoints,
+  ExtendBaseForLevel := NEWSS_FirstMovedPoint,
 
   fall_back_to_deterministic := true,
   sift_threshold := 8,
   orbits_to_consider := 3
-);
+));
 
-NEWSS_DETERMINISTIC_OPTIONS := rec(
+InstallValue(NEWSS_DETERMINISTIC_OPTIONS, rec(
   SchreierSims := SchreierSims,
   Verify := ReturnTrue,
   ExtendBaseForLevel := NEWSS_PickFromOrbits,
@@ -54,7 +54,7 @@ NEWSS_DETERMINISTIC_OPTIONS := rec(
   fall_back_to_deterministic := NEWSS_DEFAULT_OPTIONS.fall_back_to_deterministic,
   sift_threshold := NEWSS_DEFAULT_OPTIONS.sift_threshold,
   orbits_to_consider := NEWSS_DEFAULT_OPTIONS.orbits_to_consider
-);
+));
 
 
 InstallGlobalFunction(BSGS, function (group, base, sgs)
@@ -90,7 +90,7 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
   fi;
 
   # First choose a strategy based on heuristics.
-  if NrMovedPoints(group) <= BSGS_MIN_DEGREE_RANDOM then
+  if NrMovedPoints(group) <= NEWSS_MIN_DEGREE_RANDOM then
     base_options := ShallowCopy(NEWSS_DETERMINISTIC_OPTIONS);
   else
     base_options := ShallowCopy(NEWSS_DEFAULT_OPTIONS);
@@ -452,31 +452,6 @@ InstallGlobalFunction(ComputeStabOrbForBSGS, function (bsgs, i)
   bsgs.orbitsizes[i] := Size(orbstab.orbit);
 end);
 
-# ExtendBaseIfStabilized(bsgs)
-# Extends the base of a BSGS structure until no permutation in the SGS fixes
-# all of the base points.
-InstallGlobalFunction(ExtendBaseIfStabilized, function (bsgs)
-  local s;
-
-  for s in bsgs.sgs do
-    if s <> () and Stabilizes(s, bsgs.base) then
-      ExtendBase(bsgs, s);
-    fi;
-  od;
-end);
-
-# ExtendBase(bsgs, culprit)
-# Extends the base of a BSGS structure to include a new point, given a
-# permutation culprit which fixes all current base points.
-InstallGlobalFunction(ExtendBase, function (bsgs, culprit)
-  local x;
-  # First, find an appropriate point to add (there must be one here)
-  x := Difference(MovedPoints(culprit), bsgs.base)[1];
-  Info(NewssInfo, 3, "Extending base to include ", x);
-  # Then do the bookkeeping
-  Add(bsgs.base, x);
-  Add(bsgs.stabgens, []);
-end);
 
 InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
   # Take this out here so it has a name; it's easier to read the profiling
