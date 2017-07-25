@@ -257,4 +257,5 @@ DeclareGlobalFunction("ComputeStabOrbForBSGS");
 DeclareGlobalFunction("EnsureBSGSChainComputed");
 DeclareGlobalFunction("NEWSS_FirstMovedPoint");
 DeclareGlobalFunction("NEWSS_PickFromOrbits");
+DeclareGlobalFunction("NEWSS_SchreierVector");
 DeclareInfoClass("NewssInfo");

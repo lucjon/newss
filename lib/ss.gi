@@ -58,6 +58,7 @@ InstallValue(NEWSS_DEFAULT_OPTIONS, rec(
   SchreierSims := RandomSchreierSims,
   Verify := NEWSS_VerifyByDeterministic,
   ExtendBaseForLevel := NEWSS_FirstMovedPoint,
+  SchreierVectorForLevel := NEWSS_SchreierVector,
 
   perm_representation := NEWSS_PERMWORD_REPRESENTATION,
   fall_back_to_deterministic := true,
@@ -69,6 +70,7 @@ InstallValue(NEWSS_DETERMINISTIC_OPTIONS, rec(
   SchreierSims := SchreierSims,
   Verify := ReturnTrue,
   ExtendBaseForLevel := NEWSS_PickFromOrbits,
+  SchreierVectorForLevel := NEWSS_SchreierVector,
 
   # We need this here since a user could specify a random algorithm in their
   # options, even in the case where we would have picked a deterministic one,
@@ -146,6 +148,7 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
   Info(NewssInfo, 2, "Selected ", NameFunction(B.options.SchreierSims), " for stabilizer chain computation");
   B.options.SchreierSims(B);
 
+  Info(NewssInfo, 2, "Verifying with ", NameFunction(B.options.Verify));
   if not B.options.Verify(B) and B.options.fall_back_to_deterministic then
     # If we can't verify the chain is complete, then run the deterministic
     # algorithm to make sure we don't return an incomplete chain.
@@ -425,6 +428,31 @@ InstallGlobalFunction(NEWSS_PickFromOrbits, function (bsgs, level, culprit)
 end);
 
 
+##
+## SchreierVectorForLevel
+##
+
+InstallGlobalFunction(NEWSS_SchreierVector, function (bsgs, i)
+  local alpha, sv, to_compute, pt, gen, image, j;
+  alpha := bsgs.base[i];
+  sv := [];
+  sv[alpha] := -1;
+  to_compute := [alpha];
+
+  while Size(to_compute) > 0 do
+    pt := Remove(to_compute, 1);
+    for j in [1 .. Size(bsgs.stabgens[i])] do
+      gen := bsgs.stabgens[i][j];
+      image := pt ^ gen;
+      if not IsBound(sv[image]) then
+        Add(to_compute, image);
+        sv[image] := j;
+      fi;
+    od;
+  od;
+  
+  return sv;
+end);
 ###
 ### Helper functions
 ###
