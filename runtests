@@ -1,12 +1,20 @@
 #!/bin/bash
 testdir=../tests
 profile=no
-if [ "$1" == "--profile" ]; then
-	profile=yes
+verbose=no
+
+while [[ "$1" == --* ]]; do
+	if [ "$1" == "--profile" ]; then
+		profile=yes
+	elif [ "$1" == "--verbose" ]; then
+		verbose=yes
+	fi
 	shift
-fi
+done;
+
 count=${1:-100}
-if [ -z "$2" ]; then
+suite=${3:-DefaultTests}
+if [ -z "$2" ] || [ "$2" == "default" ]; then
 	filename=tests-$(git rev-parse --short HEAD)-$(date "+%s").csv
 else
 	filename="$2"
@@ -14,16 +22,18 @@ fi
 
 gap <<EOF
 LoadPackage("newss");;
-ReadPackage("newss", "lib/tests.g");;
-RESULTS_FILENAME := "$testdir/$filename";;
-${3:-PickSomeGroups}($count);
+ReadPackage("newss", "lib/newtests.g");;
 $(if [ "$profile" == "yes" ]; then cat <<EOP
 Print("Profiling...");
 NUM_RANDOM_TEST_ELTS := 2^14;
 ProfileLineByLine("$testdir/prof-$filename.gz");
 EOP
 fi) 
-DoAllTests();
+$(if [ "$verbose" == "yes" ]; then echo "SetInfoLevel(NewssInfo, 2);"; fi)
+PerformTests($suite, rec (
+	filename := "$testdir/$filename",
+	number_of_groups := $count
+));;
 $(if [ "$profile" == "yes" ]; then cat <<EOP
 UnprofileLineByLine();
 LoadPackage("profiling");
