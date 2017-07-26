@@ -57,7 +57,7 @@ GroupSourceFromLibrary := function (library, library_count, max_degree)
   end;
 end;
 
-DEFAULT_ATLAS_LIST := "atlasnames.txt";
+DEFAULT_ATLAS_LIST := "test/atlasnames.txt";
 
 # LoadATLASGroupSource([list_filename])
 # Return a group source picking random ATLAS groups from the list of ATLAS
@@ -71,7 +71,7 @@ LoadATLASGroupSource := function (arg)
     filename := arg[1];
   fi;
 
-  handle := InputTextFile("atlasnames.txt");
+  handle := InputTextFile(filename);
   group_names := [];
 
   str := Chomp(ReadLine(handle));
