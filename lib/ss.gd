@@ -258,4 +258,5 @@ DeclareGlobalFunction("EnsureBSGSChainComputed");
 DeclareGlobalFunction("NEWSS_FirstMovedPoint");
 DeclareGlobalFunction("NEWSS_PickFromOrbits");
 DeclareGlobalFunction("NEWSS_SchreierVector");
+DeclareGlobalFunction("NEWSS_UpdateRecord");
 DeclareInfoClass("NewssInfo");

@@ -94,6 +94,7 @@ InstallGlobalFunction(BSGSFromGAP, function (group)
 end);
 
 NEWSS_UpdateRecord := function (base, new)
+InstallGlobalFunction(NEWSS_UpdateRecord, function (base, new)
   local name;
   for name in RecNames(new) do
     if not IsBound(base.(name)) then
@@ -101,6 +102,7 @@ NEWSS_UpdateRecord := function (base, new)
     fi;
   od;
 end;
+end);
 
 InstallGlobalFunction(BSGSFromGroup, function (arg)
   local group, B;
