@@ -19,6 +19,6 @@ compile_io () {
 }
 
 
-#install_gap
+install_gap
 compile_io
 ln -s $PWD gap/pkg/newss
