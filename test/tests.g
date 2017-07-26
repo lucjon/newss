@@ -72,6 +72,9 @@ LoadATLASGroupSource := function (arg)
   fi;
 
   handle := InputTextFile(filename);
+  if handle = fail then
+    return fail;
+  fi;
   group_names := [];
 
   str := Chomp(ReadLine(handle));
@@ -167,30 +170,42 @@ end;
 # Returns a group source which returns a group from a random one of
 # <C>source1</C>, ..., <C>sourcen</C>.
 UnionGroupSource := function (arg)
+  local sources;
+  sources := Filtered(arg, s -> s <> fail);
+
+  if Size(sources) = 0 then
+    return fail;
+  fi;
+
   return function (degree)
     local G, i;
 
     G := fail;
     i := 1;
     while G = fail and i < GROUP_SOURCE_MAX_ATTEMPTS do
-      G := PseudoRandom(arg)(degree);
+      G := PseudoRandom(sources)(degree);
       i := i + 1;
     od;
     return G;
   end;
 end;
 
-# LimitSizeOfGroupSource(source, max_size)
+# LimitSizeOfGroupSource(source, max_size_or_range)
 # Returns a group source which returns a group from the given source as long as
-# its size is less than max_size.
-LimitSizeOfGroupSource := function (source, max_size)
+# its size is less than max_size, or if a range is given, as long as its size
+# is within the given range.
+LimitSizeOfGroupSource := function (source, range)
   return function (degree)
     local G, i;
+
+    if not IsRange(range) then
+      range := [1 .. range];
+    fi;
 
     G := fail;
     i := 1;
     while i < GROUP_SOURCE_MAX_ATTEMPTS and (G = fail or not HasSize(G)
-          or Size(G) > max_size) do
+          or not Size(G) in range) do
       G := source(degree);
       i := i + 1;
     od;
@@ -237,7 +252,7 @@ DefaultGroupSource := LimitSizeOfGroupSource(
       DirectProductSource(PickBasicGroup)
     ),
   20),
-10^12);
+[10^4 .. 10^12]);
 
 PickGroup := function ()
   return PickOneGroup(DefaultGroupSource, false);

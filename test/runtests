@@ -33,7 +33,8 @@ fi)
 $(if [ "$verbose" == "yes" ]; then echo "SetInfoLevel(NewssInfo, 2);"; fi)
 results := PerformTests($suite, rec (
 	filename := "$testdir/$filename",
-	number_of_groups := $count
+	number_of_groups := $count,
+	bsgs_options := rec($bsgs_options)
 ));;
 $(if [ "$profile" == "yes" ]; then cat <<EOP
 UnprofileLineByLine();
@@ -44,7 +45,7 @@ fi)
 QUIT_GAP(ForAll(results, t -> t.success));
 EOF
 
-${GAP:-gap} --quitonbreak -q "$script"
+${GAP:-gap} --quitonbreak -q -o 4G "$script"
 result=$?
 rm $script
 exit $result
