@@ -499,6 +499,11 @@ InstallGlobalFunction(ComputeStabOrbForBSGS, function (bsgs, i)
   local base_subset, gens, orbstab, j;
   Info(NewssInfo, 3, "Computing staborb for ", bsgs, " index ", i);
 
+  # Compute the orbit.
+  orbstab := bsgs.options.SchreierVectorForLevel(bsgs, i);
+  bsgs.orbits[i] := orbstab;
+  bsgs.orbitsizes[i] := Number(orbstab);
+
   # We special case the first entry.
   if i = 1 then
     bsgs.stabgens[i] := bsgs.sgs;
