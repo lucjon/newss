@@ -1,5 +1,7 @@
 # vim: ft=gap sts=2 et sw=2
 
+LoadPackage("io");
+
 ###
 ### Group selection
 ###
@@ -285,8 +287,7 @@ DEFAULT_TEST_OPTIONS := rec(
   ],
   compute_gap_stabchains := true,
   filename := false,
-  # These are false, or filenames.
-  load_group_list := false,
+  load_groups_list := false,
   Print := Print,
   bsgs_options := rec()
 );

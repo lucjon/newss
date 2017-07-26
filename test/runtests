@@ -13,9 +13,9 @@ while [[ "$1" == --* ]]; do
 done;
 
 if [ -f "$1" ]; then
-	list="$1"
+	group_option="load_groups_list := \"$1\""
 else
-	count=${1:-100}
+	group_option="number_of_groups := $1"
 fi
 suite=${3:-DefaultTests}
 if [ -z "$2" ] || [ "$2" == "default" ]; then
@@ -37,8 +37,7 @@ fi)
 $(if [ "$verbose" == "yes" ]; then echo "SetInfoLevel(NewssInfo, 2);"; fi)
 results := PerformTests($suite, rec (
 	filename := "$testdir/$filename",
-	$(if [ ! -z "$count" ]; then echo "number_of_groups := $count,"; fi)
-	$(if [ -f $list ]; then echo "load_groups_list := \"$list\","; fi)
+	$group_option,
 	bsgs_options := rec($bsgs_options)
 ));;
 $(if [ "$profile" == "yes" ]; then cat <<EOP
