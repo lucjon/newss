@@ -238,6 +238,9 @@ ConjugatingGroupSource := function (source, p)
   end;
 end;
 
+# XXX Workaround for a bug I don't entirely understand; works without it in GAP
+# master, but not in HPC-GAP master or released GAP 4.8
+TRANSPARTNUM[1] := 1;
 
 PickBasicGroup := UnionGroupSource(
   GroupSourceFromLibrary(PrimitiveGroup, NrPrimitiveGroups, 768),
