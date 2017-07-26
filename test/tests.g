@@ -112,6 +112,7 @@ end;
 # PickManyGroups(source, degree, n)
 # Pick n groups from a group source, without any fails.
 GROUP_SOURCE_MAX_ATTEMPTS := 100;
+DeclareInfoClass("NewssGroupSelInfo");
 PickManyGroups := function (source, degree, n)
   local groups, G, i;
 
@@ -125,9 +126,14 @@ PickManyGroups := function (source, degree, n)
       i := i + 1;
     od;
     Add(groups, G);
+
+    if i mod 25 = 0 and i > 0 then
+      Info(NewssGroupSelInfo, 2, "Picked ", i, " groups so far");
+    fi;
   od;
 
   if Size(groups) <> n then
+    Info(NewssGroupSelInfo, 1, "Failed to pick the requested number of groups");
     return fail;
   else
     return groups;
@@ -279,9 +285,54 @@ DEFAULT_TEST_OPTIONS := rec(
   ],
   compute_gap_stabchains := true,
   filename := false,
+  # These are false, or filenames.
+  load_group_list := false,
   Print := Print,
   bsgs_options := rec()
 );
+
+# SaveGroupsList(groups, filename)
+# Saves the given list of groups and names to a file.
+SaveGroupsList := function (groups, filename)
+  local result, handle;
+  result := List(groups, G -> [PickName(G), Size(G), GeneratorsOfGroup(G)]);
+  handle := IO_File(filename, "w");
+  
+  if handle <> fail then
+    IO_Pickle(handle, result);
+    IO_Close(handle);
+    return true;
+  else
+    return fail;
+  fi;
+end;
+
+# LoadGroupsList(filename)
+# Loads a list of groups from the file with the given name.
+LoadGroupsList := function (filename)
+  local handle, input, groups, G, description;
+  handle := IO_File(filename, "r");
+
+  if handle <> fail then
+    input := IO_Unpickle(handle);
+    if input = fail then
+      Error("Error unpickling groups list from file");
+    fi;
+    IO_Close(handle);
+
+    groups := [];
+    for description in input do
+      G := Group(description[3]);
+      SetName(G, description[1]);
+      SetSize(G, description[2]);
+      Add(groups, G);
+    od;
+    return groups;
+  else
+    Error("Could not open groups list file for reading");
+    return fail;
+  fi;
+end;
 
 # PerformTests(tests, opt)
 # Runs the given list of tests. <C>opt</C> is a record with the following fields:
@@ -303,9 +354,15 @@ PerformTests := function(tests, user_opt)
   NEWSS_UpdateRecord(opt, DEFAULT_TEST_OPTIONS);
 
   # First pick the groups and compute their stabiliser chains.
-  groups := ShallowCopy(opt.fixed_groups);
-  opt.Print("*** Picking ", opt.number_of_groups - Size(groups), " random groups\n");
-  Append(groups, PickManyGroups(DefaultGroupSource, false, opt.number_of_groups - Size(groups)));
+  if opt.load_groups_list = false then
+    groups := ShallowCopy(opt.fixed_groups);
+    opt.Print("*** Picking ", opt.number_of_groups - Size(groups), " random groups\n");
+    Append(groups, PickManyGroups(DefaultGroupSource, false, opt.number_of_groups - Size(groups)));
+  else
+    opt.Print("*** Loading groups from file\n");
+    groups := LoadGroupsList(opt.load_groups_list);
+  fi;
+
   stab_chains := [];
 
   opt.Print("*** Computing stabilizer chains...\n");

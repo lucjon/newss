@@ -12,7 +12,11 @@ while [[ "$1" == --* ]]; do
 	shift
 done;
 
-count=${1:-100}
+if [ -f "$1" ]; then
+	list="$1"
+else
+	count=${1:-100}
+fi
 suite=${3:-DefaultTests}
 if [ -z "$2" ] || [ "$2" == "default" ]; then
 	filename=tests-$(git rev-parse --short HEAD)-$(date "+%s").csv
@@ -33,7 +37,8 @@ fi)
 $(if [ "$verbose" == "yes" ]; then echo "SetInfoLevel(NewssInfo, 2);"; fi)
 results := PerformTests($suite, rec (
 	filename := "$testdir/$filename",
-	number_of_groups := $count,
+	$(if [ ! -z "$count" ]; then echo "number_of_groups := $count,"; fi)
+	$(if [ -f $list ]; then echo "load_groups_list := \"$list\","; fi)
 	bsgs_options := rec($bsgs_options)
 ));;
 $(if [ "$profile" == "yes" ]; then cat <<EOP

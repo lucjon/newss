@@ -1,0 +1,19 @@
+#!/bin/bash
+# pickgroups COUNT FILENAME
+# Pick some random groups.
+count=${1:-100}
+filename=$2
+
+script="$(mktemp newss.XXXXXXX.g)"
+cat > "$script" <<EOF
+LoadPackage("newss");;
+ReadPackage("newss", "test/tests.g");;
+SetInfoLevel(NewssGroupSelInfo, 2);
+SaveGroupsList(PickManyGroups(DefaultGroupSource, false, $count), "$filename");
+QUIT_GAP(true);
+EOF
+
+${GAP:-gap} --quitonbreak -q -o 4G "$script"
+result=$?
+rm $script
+exit $result
