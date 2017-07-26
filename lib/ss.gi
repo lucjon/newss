@@ -457,22 +457,24 @@ InstallGlobalFunction(NEWSS_SchreierVector, function (bsgs, i)
 end);
 
 
-InstallGlobalFunction(NEWSS_SVFromOrb, function (bsgs, i)
-  local O, orb_sv, sv, j;
-  O := Orb(bsgs.stabgens[i], bsgs.base[i], OnPoints, rec( schreier := true ));
-  orb_sv := Enumerate(O)!.schreiergen;
+if IsBound(ORB) then
+  InstallGlobalFunction(NEWSS_SVFromOrb, function (bsgs, i)
+    local O, orb_sv, sv, j;
+    O := Orb(bsgs.stabgens[i], bsgs.base[i], OnPoints, rec( schreier := true ));
+    orb_sv := Enumerate(O)!.schreiergen;
 
-  sv := [];
-  for j in [1 .. Size(O!.tab)] do
-    if O!.tab[j] <> 0 then
-      sv[j] := orb_sv[O!.tab[j]];
-    fi;
-  od;
+    sv := [];
+    for j in [1 .. Size(O!.tab)] do
+      if O!.tab[j] <> 0 then
+        sv[j] := orb_sv[O!.tab[j]];
+      fi;
+    od;
 
-  # orb uses fail instead of -1 for this sentinel
-  sv[bsgs.base[i]] := -1;
-  return sv;
-end);
+    # orb uses fail instead of -1 for this sentinel
+    sv[bsgs.base[i]] := -1;
+    return sv;
+  end);
+fi;
 
 ###
 ### Helper functions
