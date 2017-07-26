@@ -41,7 +41,7 @@ LoadPackage("profiling");
 OutputAnnotatedCodeCoverageFiles("$testdir/prof-$filename.gz", "$testdir/prof-$filename");
 EOP
 fi)
-GAP_EXIT_CODE(ForAll(results, t -> t.success));
+QUIT_GAP(ForAll(results, t -> t.success));
 EOF
 
 ${GAP:-gap} --quitonbreak -q "$script"
