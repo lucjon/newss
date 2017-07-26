@@ -10,4 +10,4 @@ env:
         - testdir=.
 
 install: ./test/travis-setup
-script: ./test/runtests 25
+script: ./test/runtests 50
