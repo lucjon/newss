@@ -5,8 +5,9 @@ compiler:
     - gcc
 
 env:
-    - GAP="./gap/gap -l ./gap"
-    - testdir=.
+    global:
+        - GAP="./gap/gap -l ./gap"
+        - testdir=.
 
 install: ./test/travis-setup
 script: ./test/runtests 25
