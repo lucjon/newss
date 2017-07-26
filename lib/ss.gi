@@ -20,6 +20,9 @@
 #          level (or 0 if we are starting from an empty base). If known, the
 #          argument culprit is a permutation which fixes all the existing base
 #          points; otherwise it has the value false.
+#        SchreierVectorForLevel(bsgs, level)
+#          Finds a Schreier vector for the basic orbit of the level-th base
+#          point in the level-th stabilizer group.
 #
 #   *  Helper functions common to many implementations
 #
@@ -452,6 +455,25 @@ InstallGlobalFunction(NEWSS_SchreierVector, function (bsgs, i)
   
   return sv;
 end);
+
+
+InstallGlobalFunction(NEWSS_SVFromOrb, function (bsgs, i)
+  local O, orb_sv, sv, j;
+  O := Orb(bsgs.stabgens[i], bsgs.base[i], OnPoints, rec( schreier := true ));
+  orb_sv := Enumerate(O)!.schreiergen;
+
+  sv := [];
+  for j in [1 .. Size(O!.tab)] do
+    if O!.tab[j] <> 0 then
+      sv[j] := orb_sv[O!.tab[j]];
+    fi;
+  od;
+
+  # orb uses fail instead of -1 for this sentinel
+  sv[bsgs.base[i]] := -1;
+  return sv;
+end);
+
 ###
 ### Helper functions
 ###

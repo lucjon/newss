@@ -20,6 +20,6 @@ SetPackageInfo( rec(
 		LongTitle := ~.Subtitle),
 	Dependencies := rec(
 		GAP := "4.5",
-		NeededOtherPackages := [ ["GAPDoc", "1.3"] ],
-		SuggestedOtherPackages := [] ),
+		NeededOtherPackages := [ ["GAPDoc", ">=1.3"] ],
+		SuggestedOtherPackages := [ ["orb", ">=4.7.6"] ] ),
 	AvailabilityTest := ReturnTrue));

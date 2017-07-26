@@ -75,6 +75,9 @@ DeclareGlobalFunction("BSGSFromGroup");
 #!   <Ref Sect="Chapter_Stabilizer_Chains_Section_Verification_procedures"/>.
 #! * **<C>ExtendBaseForLevel</C>**. The function used to select new base points
 #!   when a Schreier generator is found which fixes all the existing ones.
+#! * **<C>SchreierVectorForLevel</C>**. The function used to compute Schreier
+#!   vectors for basic orbits. See
+#!   <Ref Sect="Chapter_Stabilizer_Chains_Section_Orbit_computation_procedures"/>.
 #!
 #! The following tuning parameters can be specified:
 #!
@@ -226,6 +229,25 @@ DeclareGlobalFunction("NEWSS_VerifyByOrder");
 #! it does from scratch.
 DeclareGlobalFunction("NEWSS_VerifyByDeterministic");
 
+#! @Section Orbit computation procedures
+#! The default orbit algorithm is our own naive implementation
+#! <Ref Func="NEWSS_SchreierVector"/>. If the <C>orb</C> package is available
+#! when <C>newss</C> is loaded, then <Ref Func="NEWSS_SVFromOrb"/> can also be
+#! selected. 
+
+#! @Arguments bsgs, level
+#! @Returns a Schreier vector for the <C>level</C>th basic orbit
+#! @Description
+#! Compute a Schreier vector the <C>level</C>th basic orbit by simple
+#! enumeration.
+DeclareGlobalFunction("NEWSS_SchreierVector");
+
+#! @Arguments bsgs, level
+#! @Returns a Schreier vector for the <C>level</C>th basic orbit
+#! @Description
+#! Compute a Schreier vector for the <C>level</C>th basic orbit using the orbit
+#! enumeration functions in the <C>orb</C> package.
+DeclareGlobalFunction("NEWSS_SVFromOrb");
 
 #! @Chapter Computing with Stabilizer Chains
 #! @Section Permutations
@@ -257,6 +279,5 @@ DeclareGlobalFunction("ComputeStabOrbForBSGS");
 DeclareGlobalFunction("EnsureBSGSChainComputed");
 DeclareGlobalFunction("NEWSS_FirstMovedPoint");
 DeclareGlobalFunction("NEWSS_PickFromOrbits");
-DeclareGlobalFunction("NEWSS_SchreierVector");
 DeclareGlobalFunction("NEWSS_UpdateRecord");
 DeclareInfoClass("NewssInfo");
