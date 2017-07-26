@@ -52,8 +52,7 @@ InstallValue(NEWSS_PERM_REPRESENTATION, rec(
   LiftPerm := IdFunc,
   ImagePerm := OnPoints
 ));
-  
-
+ 
 InstallValue(NEWSS_DEFAULT_OPTIONS, rec(
   SchreierSims := RandomSchreierSims,
   Verify := NEWSS_VerifyByDeterministic,
@@ -509,11 +508,6 @@ InstallGlobalFunction(ComputeStabOrbForBSGS, function (bsgs, i)
   else
     bsgs.stabilizers[i] := Group(bsgs.stabgens[i]);
   fi;
-
-  # Then compute the orbit.
-  orbstab := NOrbitStabilizer(bsgs.stabgens[i], bsgs.base[i], OnPoints, true);
-  bsgs.orbits[i] := orbstab.sv;
-  bsgs.orbitsizes[i] := Size(orbstab.orbit);
 end);
 
 
