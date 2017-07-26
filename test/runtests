@@ -44,7 +44,7 @@ fi)
 GAP_EXIT_CODE(ForAll(results, t -> t.success));
 EOF
 
-${GAP:-gap} "$script"
+${GAP:-gap} --quitonbreak -q "$script"
 result=$?
 rm $script
 exit $result
