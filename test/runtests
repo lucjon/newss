@@ -44,7 +44,7 @@ fi)
 GAP_EXIT_CODE(ForAll(results, t -> t.success));
 EOF
 
-gap "$script"
+${GAP:-gap} "$script"
 result=$?
 rm $script
 exit $result
