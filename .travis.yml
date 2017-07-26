@@ -1,0 +1,12 @@
+sudo: false
+dist: trusty
+language: c
+compiler:
+    - gcc
+
+env:
+    - GAP="./gap/gap -l ./gap"
+    - testdir=.
+
+install: ./test/travis-setup
+script: ./test/runtests 25

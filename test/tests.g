@@ -354,6 +354,12 @@ NUM_RANDOM_TEST_ELTS := 2^15;
 
 NoTests := rec();
 
+FailTests := rec(
+  Fail := function (G)
+    return false;
+  end
+);
+
 DefaultTests := rec(
   Containment := function(H_sc)
     local G, H, actually_in_H, think_in_H, x, Sn;
