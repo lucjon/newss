@@ -1,5 +1,5 @@
 #!/bin/bash
-testdir=../tests
+testdir=${testdir:-../tests}
 profile=no
 verbose=no
 
@@ -20,9 +20,10 @@ else
 	filename="$2"
 fi
 
-gap <<EOF
+script="$(mktemp newss.XXXXXXX.g)"
+cat > "$script" <<EOF
 LoadPackage("newss");;
-ReadPackage("newss", "lib/tests.g");;
+ReadPackage("newss", "test/tests.g");;
 $(if [ "$profile" == "yes" ]; then cat <<EOP
 Print("Profiling...");
 NUM_RANDOM_TEST_ELTS := 2^14;
@@ -30,7 +31,7 @@ ProfileLineByLine("$testdir/prof-$filename.gz");
 EOP
 fi) 
 $(if [ "$verbose" == "yes" ]; then echo "SetInfoLevel(NewssInfo, 2);"; fi)
-PerformTests($suite, rec (
+results := PerformTests($suite, rec (
 	filename := "$testdir/$filename",
 	number_of_groups := $count
 ));;
@@ -40,5 +41,10 @@ LoadPackage("profiling");
 OutputAnnotatedCodeCoverageFiles("$testdir/prof-$filename.gz", "$testdir/prof-$filename");
 EOP
 fi)
+QUIT_GAP(ForAll(results, t -> t.success));
 EOF
 
+${GAP:-gap} --quitonbreak -q "$script"
+result=$?
+rm $script
+exit $result

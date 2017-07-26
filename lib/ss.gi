@@ -93,7 +93,6 @@ InstallGlobalFunction(BSGSFromGAP, function (group)
   return BSGS(group, BaseStabChain(sc), StrongGeneratorsStabChain(sc));
 end);
 
-NEWSS_UpdateRecord := function (base, new)
 InstallGlobalFunction(NEWSS_UpdateRecord, function (base, new)
   local name;
   for name in RecNames(new) do
@@ -101,7 +100,6 @@ InstallGlobalFunction(NEWSS_UpdateRecord, function (base, new)
       base.(name) := new.(name);
     fi;
   od;
-end;
 end);
 
 InstallGlobalFunction(BSGSFromGroup, function (arg)

@@ -1,0 +1,24 @@
+#!/bin/bash
+set -e
+
+install_gap () {
+	git clone --depth=1 https://github.com/gap-system/gap
+	pushd gap
+	./autogen.sh
+	./configure
+	make -j4
+	make bootstrap-pkg-full
+	popd
+}
+
+compile_io () {
+	pushd gap/pkg/io*
+	./configure
+	make -j4
+	popd
+}
+
+
+install_gap
+compile_io
+ln -s $PWD gap/pkg/newss
