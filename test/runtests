@@ -20,7 +20,8 @@ else
 	filename="$2"
 fi
 
-exec ${GAP:-gap} <<EOF
+script="$(mktemp newss.XXXXXXX.g)"
+cat > "$script" <<EOF
 LoadPackage("newss");;
 ReadPackage("newss", "test/tests.g");;
 $(if [ "$profile" == "yes" ]; then cat <<EOP
@@ -42,3 +43,8 @@ EOP
 fi)
 GAP_EXIT_CODE(ForAll(results, t -> t.success));
 EOF
+
+gap "$script"
+result=$?
+rm $script
+exit $result

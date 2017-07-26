@@ -101,7 +101,6 @@ InstallGlobalFunction(NEWSS_UpdateRecord, function (base, new)
       base.(name) := new.(name);
     fi;
   od;
-end;
 end);
 
 InstallGlobalFunction(BSGSFromGroup, function (arg)
