@@ -275,8 +275,10 @@ DeclareGlobalFunction("StabilizerChainStrip");
 #! <Ref Sect="Chapter_Miscellany_Section_Permutation_words"/>.
 DeclareGlobalFunction("StabilizerChainStripWord");
 
-DeclareGlobalFunction("ComputeStabOrbForBSGS");
+DeclareGlobalFunction("ComputeStabForBSGS");
 DeclareGlobalFunction("EnsureBSGSChainComputed");
+DeclareGlobalFunction("NEWSS_ExtendSVByRecomputing");
+DeclareGlobalFunction("NEWSS_ExtendSchreierVector");
 DeclareGlobalFunction("NEWSS_FirstMovedPoint");
 DeclareGlobalFunction("NEWSS_PickFromOrbits");
 DeclareGlobalFunction("NEWSS_UpdateRecord");

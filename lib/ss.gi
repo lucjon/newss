@@ -23,6 +23,9 @@
 #        SchreierVectorForLevel(bsgs, level)
 #          Finds a Schreier vector for the basic orbit of the level-th base
 #          point in the level-th stabilizer group.
+#        ExtendSchreierVector(bsgs, level, gen)
+#          Extend the level-th basic orbit after adding a Schreier generator
+#          gen.
 #
 #   *  Helper functions common to many implementations
 #
@@ -61,6 +64,8 @@ InstallValue(NEWSS_DEFAULT_OPTIONS, rec(
   Verify := NEWSS_VerifyByDeterministic,
   ExtendBaseForLevel := NEWSS_FirstMovedPoint,
   SchreierVectorForLevel := NEWSS_SchreierVector,
+  ExtendSchreierVector := NEWSS_ExtendSchreierVector,
+#  ExtendSchreierVector := NEWSS_ExtendSVByRecomputing,
 
   perm_representation := NEWSS_PERMWORD_REPRESENTATION,
   fall_back_to_deterministic := true,
@@ -73,6 +78,8 @@ InstallValue(NEWSS_DETERMINISTIC_OPTIONS, rec(
   Verify := ReturnTrue,
   ExtendBaseForLevel := NEWSS_PickFromOrbits,
   SchreierVectorForLevel := NEWSS_SchreierVector,
+  ExtendSchreierVector := NEWSS_ExtendSchreierVector,
+#  ExtendSchreierVector := NEWSS_ExtendSVByRecomputing,
 
   # We need this here since a user could specify a random algorithm in their
   # options, even in the case where we would have picked a deterministic one,
@@ -258,7 +265,6 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
       perm := bsgs.options.AsPerm(stripped.residue);
       if perm <> () then
         Info(NewssInfo, 3, "Adjoining generator ", g);
-
         Add(bsgs.sgs, perm);
 
         # Additionally, if the strip procedure made it to the last iteration,
@@ -270,7 +276,8 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
 
         for l in [i + 1 .. stripped.level] do
           Add(bsgs.stabgens[l], perm);
-          ComputeStabOrbForBSGS(bsgs, l);
+          bsgs.options.ExtendSchreierVector(bsgs, l, perm);
+          ComputeStabForBSGS(bsgs, l);
           # We might be able to avoid this as well.
           iterators[l] := SchreierGenerators(bsgs, l);
         od;
@@ -322,8 +329,8 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs)
       fi;
 
       for l in [2 .. stripped.level] do
-        Add(bsgs.stabgens[l], stripped.residue);
-        ComputeStabOrbForBSGS(bsgs, l);
+        bsgs.options.ExtendSchreierVector(bsgs, l, stripped.residue);
+        ComputeStabForBSGS(bsgs, l);
       od;
       no_sifted_this_round := 0;
     else
@@ -435,11 +442,12 @@ end);
 ##
 
 InstallGlobalFunction(NEWSS_SchreierVector, function (bsgs, i)
-  local alpha, sv, to_compute, pt, gen, image, j;
+  local alpha, sv, to_compute, pt, gen, image, j, size;
   alpha := bsgs.base[i];
   sv := [];
   sv[alpha] := -1;
   to_compute := [alpha];
+  size := 1;
 
   while Size(to_compute) > 0 do
     pt := Remove(to_compute, 1);
@@ -449,32 +457,88 @@ InstallGlobalFunction(NEWSS_SchreierVector, function (bsgs, i)
       if not IsBound(sv[image]) then
         Add(to_compute, image);
         sv[image] := j;
+        size := size + 1;
       fi;
     od;
   od;
   
+  bsgs.orbits[i] := sv;
+  bsgs.orbitsizes[i] := size;
   return sv;
 end);
 
 
 if IsBound(ORB) then
   InstallGlobalFunction(NEWSS_SVFromOrb, function (bsgs, i)
-    local O, orb_sv, sv, j;
+    local O, orb_sv, sv, j, size;
     O := Orb(bsgs.stabgens[i], bsgs.base[i], OnPoints, rec( schreier := true ));
     orb_sv := Enumerate(O)!.schreiergen;
+    size := 1;
 
     sv := [];
     for j in [1 .. Size(O!.tab)] do
       if O!.tab[j] <> 0 then
         sv[j] := orb_sv[O!.tab[j]];
+        size := size + 1;
       fi;
     od;
 
     # orb uses fail instead of -1 for this sentinel
     sv[bsgs.base[i]] := -1;
+    bsgs.orbits[i] := sv;
+    bsgs.orbitsizes[i] := size;
     return sv;
   end);
 fi;
+
+###
+### ExtendSchreierVector
+###
+
+InstallGlobalFunction(NEWSS_ExtendSVByRecomputing, function (bsgs, i, gen)
+  Add(bsgs.stabgens[i], gen);
+  bsgs.options.SchreierVectorForLevel(bsgs, i);
+end);
+
+InstallGlobalFunction(NEWSS_ExtendSchreierVector, function (bsgs, i, gen)
+  local sv, to_compute, size, n, pt, image, j, g;
+
+  if not IsBound(bsgs.orbits[i]) then
+    NEWSS_ExtendSVByRecomputing(bsgs, i, gen);
+  fi;
+
+  sv := bsgs.orbits[i];
+  to_compute := [];
+  size := bsgs.orbitsizes[i];
+
+  Add(bsgs.stabgens[i], gen);
+  n := Size(bsgs.stabgens[i]);
+
+  for pt in Filtered([1 .. Size(sv)], j -> IsBound(sv[j])) do
+    image := pt ^ gen;
+    if not IsBound(sv[image]) then
+      Add(to_compute, image);
+      sv[image] := n;
+      size := size + 1;
+    fi;
+  od;
+
+  while Size(to_compute) > 0 do
+    pt := Remove(to_compute, 1);
+    for j in [1 .. Size(bsgs.stabgens[i])] do
+      g := bsgs.stabgens[i][j];
+      image := pt ^ g;
+      if not IsBound(sv[image]) then
+        Add(to_compute, image);
+        sv[image] := j;
+        size := size + 1;
+      fi;
+    od;
+  od;
+
+  bsgs.orbitsizes[i] := size;
+end);
+
 
 ###
 ### Helper functions
@@ -509,21 +573,16 @@ InstallGlobalFunction(ComputeChainForBSGS, function (bsgs)
     fi;
     bsgs.stabgens[i] := gens;
 
-    ComputeStabOrbForBSGS(bsgs, i);
+    bsgs.options.SchreierVectorForLevel(bsgs, i);
+    ComputeStabForBSGS(bsgs, i);
   od;
 end);
 
-# ComputeStabOrbForBSGS(bsgs, i)
+# ComputeStabForBSGS(bsgs, i)
 # Given a BSGS structure, compute the basic stabilizer with the given
-# generators and the corresponding basic orbit for the i-th stabilizer group.
-InstallGlobalFunction(ComputeStabOrbForBSGS, function (bsgs, i)
+# generators for the i-th stabilizer group.
+InstallGlobalFunction(ComputeStabForBSGS, function (bsgs, i)
   local base_subset, gens, orbstab, j;
-  Info(NewssInfo, 3, "Computing staborb for ", bsgs, " index ", i);
-
-  # Compute the orbit.
-  orbstab := bsgs.options.SchreierVectorForLevel(bsgs, i);
-  bsgs.orbits[i] := orbstab;
-  bsgs.orbitsizes[i] := Number(orbstab);
 
   # We special case the first entry.
   if i = 1 then
