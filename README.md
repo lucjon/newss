@@ -9,4 +9,4 @@ functions.
 
 To install the package, simply clone the repository to your GAP `pkg/`
 directory. To compile the documentation, run `gap makedoc.g`, and to run the
-test suite, run the `tests/runtests` script.
+test suite, run the `test/runtests` script.
