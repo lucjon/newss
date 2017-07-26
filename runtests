@@ -22,7 +22,7 @@ fi
 
 gap <<EOF
 LoadPackage("newss");;
-ReadPackage("newss", "lib/newtests.g");;
+ReadPackage("newss", "lib/tests.g");;
 $(if [ "$profile" == "yes" ]; then cat <<EOP
 Print("Profiling...");
 NUM_RANDOM_TEST_ELTS := 2^14;
