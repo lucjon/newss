@@ -240,7 +240,7 @@ DeclareGlobalFunction("NEWSS_VerifyByDeterministic");
 #! @Description
 #! Compute a Schreier vector the <C>level</C>th basic orbit by simple
 #! enumeration.
-DeclareGlobalFunction("NEWSS_SchreierVector");
+DeclareGlobalFunction("NEWSS_SVForLevel");
 
 #! @Arguments bsgs, level
 #! @Returns a Schreier vector for the <C>level</C>th basic orbit
@@ -281,5 +281,6 @@ DeclareGlobalFunction("NEWSS_ExtendSVByRecomputing");
 DeclareGlobalFunction("NEWSS_ExtendSchreierVector");
 DeclareGlobalFunction("NEWSS_FirstMovedPoint");
 DeclareGlobalFunction("NEWSS_PickFromOrbits");
+DeclareGlobalFunction("NEWSS_SchreierVector");
 DeclareGlobalFunction("NEWSS_UpdateRecord");
 DeclareInfoClass("NewssInfo");

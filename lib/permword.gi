@@ -1,6 +1,6 @@
 # vim: ft=gap sts=2 et sw=2
 InstallGlobalFunction(PermWordInverse, function (word)
-  return Reversed(List(word, p -> Inverse(p)));
+  return Reversed(List(word, Inverse));
 end);
 
 InstallGlobalFunction(PermWordPreImage, function (word, pt)
