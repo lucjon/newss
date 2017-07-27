@@ -1,6 +1,7 @@
 # vim: ft=gap sts=2 et sw=2
 
 LoadPackage("io");
+ReadPackage("newss", "test/timeout.g");
 
 ###
 ### Group selection
@@ -19,7 +20,7 @@ PickName := function (G)
   if HasName(G) then
     return Name(G);
   else
-    return Concatenation("<degree ", String(NrMovedPoints(G)), ">");
+    return Concatenation("{degree ", String(NrMovedPoints(G)), "}");
   fi;
 end;
 
@@ -116,21 +117,23 @@ end;
 GROUP_SOURCE_MAX_ATTEMPTS := 100;
 DeclareInfoClass("NewssGroupSelInfo");
 PickManyGroups := function (source, degree, n)
-  local groups, G, i;
+  local groups, names, G, i;
 
   groups := [];
+  names := Set([]);
   i := 1;
 
   while Size(groups) < n and i < n * GROUP_SOURCE_MAX_ATTEMPTS do
     G := fail;
-    while G = fail and i < n * GROUP_SOURCE_MAX_ATTEMPTS do
+    while (G = fail or Name(G) in names) and i < n * GROUP_SOURCE_MAX_ATTEMPTS do
       G := source(degree);
       i := i + 1;
     od;
     Add(groups, G);
+    AddSet(names, Name(G));
 
     if i mod 25 = 0 and i > 0 then
-      Info(NewssGroupSelInfo, 2, "Picked ", i, " groups so far");
+      Info(NewssGroupSelInfo, 2, "Picked ", Size(groups), " groups so far (", i, " attempts)");
     fi;
   od;
 
@@ -138,6 +141,7 @@ PickManyGroups := function (source, degree, n)
     Info(NewssGroupSelInfo, 1, "Failed to pick the requested number of groups");
     return fail;
   else
+    Info(NewssGroupSelInfo, 2, "Picked ", Size(groups), " groups");
     return groups;
   fi;
 end;
@@ -202,9 +206,10 @@ end;
 # Returns a group source which returns a group from the given source as long as
 # its size is less than max_size, or if a range is given, as long as its size
 # is within the given range.
+NEWSS_ORDER_TEST_TIMEOUT := 1;
 LimitSizeOfGroupSource := function (source, range)
   return function (degree)
-    local G, i;
+    local G, i, H, size;
 
     if not IsRange(range) then
       range := [1 .. range];
@@ -212,10 +217,23 @@ LimitSizeOfGroupSource := function (source, range)
 
     G := fail;
     i := 1;
-    while i < GROUP_SOURCE_MAX_ATTEMPTS and (G = fail or not HasSize(G)
-          or not Size(G) in range) do
+    while i < GROUP_SOURCE_MAX_ATTEMPTS do
       G := source(degree);
       i := i + 1;
+
+      if HasSize(G) then
+        if Size(G) in range then
+          return G;
+        fi;
+      else
+        # We don't want to bias timings of newss by giving it information
+        # precomputed by GAP's implementations
+        H := Group(GeneratorsOfGroup(G));
+        size := Fork_CallWithTimeout(NEWSS_ORDER_TEST_TIMEOUT, Size, H);
+        if size[1] and size[2] in range then
+          return G;
+        fi;
+      fi;
     od;
 
     return G;
@@ -246,6 +264,31 @@ ConjugatingGroupSource := function (source, p)
   end;
 end;
 
+# RegeneratingGroupSource(source, p)
+# Returns a group source which returns groups from <C>source</C>, except with a
+# probability $\frac{\mathrm{p}}{100}$ that we actually make a new group object
+# with the same generators. This way, neither newss or GAP have any intrinsic
+# knowledge about the group (e.g. order, if the group is Sym/Alt, etc.) that
+# might have been picked up e.g. from the ATLAS.
+RegeneratingGroupSource := function (source, p)
+  return function (degree)
+    local G, H, q;
+    G := source(degree);
+    if G = fail then
+      return fail;
+    fi;
+
+    q := Random([1 .. 100]);
+    if q <= p then
+      H := Group(GeneratorsOfGroup(G));
+      SetName(H, Concatenation("< ", PickName(G), " >"));
+      return H;
+    else
+      return G;
+    fi;
+  end;
+end;
+
 # XXX Workaround for a bug I don't entirely understand; works without it in GAP
 # master, but not in HPC-GAP master or released GAP 4.8
 TRANSPARTNUM[1] := 1;
@@ -256,47 +299,38 @@ PickBasicGroup := UnionGroupSource(
   LoadATLASGroupSource()
 );
 
-DefaultGroupSource := LimitSizeOfGroupSource(
+VariedGroupSource := RegeneratingGroupSource(
   ConjugatingGroupSource(
     UnionGroupSource(
       PickBasicGroup,
       DirectProductSource(PickBasicGroup)
     ),
   20),
-[10^4 .. 10^12]);
+10);
+
+DefaultGroupSource := LimitSizeOfGroupSource(VariedGroupSource, [10^4 .. 10^12]);
 
 PickGroup := function ()
   return PickOneGroup(DefaultGroupSource, false);
 end;
 
 ###
-### The test driving code
+### Code for loading and saving lists of groups
 ###
-# A test is a record ontaining test functions with arbitrary names. These test
-# functions have the signature (bsgs) and return true or false, depending on
-# whether or not they succeeded.
-
-DEFAULT_TEST_OPTIONS := rec(
-  number_of_groups := 100,
-  fixed_groups := [
-    GroupWithName(AlternatingGroup(4), "A4"),
-    GroupWithName(MathieuGroup(9), "MathieuGroup(9)"),
-    GroupWithName(SymmetricGroup(11), "S11"),
-    GroupWithName(PrimitiveGroup(1024, 2), "PrimitiveGroup(1024, 2)"),
-    TransitiveGroup(10,37)
-  ],
-  compute_gap_stabchains := true,
-  filename := false,
-  load_groups_list := false,
-  Print := Print,
-  bsgs_options := rec()
-);
 
 # SaveGroupsList(groups, filename)
 # Saves the given list of groups and names to a file.
 SaveGroupsList := function (groups, filename)
   local result, handle;
-  result := List(groups, G -> [PickName(G), Size(G), GeneratorsOfGroup(G)]);
+  result := List(groups, function (G)
+    local size;
+    if HasSize(G) then
+      size := Size(G);
+    else
+      size := fail;
+    fi;
+    return [PickName(G), size, GeneratorsOfGroup(G)];
+  end);
   handle := IO_File(filename, "w");
   
   if handle <> fail then
@@ -325,7 +359,9 @@ LoadGroupsList := function (filename)
     for description in input do
       G := Group(description[3]);
       SetName(G, description[1]);
-      SetSize(G, description[2]);
+      if description[2] <> fail then
+        SetSize(G, description[2]);
+      fi;
       Add(groups, G);
     od;
     return groups;
@@ -334,6 +370,31 @@ LoadGroupsList := function (filename)
     return fail;
   fi;
 end;
+
+###
+### The test driving code
+###
+# A test is a record ontaining test functions with arbitrary names. These test
+# functions have the signature (bsgs) and return true or false, depending on
+# whether or not they succeeded.
+
+DEFAULT_TEST_OPTIONS := rec(
+  number_of_groups := 100,
+  fixed_groups := [
+    GroupWithName(AlternatingGroup(4), "A4"),
+    GroupWithName(MathieuGroup(9), "MathieuGroup(9)"),
+    GroupWithName(SymmetricGroup(11), "S11"),
+    GroupWithName(PrimitiveGroup(1024, 2), "PrimitiveGroup(1024, 2)"),
+    TransitiveGroup(10,37)
+  ],
+  compute_gap_stabchains := true,
+  filename := false,
+  load_groups_list := false,
+  group_source := DefaultGroupSource,
+  Print := Print,
+  bsgs_options := rec()
+);
+
 
 # PerformTests(tests, opt)
 # Runs the given list of tests. <C>opt</C> is a record with the following fields:
@@ -358,7 +419,7 @@ PerformTests := function(tests, user_opt)
   if opt.load_groups_list = false then
     groups := ShallowCopy(opt.fixed_groups);
     opt.Print("*** Picking ", opt.number_of_groups - Size(groups), " random groups\n");
-    Append(groups, PickManyGroups(DefaultGroupSource, false, opt.number_of_groups - Size(groups)));
+    Append(groups, PickManyGroups(opt.group_source, false, opt.number_of_groups - Size(groups)));
   else
     opt.Print("*** Loading groups from file\n");
     groups := LoadGroupsList(opt.load_groups_list);
