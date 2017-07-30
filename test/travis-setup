@@ -7,18 +7,56 @@ install_gap () {
 	./autogen.sh
 	./configure
 	make -j4
-	make bootstrap-pkg-full
 	popd
 }
 
-compile_io () {
-	pushd gap/pkg/io*
-	./configure
+install_hpcgap () {
+	git clone --depth=1 https://github.com/gap-system/gap
+	pushd gap
+
+	pushd hpcgap
+	git clone --depth=1 https://github.com/gap-system/ward
+	cd ward
+	./build.sh
+	popd
+
+	./autogen.sh
+	./configure --enable-hpcgap
 	make -j4
 	popd
 }
 
+fetch_hpcgap_packages () {
+	pushd gap
+	mkdir -p pkg
+	cd pkg
+	git clone https://github.com/gap-packages/io
+	curl "http://www.gap-system.org/pub/gap/gap4/tar.bz2/packages/atlasrep1r5p1.tar.bz2" | tar jxv
+	popd
+}
 
-install_gap
-compile_io
+fetch_gap_packages () {
+	pushd gap
+	make bootstrap-pkg-full
+	popd
+}
+
+build_packages () {
+	pushd gap/pkg
+	cd io
+	./autogen.sh
+	./configure
+	make
+	popd
+}
+
+
+if [ "$HPCGAP" == "yes" ]; then
+	install_hpcgap
+	fetch_hpcgap_packages
+else
+	install_gap
+	fetch_gap_packages
+fi
+build_packages
 ln -s $PWD gap/pkg/newss
