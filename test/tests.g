@@ -21,7 +21,7 @@ PickName := function (G)
   if HasName(G) then
     return Name(G);
   else
-    return Concatenation("<degree ", String(NrMovedPoints(G)), ">");
+    return Concatenation("{degree ", String(NrMovedPoints(G)), "}");
   fi;
 end;
 
@@ -61,7 +61,7 @@ GroupSourceFromLibrary := function (library, library_count, max_degree)
   end;
 end;
 
-DEFAULT_ATLAS_LIST := "atlasnames.txt";
+DEFAULT_ATLAS_LIST := "test/atlasnames.txt";
 
 # LoadATLASGroupSource([list_filename])
 # Return a group source picking random ATLAS groups from the list of ATLAS
@@ -75,7 +75,10 @@ LoadATLASGroupSource := function (arg)
     filename := arg[1];
   fi;
 
-  handle := InputTextFile("atlasnames.txt");
+  handle := InputTextFile(filename);
+  if handle = fail then
+    return fail;
+  fi;
   group_names := [];
 
   str := Chomp(ReadLine(handle));
@@ -113,24 +116,33 @@ end;
 # PickManyGroups(source, degree, n)
 # Pick n groups from a group source, without any fails.
 GROUP_SOURCE_MAX_ATTEMPTS := 100;
+DeclareInfoClass("NewssGroupSelInfo");
 PickManyGroups := function (source, degree, n)
-  local groups, G, i;
+  local groups, names, G, i;
 
   groups := [];
+  names := Set([]);
   i := 1;
 
   while Size(groups) < n and i < n * GROUP_SOURCE_MAX_ATTEMPTS do
     G := fail;
-    while G = fail and i < n * GROUP_SOURCE_MAX_ATTEMPTS do
+    while (G = fail or Name(G) in names) and i < n * GROUP_SOURCE_MAX_ATTEMPTS do
       G := source(degree);
       i := i + 1;
     od;
     Add(groups, G);
+    AddSet(names, Name(G));
+
+    if i mod 25 = 0 and i > 0 then
+      Info(NewssGroupSelInfo, 2, "Picked ", Size(groups), " groups so far (", i, " attempts)");
+    fi;
   od;
 
   if Size(groups) <> n then
+    Info(NewssGroupSelInfo, 1, "Failed to pick the requested number of groups");
     return fail;
   else
+    Info(NewssGroupSelInfo, 2, "Picked ", Size(groups), " groups");
     return groups;
   fi;
 end;
@@ -171,32 +183,58 @@ end;
 # Returns a group source which returns a group from a random one of
 # <C>source1</C>, ..., <C>sourcen</C>.
 UnionGroupSource := function (arg)
+  local sources;
+  sources := Filtered(arg, s -> s <> fail);
+
+  if Size(sources) = 0 then
+    return fail;
+  fi;
+
   return function (degree)
     local G, i;
 
     G := fail;
     i := 1;
     while G = fail and i < GROUP_SOURCE_MAX_ATTEMPTS do
-      G := PseudoRandom(arg)(degree);
+      G := PseudoRandom(sources)(degree);
       i := i + 1;
     od;
     return G;
   end;
 end;
 
-# LimitSizeOfGroupSource(source, max_size)
+# LimitSizeOfGroupSource(source, max_size_or_range)
 # Returns a group source which returns a group from the given source as long as
-# its size is less than max_size.
-LimitSizeOfGroupSource := function (source, max_size)
+# its size is less than max_size, or if a range is given, as long as its size
+# is within the given range.
+NEWSS_ORDER_TEST_TIMEOUT := 1;
+LimitSizeOfGroupSource := function (source, range)
   return function (degree)
-    local G, i;
+    local G, i, H, size;
+
+    if not IsRange(range) then
+      range := [1 .. range];
+    fi;
 
     G := fail;
     i := 1;
-    while i < GROUP_SOURCE_MAX_ATTEMPTS and (G = fail or not HasSize(G)
-          or Size(G) > max_size) do
+    while i < GROUP_SOURCE_MAX_ATTEMPTS do
       G := source(degree);
       i := i + 1;
+
+      if HasSize(G) then
+        if Size(G) in range then
+          return G;
+        fi;
+      else
+        # We don't want to bias timings of newss by giving it information
+        # precomputed by GAP's implementations
+        H := Group(GeneratorsOfGroup(G));
+        size := Fork_CallWithTimeout(NEWSS_ORDER_TEST_TIMEOUT, Size, H);
+        if size[1] and size[2] in range then
+          return G;
+        fi;
+      fi;
     od;
 
     return G;
@@ -227,6 +265,34 @@ ConjugatingGroupSource := function (source, p)
   end;
 end;
 
+# RegeneratingGroupSource(source, p)
+# Returns a group source which returns groups from <C>source</C>, except with a
+# probability $\frac{\mathrm{p}}{100}$ that we actually make a new group object
+# with the same generators. This way, neither newss or GAP have any intrinsic
+# knowledge about the group (e.g. order, if the group is Sym/Alt, etc.) that
+# might have been picked up e.g. from the ATLAS.
+RegeneratingGroupSource := function (source, p)
+  return function (degree)
+    local G, H, q;
+    G := source(degree);
+    if G = fail then
+      return fail;
+    fi;
+
+    q := Random([1 .. 100]);
+    if q <= p then
+      H := Group(GeneratorsOfGroup(G));
+      SetName(H, Concatenation("< ", PickName(G), " >"));
+      return H;
+    else
+      return G;
+    fi;
+  end;
+end;
+
+# XXX Workaround for a bug I don't entirely understand; works without it in GAP
+# master, but not in HPC-GAP master or released GAP 4.8
+TRANSPARTNUM[1] := 1;
 
 PickBasicGroup := UnionGroupSource(
   GroupSourceFromLibrary(PrimitiveGroup, NrPrimitiveGroups, 768),
@@ -234,17 +300,76 @@ PickBasicGroup := UnionGroupSource(
   LoadATLASGroupSource()
 );
 
-DefaultGroupSource := LimitSizeOfGroupSource(
+VariedGroupSource := RegeneratingGroupSource(
   ConjugatingGroupSource(
     UnionGroupSource(
       PickBasicGroup,
       DirectProductSource(PickBasicGroup)
     ),
   20),
-10^12);
+10);
+
+DefaultGroupSource := LimitSizeOfGroupSource(VariedGroupSource, [10^4 .. 10^12]);
 
 PickGroup := function ()
   return PickOneGroup(DefaultGroupSource, false);
+end;
+
+###
+### Code for loading and saving lists of groups
+###
+
+# SaveGroupsList(groups, filename)
+# Saves the given list of groups and names to a file.
+SaveGroupsList := function (groups, filename)
+  local result, handle;
+  result := List(groups, function (G)
+    local size;
+    if HasSize(G) then
+      size := Size(G);
+    else
+      size := fail;
+    fi;
+    return [PickName(G), size, GeneratorsOfGroup(G)];
+  end);
+  handle := IO_File(filename, "w");
+  
+  if handle <> fail then
+    IO_Pickle(handle, result);
+    IO_Close(handle);
+    return true;
+  else
+    return fail;
+  fi;
+end;
+
+# LoadGroupsList(filename)
+# Loads a list of groups from the file with the given name.
+LoadGroupsList := function (filename)
+  local handle, input, groups, G, description;
+  handle := IO_File(filename, "r");
+
+  if handle <> fail then
+    input := IO_Unpickle(handle);
+    if input = fail then
+      Error("Error unpickling groups list from file");
+    fi;
+    IO_Close(handle);
+
+    groups := [];
+    for description in input do
+      G := Group(description[3]);
+      SetName(G, description[1]);
+      if description[2] <> fail then
+        SetSize(G, description[2]);
+      fi;
+      Add(groups, G);
+    od;
+    return groups;
+  else
+    Error("Could not open groups list file for reading");
+    return fail;
+  fi;
 end;
 
 ###
@@ -265,9 +390,12 @@ DEFAULT_TEST_OPTIONS := rec(
   ],
   compute_gap_stabchains := true,
   filename := false,
+  load_groups_list := false,
+  group_source := DefaultGroupSource,
   Print := Print,
   bsgs_options := rec()
 );
+
 
 # PerformTests(tests, opt)
 # Runs the given list of tests. <C>opt</C> is a record with the following fields:
@@ -289,9 +417,15 @@ PerformTests := function(tests, user_opt)
   NEWSS_UpdateRecord(opt, DEFAULT_TEST_OPTIONS);
 
   # First pick the groups and compute their stabiliser chains.
-  groups := ShallowCopy(opt.fixed_groups);
-  opt.Print("*** Picking ", opt.number_of_groups - Size(groups), " random groups\n");
-  Append(groups, PickManyGroups(DefaultGroupSource, false, opt.number_of_groups - Size(groups)));
+  if opt.load_groups_list = false then
+    groups := ShallowCopy(opt.fixed_groups);
+    opt.Print("*** Picking ", opt.number_of_groups - Size(groups), " random groups\n");
+    Append(groups, PickManyGroups(opt.group_source, false, opt.number_of_groups - Size(groups)));
+  else
+    opt.Print("*** Loading groups from file\n");
+    groups := LoadGroupsList(opt.load_groups_list);
+  fi;
+
   stab_chains := [];
 
   opt.Print("*** Computing stabilizer chains...\n");
@@ -313,6 +447,7 @@ PerformTests := function(tests, user_opt)
                           group_order := Size(G),
                           time_BSGSFromGroup := our_time,
                           time_StabChain := gap_time,
+                          verify := NameFunction(bsgs.options.Verify),
                           success_BSGSFromGroup := true,
                           success_StabChain := true,
                           success := true));
