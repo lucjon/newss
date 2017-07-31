@@ -8,6 +8,9 @@ env:
     global:
         - GAP="./gap/gap -l ./gap"
         - testdir=.
+    matrix:
+        - HPCGAP=yes
+        - HPCGAP=no
 
 before_install:
     - sudo apt-get -qq update
