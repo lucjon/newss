@@ -42,10 +42,14 @@ fetch_gap_packages () {
 }
 
 build_packages () {
+	if [ "$HPCGAP" == "yes" ]; then
+		export CFLAGS="-I../../extern/install/libatomic_ops/include/ -L../../extern/install/libatomic_ops/lib"
+	fi
+
 	pushd gap/pkg
 	cd io*
 	./autogen.sh
-	CFLAGS="-I../../extern/install/libatomic_ops/include/ -L../../extern/install/libatomic_ops/lib" ./configure
+	./configure
 	make
 	popd
 }
