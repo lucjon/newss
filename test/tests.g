@@ -525,6 +525,7 @@ DefaultTests := rec(
 
 KnownBaseTests := rec(
   KnownBase := function (bsgs)
+    local new_chain;
     new_chain := BSGSFromGroup(bsgs.group, rec( known_base := bsgs.base ));
     return StabilizerChainOrder(bsgs) = StabilizerChainOrder(new_chain);
   end
@@ -532,3 +533,13 @@ KnownBaseTests := rec(
 
 WithKnownBaseTests := ShallowCopy(KnownBaseTests);
 NEWSS_UpdateRecord(WithKnownBaseTests, DefaultTests);
+
+ToGAPStabChainTests := rec(
+  ToGAPStabChain := function (bsgs)
+    local gap_sc, G;
+    gap_sc := GAPStabChainFromBSGS(bsgs);
+    G := Group(GeneratorsOfGroup(bsgs.group));
+    SetStabChainMutable(G, gap_sc);
+    return StabilizerChainOrder(bsgs) = Size(G) and BaseStabChain(G) = bsgs.base;
+  end
+);
