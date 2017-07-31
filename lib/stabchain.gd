@@ -59,8 +59,10 @@ DeclareGlobalFunction("BSGSFromGroup");
 #! @Returns a GAP stabilizer chain structure
 #! @Description
 #! Takes a BSGS structure and, finding a base and strong generating set if
-#! necessary (using the algorithms in this package), returns a GAP stabilizer
-#! chain record representing the computed chain.
+#! necessary (using the algorithms in this package), returns a &GAP; stabilizer
+#! chain record representing the computed chain. (For testing purposes, the
+#! topmost stabilizer chain record has an additional component
+#! <C>from_newss := true</C>.)
 DeclareGlobalFunction("GAPStabChainFromBSGS");
 
 #! @Description

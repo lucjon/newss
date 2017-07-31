@@ -1,4 +1,5 @@
 # vim: ft=gap sts=2 et sw=2
+#! @Chapter Stabilizer Chains
 
 #! @Section Options for stabilizer chain creation
 #! 
@@ -157,7 +158,7 @@ DeclareGlobalFunction("NEWSS_VerifyByDeterministic");
 
 #! @Section Orbit computation procedures
 #! The default orbit algorithm is our own naive implementation
-#! <Ref Func="NEWSS_SchreierVector"/>. If the <C>orb</C> package is available
+#! <Ref Func="NEWSS_SVForLevel"/>. If the <C>orb</C> package is available
 #! when <C>newss</C> is loaded, then <Ref Func="NEWSS_SVFromOrb"/> can also be
 #! selected. 
 
