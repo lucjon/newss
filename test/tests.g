@@ -446,6 +446,7 @@ PerformTests := function(tests, user_opt)
                           group_order := Size(G),
                           time_BSGSFromGroup := our_time,
                           time_StabChain := gap_time,
+                          verify := NameFunction(bsgs.options.Verify),
                           success_BSGSFromGroup := true,
                           success_StabChain := true,
                           success := true));
