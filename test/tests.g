@@ -1,5 +1,8 @@
 # vim: ft=gap sts=2 et sw=2
 
+LoadPackage("io");
+LoadPackage("atlasrep");
+
 ###
 ### Group selection
 ###
