@@ -43,7 +43,7 @@ fetch_gap_packages () {
 
 build_packages () {
 	pushd gap/pkg
-	cd io
+	cd io*
 	./autogen.sh
 	./configure
 	make
