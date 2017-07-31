@@ -189,7 +189,29 @@ InstallGlobalFunction(GAPStabChainFromBSGS, function (bsgs)
     fi;
   od;
 
+  top.from_newss := true;
   return top;
+end);
+
+
+StabChainNewssOp := function (G, options)
+  local S;
+  # We ignore the options record for now given that they will be GAP options
+  # that don't really make any sense for us. In future, could perhaps try and
+  # translate, or use our own options if any are given.
+  if HasStabChainMutable(G) then
+    return StabChainMutable(G);
+  else
+    S := GAPStabChainFromBSGS(BSGSFromGroup(G));
+    SetStabChainMutable(G, S);
+    return S;
+  fi;
+end;
+
+InstallGlobalFunction(EnableNewssOverloads, function ()
+  InstallOtherMethod(StabChainOp, "permutation group and options", true,
+                     [IsPermGroup, IsRecord], RankFilter(IsPermGroup) + 1,
+                     StabChainNewssOp);
 end);
 
 

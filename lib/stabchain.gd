@@ -63,6 +63,11 @@ DeclareGlobalFunction("BSGSFromGroup");
 #! chain record representing the computed chain.
 DeclareGlobalFunction("GAPStabChainFromBSGS");
 
+#! @Description
+#! Overrides the default &GAP; stabilizer chain methods with the ones from this
+#! package.
+DeclareGlobalFunction("EnableNewssOverloads");
+
 
 #! @Section Manipulating stabilizer chains
 
