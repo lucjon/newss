@@ -95,6 +95,10 @@ DeclareGlobalFunction("BSGSFromGroup");
 #!   faster for small-base groups; specify either
 #!   <C>NEWSS_PERM_REPRESENTATION</C> or <C>NEWSS_PERMWORD_REPRESENTATION</C>
 #!   respectively to override the default.
+#! * **known_base**. If a base is already known for the group, then passing it
+#!   as this parameter speeds up the process of finding a strong generating set
+#!   since we can check whether a product of permutations is the identity by
+#!   checking its action on the base, instead of having to multiply it out.
 #!
 #! All of these fields are optional; if any are missing, they are taken from
 #! whichever of the following default options structures are chosen by
@@ -280,6 +284,8 @@ DeclareGlobalFunction("EnsureBSGSChainComputed");
 DeclareGlobalFunction("NEWSS_ExtendSVByRecomputing");
 DeclareGlobalFunction("NEWSS_ExtendSchreierVector");
 DeclareGlobalFunction("NEWSS_FirstMovedPoint");
+DeclareGlobalFunction("NEWSS_IsIdentityByKnownBase");
+DeclareGlobalFunction("NEWSS_IsIdentityByMul");
 DeclareGlobalFunction("NEWSS_PickFromOrbits");
 DeclareGlobalFunction("NEWSS_SchreierVector");
 DeclareGlobalFunction("NEWSS_UpdateRecord");

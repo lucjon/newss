@@ -389,6 +389,7 @@ DEFAULT_TEST_OPTIONS := rec(
     TransitiveGroup(10,37)
   ],
   compute_gap_stabchains := true,
+  test_known_base := true,
   filename := false,
   load_groups_list := false,
   group_source := DefaultGroupSource,
@@ -411,7 +412,7 @@ DEFAULT_TEST_OPTIONS := rec(
 
 PerformTests := function(tests, user_opt)
   local test_results, opt, groups, stab_chains, t, bsgs, result, test, G, i,
-        test_name, success, our_time, gap_time;
+        test_name, success, our_time, gap_time, new_chain;
   test_results := [];
   opt := ShallowCopy(user_opt);
   NEWSS_UpdateRecord(opt, DEFAULT_TEST_OPTIONS);
@@ -500,7 +501,7 @@ FailTests := rec(
 );
 
 DefaultTests := rec(
-  Containment := function(H_sc)
+  Containment := function (H_sc)
     local G, H, actually_in_H, think_in_H, x, Sn;
     Sn := SymmetricGroup(LargestMovedPoint(H_sc.group));
     G := List([1 .. NUM_RANDOM_TEST_ELTS], i -> PseudoRandom(Sn));
@@ -521,3 +522,13 @@ DefaultTests := rec(
     return StabilizerChainOrder(bsgs) = Size(bsgs.group);
   end
 );
+
+KnownBaseTests := rec(
+  KnownBase := function (bsgs)
+    new_chain := BSGSFromGroup(bsgs.group, rec( known_base := bsgs.base ));
+    return StabilizerChainOrder(bsgs) = StabilizerChainOrder(new_chain);
+  end
+);
+
+WithKnownBaseTests := ShallowCopy(KnownBaseTests);
+NEWSS_UpdateRecord(WithKnownBaseTests, DefaultTests);

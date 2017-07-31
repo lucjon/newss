@@ -26,6 +26,11 @@
 #        ExtendSchreierVector(bsgs, level, gen)
 #          Extend the level-th basic orbit after adding a Schreier generator
 #          gen.
+#        IsIdentity(bsgs, perm_rep)
+#          Takes a permutation in our working representation and determines if
+#          it is the identity. If it is, return rec(is_identity := true). If
+#          not, return rec(is_identity := false, perm := p), where p is a GAP
+#          permutation corresponding to perm_rep.
 #
 #   *  Helper functions common to many implementations
 #
@@ -151,6 +156,13 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
     B.options := arg[2];
   fi;
 
+  if IsBound(B.options.known_base) then
+    B.options.known_base := Immutable(B.options.known_base);
+    B.options.IsIdentity := NEWSS_IsIdentityByKnownBase;
+  else
+    B.options.IsIdentity := NEWSS_IsIdentityByMul;
+  fi;
+
   NEWSS_UpdateRecord(B.options, B.options.perm_representation);
   Info(NewssInfo, 2, "Selected ", NameFunction(B.options.SchreierSims), " for stabilizer chain computation");
   B.options.SchreierSims(B);
@@ -218,7 +230,7 @@ end);
 ##
 
 InstallGlobalFunction(SchreierSims, function (bsgs)
-  local i, added_generator, stripped, iterators, g, l, need_to_adjoin, perm;
+  local i, added_generator, stripped, iterators, g, l, need_to_adjoin, perm, id_result;
 
   bsgs.sgs := List(bsgs.sgs);
   if not IsBound(bsgs.stabgens) then
@@ -260,9 +272,10 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
 
       # If the stripped permutation is not the identity, it was not in the next
       # group --- so we adjoin it.
-      perm := bsgs.options.AsPerm(stripped.residue);
-      if perm <> () then
+      id_result := bsgs.options.IsIdentity(bsgs, stripped.residue);
+      if not id_result.is_identity then
         Info(NewssInfo, 3, "Adjoining generator ", g);
+        perm := id_result.perm;
         Add(bsgs.sgs, perm);
 
         # Additionally, if the strip procedure made it to the last iteration,
@@ -319,7 +332,7 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs)
     g := PseudoRandom(bsgs.group);
     stripped := StabilizerChainStrip(bsgs, g);
 
-    if stripped.residue <> () then
+    if not bsgs.options.IsIdentity(bsgs, stripped.residue).is_identity then
       Add(bsgs.sgs, stripped.residue);
 
       if stripped.level > Size(bsgs.base) then
@@ -344,6 +357,47 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs)
 
   return bsgs;
 end);
+
+
+##
+## IsIdentity
+##
+InstallGlobalFunction(NEWSS_IsIdentityByMul, function (bsgs, perm)
+  if not IsPerm(perm) then
+    perm := bsgs.options.AsPerm(perm);
+  fi;
+
+  return rec( is_identity := perm = (), perm := perm );
+end);
+
+InstallGlobalFunction(NEWSS_IsIdentityByKnownBase, function (bsgs, perm_rep)
+  local image_fn, b;
+
+  # In RandomSchreierSims, we don't use the permutation representations.
+  if IsPerm(perm_rep) then
+    image_fn := OnPoints;
+  else
+    image_fn := bsgs.options.ImagePerm;
+  fi;
+
+  for b in bsgs.options.known_base do
+    if image_fn(b, perm_rep) <> b then
+      if not IsPerm(perm_rep) then
+        perm_rep := bsgs.options.AsPerm(perm_rep);
+      fi;
+
+      return rec(
+        is_identity := false,
+        perm := perm_rep
+      );
+    fi;
+  od;
+
+  # If we get here, it must be the identity since we haven't moved any base
+  # points.
+  return rec( is_identity := true );
+end);
+
 
 ##
 ## Verify
