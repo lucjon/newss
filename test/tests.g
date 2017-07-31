@@ -2,6 +2,7 @@
 
 LoadPackage("io");
 LoadPackage("atlasrep");
+ReadPackage("newss", "test/timeout.g");
 
 ###
 ### Group selection
