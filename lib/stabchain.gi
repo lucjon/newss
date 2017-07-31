@@ -7,7 +7,7 @@
 MakeReadWriteGlobal("NEWSS_MIN_DEGREE_RANDOM");
 NEWSS_MIN_DEGREE_RANDOM := 10;
 
-InstallValue(NEWSS_PERMWORD_REPRESENTATION, rec(
+InstallValue(NEWSS_PERMWORD_REPRESENTATION, Immutable(rec(
   PermFromBasePoint := SchreierVectorWordFromBasePoint,
   Strip := StabilizerChainStripWord,
   AsPerm := PermWordAsPerm,
@@ -15,9 +15,9 @@ InstallValue(NEWSS_PERMWORD_REPRESENTATION, rec(
   InvPerm := PermWordInverse,
   LiftPerm := x -> [x],
   ImagePerm := PermWordImage
-));
+)));
 
-InstallValue(NEWSS_PERM_REPRESENTATION, rec(
+InstallValue(NEWSS_PERM_REPRESENTATION, Immutable(rec(
   PermFromBasePoint := SchreierVectorPermFromBasePoint,
   Strip := StabilizerChainStrip,
   AsPerm := IdFunc,
@@ -25,9 +25,9 @@ InstallValue(NEWSS_PERM_REPRESENTATION, rec(
   InvPerm := Inverse,
   LiftPerm := IdFunc,
   ImagePerm := OnPoints
-));
+)));
  
-InstallValue(NEWSS_DEFAULT_OPTIONS, rec(
+InstallValue(NEWSS_DEFAULT_OPTIONS, Immutable(rec(
   SchreierSims := RandomSchreierSims,
   Verify := NEWSS_VerifyByDeterministic,
   ExtendBaseForLevel := NEWSS_FirstMovedPoint,
@@ -38,9 +38,9 @@ InstallValue(NEWSS_DEFAULT_OPTIONS, rec(
   fall_back_to_deterministic := true,
   sift_threshold := 8,
   orbits_to_consider := 3
-));
+)));
 
-InstallValue(NEWSS_DETERMINISTIC_OPTIONS, rec(
+InstallValue(NEWSS_DETERMINISTIC_OPTIONS, Immutable(rec(
   SchreierSims := SchreierSims,
   Verify := ReturnTrue,
   ExtendBaseForLevel := NEWSS_PickFromOrbits,
@@ -54,7 +54,7 @@ InstallValue(NEWSS_DETERMINISTIC_OPTIONS, rec(
   fall_back_to_deterministic := NEWSS_DEFAULT_OPTIONS.fall_back_to_deterministic,
   sift_threshold := NEWSS_DEFAULT_OPTIONS.sift_threshold,
   orbits_to_consider := NEWSS_DEFAULT_OPTIONS.orbits_to_consider
-));
+)));
 
 
 InstallGlobalFunction(BSGS, function (group, base, sgs)
