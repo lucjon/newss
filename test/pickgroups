@@ -1,7 +1,13 @@
 #!/bin/bash
 # pickgroups COUNT FILENAME
 # Pick some random groups.
-count=${1:-100}
+if [ "$#" -lt 2 ]; then
+	echo "Usage: $0 COUNT FILENAME" >&2
+	echo "Pick COUNT groups, saving the resulting list to the file FILENAME." >&2
+	exit 1
+fi
+
+count=$1
 filename=$2
 
 script="$(mktemp newss.XXXXXXX.g)"

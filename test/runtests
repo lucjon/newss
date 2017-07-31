@@ -3,11 +3,52 @@ testdir=${testdir:-../tests}
 profile=no
 verbose=no
 
-while [[ "$1" == --* ]]; do
+while [[ "$1" == -* ]]; do
 	if [ "$1" == "--profile" ]; then
 		profile=yes
 	elif [ "$1" == "--verbose" ]; then
 		verbose=yes
+	elif [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
+		cat <<EOF
+Usage: $0 [--profile] [--verbose] [(GROUP_COUNT|GROUP_LIST_FILE)
+                                              [RESULTS_FILENAME [TEST_SUITE]]]
+
+Runs the set of tests TEST_SUITE against either GROUP_COUNT randomly picked
+groups, or the groups in the file GROUP_LIST_FILE, saving the resulting timing
+information to the CSV file \$testdir/RESULTS_FILENAME (currently: $testdir).
+
+To generate a GROUP_LIST_FILE, use the script test/pickgroups. If \`default' is
+given as the RESULTS_FILENAME, or no filename is given at all, we pick a
+filename based on the current time and git commit hash. The TEST_SUITE
+parameter defaults to \`DefaultTests'; see test/tests.g for the full list of
+options.
+
+OPTIONS
+    --profile:  If given, enable line-by-line profiling using the profiling
+                package (requires very recent GAP). The resulting profile data
+                and report are saved to \$testdir/prof-RESULTS_FILENAME.
+
+    --verbose:  Set the info level for the newss package higher, so that
+                progress and debug messages are printed.
+
+ENVIRONMENT VARIABLES
+    GAP:          Specifies the command line used to invoke GAP (default: gap).
+
+    bsgs_options: Any options to pass to the BSGSFromGroup function when
+                  creating stabilizer chains (see the package manual).
+
+EXAMPLES
+    $0
+        Run the default test suite on 100 groups.
+    bsgs_options='Verify := ReturnTrue' $0
+        Run the default test suite on 100 groups, but never verify the results
+        of the randomized Schreier-Sims algorithm.
+    $0 ../hardgroups.grp default NoTests
+        Calculate stabilizer chains for the groups in the group list file
+        hardgroups.grp, recording timing information in the default location,
+        but do not run any of the correctness tests.
+EOF
+		exit 0
 	fi
 	shift
 done;
@@ -15,7 +56,7 @@ done;
 if [ -f "$1" ]; then
 	group_option="load_groups_list := \"$1\""
 else
-	group_option="number_of_groups := $1"
+	group_option="number_of_groups := ${1:-100}"
 fi
 suite=${3:-DefaultTests}
 if [ -z "$2" ] || [ "$2" == "default" ]; then
