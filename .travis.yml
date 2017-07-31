@@ -1,4 +1,4 @@
-sudo: true
+sudo: false
 dist: trusty
 language: c
 compiler:
@@ -12,8 +12,5 @@ env:
         - HPCGAP=yes
         - HPCGAP=no
 
-before_install:
-    - sudo apt-get -qq update
-    - sudo apt-get install libatomic-ops-dev
 install: ./test/travis-setup
 script: ./test/runtests 50

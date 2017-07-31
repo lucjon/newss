@@ -45,7 +45,7 @@ build_packages () {
 	pushd gap/pkg
 	cd io*
 	./autogen.sh
-	./configure
+	CFLAGS="-I../../extern/install/libatomic_ops/include/ -L../../extern/install/libatomic_ops/lib" ./configure
 	make
 	popd
 }
