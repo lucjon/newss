@@ -143,9 +143,13 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
 end);
 
 InstallGlobalFunction(GAPStabChainFromBSGS, function (bsgs)
-  local top, prev, current, next, i, j;
+  local top, prev, current, next, i, j, gen;
 
   EnsureBSGSChainComputed(bsgs);
+
+  if Size(bsgs.base) = 0 then
+    return rec(generators := [], genlabels := [], identity := (), labels := [()]);
+  fi;
 
   top := rec();
   prev := top;
@@ -158,18 +162,15 @@ InstallGlobalFunction(GAPStabChainFromBSGS, function (bsgs)
     current.genlabels := List(bsgs.stabgens[i], g -> Position(bsgs.sgs, g) + 1);
     current.generators := ShallowCopy(bsgs.stabgens[i]);
 
-    current.orbit := [];
-    current.transversal := [];
-    current.translabels := [];
+    current.orbit := [bsgs.base[i]];
+    current.transversal := [()];
+    current.translabels := [1];
     for j in [1 .. Size(bsgs.orbits[i])] do
-      if j = bsgs.base[i] then
-        Add(current.orbit, j, 1);
-        Add(current.transversal, (), 1);
-        Add(current.translabels, 1, 1);
-      elif IsBound(bsgs.orbits[i][j]) then
+      if j <> bsgs.base[i] and IsBound(bsgs.orbits[i][j]) then
+        gen := bsgs.stabgens[i][bsgs.orbits[i][j]];
         Add(current.orbit, j);
-        Add(current.transversal, bsgs.stabgens[i][bsgs.orbits[i][j]]);
-        Add(current.translabels, bsgs.orbits[i][j] + 1);
+        current.transversal[j] := gen;
+        current.translabels[j] := Position(bsgs.sgs, gen) + 1;
       fi;
     od;
 
