@@ -279,3 +279,22 @@ InstallGlobalFunction(ComputeChainForBSGS, function (bsgs)
     ComputeStabForBSGS(bsgs, i);
   od;
 end);
+
+
+InstallGlobalFunction(ConjugateBSGS, function (bsgs, g)
+  local ConjugateByG;
+  ConjugateByG := function (L)
+    local i;
+    for i in [1 .. Size(L)] do
+      if IsBound(L[i]) then
+        L[i] := L[i] ^ g;
+      fi;
+    od;
+  end;
+
+  EnsureBSGSChainComputed(bsgs);
+  ConjugateByG(bsgs.base);
+  ConjugateByG(bsgs.sgs);
+  bsgs.group := Group(bsgs.sgs);
+  ComputeChainForBSGS(bsgs);
+end);
