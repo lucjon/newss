@@ -48,10 +48,16 @@
 InstallGlobalFunction(SchreierSims, function (bsgs)
   local i, added_generator, stripped, iterators, g, l, need_to_adjoin, perm, id_result;
 
-  bsgs.sgs := List(bsgs.sgs);
   if not IsBound(bsgs.stabgens) then
     bsgs.stabgens := [];
   fi;
+
+  bsgs.sgs := Filtered(bsgs.sgs, x -> x <> ());
+  if Size(bsgs.sgs) = 0 then
+    # The trivial group!
+    return;
+  fi;
+
 
   if Size(bsgs.base) = 0 then
     bsgs.options.ExtendBaseForLevel(bsgs, 0, false);
