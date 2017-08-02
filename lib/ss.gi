@@ -274,6 +274,25 @@ InstallGlobalFunction(NEWSS_FirstMovedPoint, function (bsgs, level, culprit)
   return point;
 end);
 
+InstallGlobalFunction(NEWSS_PickAscending, function (bsgs, level, culprit)
+  local i;
+  if culprit = false then
+    return NEWSS_FirstMovedPoint(bsgs, level, culprit);
+  else
+    for i in [1 .. LargestMovedPoint(bsgs.group)] do
+      if i ^ culprit <> i then
+        Add(bsgs.base, i);
+        if level > 0 then
+          Add(bsgs.stabgens, []);
+        fi;
+        return i;
+      fi;
+    od;
+    
+    Error("could not find point not fixed by culprit");
+  fi;
+end);
+
 InstallGlobalFunction(NEWSS_PickFromOrbits, function (bsgs, level, culprit)
   local point, orbit_level, min_level, i;
 

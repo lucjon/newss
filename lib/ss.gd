@@ -209,6 +209,7 @@ DeclareGlobalFunction("NEWSS_ExtendSchreierVector");
 DeclareGlobalFunction("NEWSS_FirstMovedPoint");
 DeclareGlobalFunction("NEWSS_IsIdentityByKnownBase");
 DeclareGlobalFunction("NEWSS_IsIdentityByMul");
+DeclareGlobalFunction("NEWSS_PickAscending");
 DeclareGlobalFunction("NEWSS_PickFromOrbits");
 DeclareGlobalFunction("NEWSS_SchreierVector");
 DeclareGlobalFunction("NEWSS_UpdateRecord");
