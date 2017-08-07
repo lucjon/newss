@@ -520,7 +520,7 @@ DefaultTests := rec(
 
   Order := function (bsgs)
     return StabilizerChainOrder(bsgs) = Size(bsgs.group);
-  end
+  end,
 );
 
 KnownBaseTests := rec(
@@ -530,9 +530,33 @@ KnownBaseTests := rec(
     return StabilizerChainOrder(bsgs) = StabilizerChainOrder(new_chain);
   end
 );
-
 WithKnownBaseTests := ShallowCopy(KnownBaseTests);
 NEWSS_UpdateRecord(WithKnownBaseTests, DefaultTests);
+
+ChangeOfBaseTests := rec(
+  ChangeOfBase := function (bsgs)
+    local gens, new_base, i;
+    # First, we pick a random base for the group
+    gens := GeneratorsOfGroup(bsgs.group);
+    new_base := [];
+    i := 1;
+    while i <= Size(gens) do
+      if Stabilizes(gens[i], new_base) then
+        Add(new_base, PseudoRandom(MovedPoints(gens[i])));
+        i := 1;
+      fi;
+      i := i + 1;
+    od;
+    Shuffle(new_base);
+
+    # Then perform the change of base and do the usual verification step
+    ChangeBaseOfBSGS(bsgs, new_base);
+    Print("\n*** ", new_base, "\n");
+    return DefaultTests.Containment(bsgs);
+  end
+);
+WithChangeOfBaseTests := ShallowCopy(ChangeOfBaseTests);
+NEWSS_UpdateRecord(WithChangeOfBaseTests, DefaultTests);
 
 ToGAPStabChainTests := rec(
   ToGAPStabChain := function (bsgs)

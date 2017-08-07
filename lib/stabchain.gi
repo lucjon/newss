@@ -220,6 +220,21 @@ end);
 ### Functions for manipulating stabiliser chains
 ###
 
+InstallGlobalFunction(ChangeBaseOfBSGS, function (bsgs, new_base)
+  # For now, we just re-run Schreier–Sims with the given base. Knowing we
+  # have a base makes this a lot faster, but in general we can do much better
+  # than this.
+  bsgs.base := new_base;
+  bsgs.sgs := GeneratorsOfGroup(bsgs.group);
+  bsgs.stabgens := [];
+  bsgs.stabilizers := [];
+  bsgs.orbits := [];
+  bsgs.orbitsizes := [];
+  bsgs.options.known_base := new_base;
+  bsgs.options.IsIdentity := NEWSS_IsIdentityByKnownBase;
+  bsgs.options.SchreierSims(bsgs);
+end);
+
 InstallGlobalFunction(RemoveRedundantGenerators, function (bsgs, keep_initial_gens)
   local i, new_gens, generator, sv, have_shrunk, j, k;
 
