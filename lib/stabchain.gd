@@ -73,6 +73,14 @@ DeclareGlobalFunction("EnableNewssOverloads");
 
 #! @Section Manipulating stabilizer chains
 
+#! @Arguments bsgs, new_base
+#! @Returns nothing
+#! @Description
+#! Modifies the given BSGS so that it contains a strong generating set and
+#! stabilizer chain relative to the base <C>new_base</C>. This function does not
+#! attempt to verify that <C>new_base</C> is in fact a base for the group.
+DeclareGlobalFunction("ChangeBaseOfBSGS");
+
 #! @Arguments bsgs
 #! @Returns nothing
 #! @Description
@@ -80,6 +88,21 @@ DeclareGlobalFunction("EnableNewssOverloads");
 #! chain) and basic orbits. Returns nothing; the chain is stored in the BSGS
 #! structure (see the function <Ref Func="BSGS"/>).
 DeclareGlobalFunction("ComputeChainForBSGS");
+
+#! @Arguments bsgs, g
+#! @Returns nothing
+#! @Description
+#! Conjugates the given stabilizer chain <C>bsgs</C> for a group $G$ by the
+#! permutation <C>g</C>, such that its base $[\beta_1, \ldots, \beta_n]$
+#! is now $[\beta_1^g, \ldots, \beta_n^g]$, and we have a stabilizer chain for
+#! $G^g$.
+DeclareGlobalFunction("ConjugateBSGS");
+
+#! @Arguments bsgs
+#! @Returns a new BSGS structure
+#! @Description
+#! Creates a deep copy of the given BSGS structure.
+DeclareGlobalFunction("CopyBSGS");
 
 #! @Arguments bsgs, keep_initial_gens
 #! @Returns a BSGS structure
@@ -90,12 +113,3 @@ DeclareGlobalFunction("ComputeChainForBSGS");
 #! remove any generator in the BSGS structure's <C>initial_gens</C> set (see
 #! <Ref Func="BSGS"/>).
 DeclareGlobalFunction("RemoveRedundantGenerators");
-
-#! @Arguments bsgs, g
-#! @Returns nothing
-#! @Description
-#! Conjugates the given stabilizer chain <C>bsgs</C> for a group $G$ by the
-#! permutation <C>g</C>, such that its base $[\beta_1, \ldots, \beta_n]$
-#! is now $[\beta_1^g, #! \ldots, \beta_n^g]$, and we have a stabilizer chain
-#! for $G^g$.
-DeclareGlobalFunction("ConjugateBSGS");

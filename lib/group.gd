@@ -10,6 +10,7 @@
 #! Return the order of the group $G$ described by the given BSGS structure.
 DeclareGlobalFunction("StabilizerChainOrder");
 
+
 #! @Section Permutations
 #! @Arguments bsgs, g
 #! @Returns a boolean
@@ -17,3 +18,4 @@ DeclareGlobalFunction("StabilizerChainOrder");
 #! Returns <K>true</K> if the permutation $g$ is in the group described by the
 #! BSGS structure <C>bsgs</C>, otherwise returns <K>false</K>.
 DeclareGlobalFunction("StabilizerChainContains");
+

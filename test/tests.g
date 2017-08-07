@@ -522,26 +522,62 @@ DefaultTests := rec(
 
   Order := function (bsgs)
     return StabilizerChainOrder(bsgs) = Size(bsgs.group);
-  end
+  end,
 );
 
 KnownBaseTests := rec(
-  KnownBase := function (bsgs)
+  ConstructKnownBase := function (bsgs)
     local new_chain;
     new_chain := BSGSFromGroup(bsgs.group, rec( known_base := bsgs.base ));
     return StabilizerChainOrder(bsgs) = StabilizerChainOrder(new_chain);
+  end,
+  
+  CheckKnownBase := function (bsgs)
+    local new_chain;
+    new_chain := BSGSFromGroup(bsgs.group, rec( known_base := bsgs.base ));
+    return StabilizerChainOrder(bsgs) = StabilizerChainOrder(new_chain) and
+           DefaultTests.Containment(new_chain);
   end
 );
-
 WithKnownBaseTests := ShallowCopy(KnownBaseTests);
 NEWSS_UpdateRecord(WithKnownBaseTests, DefaultTests);
 
+ChangeOfBaseTests := rec(
+  ChangeOfBase := function (bsgs)
+    local gens, new_base, i, pt;
+    # First, we change up the base a bit
+    gens := GeneratorsOfGroup(bsgs.group);
+    new_base := ShallowCopy(bsgs.base);
+    Shuffle(new_base);
+    for i in [1 .. Int(Size(bsgs.base)/10) + 1] do
+      pt := PseudoRandom(MovedPoints(bsgs.group));
+      if not (pt in new_base) then
+        Add(new_base, PseudoRandom(MovedPoints(bsgs.group)));
+      fi;
+    od;
+
+    # Then perform the change of base and do the usual verification step
+    ChangeBaseOfBSGS(bsgs, new_base);
+    return DefaultTests.Containment(bsgs);
+  end
+);
+WithChangeOfBaseTests := ShallowCopy(ChangeOfBaseTests);
+NEWSS_UpdateRecord(WithChangeOfBaseTests, DefaultTests);
+
 ToGAPStabChainTests := rec(
   ToGAPStabChain := function (bsgs)
-    local gap_sc, G;
+    local gap_sc, G, g, i;
     gap_sc := GAPStabChainFromBSGS(bsgs);
     G := Group(GeneratorsOfGroup(bsgs.group));
     SetStabChainMutable(G, gap_sc);
+
+    for i in [1 .. Minimum(Size(bsgs.group), 1024)] do
+      g := PseudoRandom(bsgs.group);
+      if not (g in G) then
+        return false;
+      fi;
+    od;
+
     return StabilizerChainOrder(bsgs) = Size(G) and BaseStabChain(G) = bsgs.base;
   end
 );
