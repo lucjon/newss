@@ -463,10 +463,14 @@ PerformTests := function(tests, user_opt)
 
     opt.Print(PickName(bsgs.group), ":\n");
     for test_name in RecNames(tests) do
+      # Some tests modify the BSGS; we want to copy it here so we don't count
+      # the copying as part of the time taken by the test
+      test_bsgs := CopyBSGS(bsgs);
+
       opt.Print("    ", test_name, "\n");
       test := tests.(test_name);
       t := Runtime();
-      success := test(bsgs);
+      success := test(test_bsgs);
       t := Runtime() - t;
 
       result.(Concatenation("time_", test_name)) := t;

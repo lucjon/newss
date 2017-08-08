@@ -314,3 +314,8 @@ InstallGlobalFunction(ConjugateBSGS, function (bsgs, g)
   bsgs.group := Group(bsgs.sgs);
   ComputeChainForBSGS(bsgs);
 end);
+
+
+InstallGlobalFunction(CopyBSGS, function (bsgs)
+  return StructuralCopy(bsgs);
+end);
