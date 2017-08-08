@@ -335,28 +335,6 @@ end);
 ## SchreierVectorForLevel
 ##
 
-InstallGlobalFunction(NEWSS_SchreierVector, function (sv, size, gens, to_compute)
-  local pt, gen, image, j;
-  if Size(to_compute) = 1 and Size(sv) = 0 then
-    sv[to_compute[1]] := -1;
-    size := 1;
-  fi;
-
-  while Size(to_compute) > 0 do
-    pt := Remove(to_compute, 1);
-    for j in [1 .. Size(gens)] do
-      gen := gens[j];
-      image := pt ^ gen;
-      if not IsBound(sv[image]) then
-        Add(to_compute, image);
-        sv[image] := j;
-        size := size + 1;
-      fi;
-    od;
-  od;
-  
-  return rec( sv := sv, size := size );
-end);
 
 InstallGlobalFunction(NEWSS_SVForLevel, function (bsgs, i)
   local sv;
@@ -394,36 +372,14 @@ fi;
 ### ExtendSchreierVector
 ###
 
-InstallGlobalFunction(NEWSS_ExtendSVByRecomputing, function (bsgs, i, gen)
-  bsgs.options.SchreierVectorForLevel(bsgs, i);
-end);
-
-InstallGlobalFunction(NEWSS_ExtendSchreierVector, function (bsgs, i, gen)
-  local sv, to_compute, size, n, pt, image, j, g;
-
+InstallGlobalFunction(NEWSS_ExtendSV, function (bsgs, i, gen)
+  local sv;
   if not IsBound(bsgs.orbits[i]) then
-    NEWSS_ExtendSVByRecomputing(bsgs, i, gen);
+    bsgs.options.SchreierVectorForLevel(bsgs, i);
+  else
+    sv := NEWSS_ExtendSchreierVector(bsgs.orbits[i], bsgs.orbitsizes[i], bsgs.stabgens[i], gen);
+    bsgs.orbitsizes[i] := sv.size;
   fi;
-
-  sv := bsgs.orbits[i];
-  to_compute := [];
-  size := bsgs.orbitsizes[i];
-  n := Size(bsgs.stabgens[i]);
-
-  for pt in [1 .. Size(sv)] do
-    if not IsBound(sv[pt]) then
-      continue;
-    fi;
-
-    image := pt ^ gen;
-    if not IsBound(sv[image]) then
-      Add(to_compute, image);
-      sv[image] := n;
-      size := size + 1;
-    fi;
-  od;
-
-  bsgs.orbitsizes[i] := NEWSS_SchreierVector(sv, size, bsgs.stabgens[i], to_compute).size;
 end);
 
 

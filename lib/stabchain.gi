@@ -32,7 +32,7 @@ InstallValue(NEWSS_DEFAULT_OPTIONS, Immutable(rec(
   Verify := NEWSS_VerifyByDeterministic,
   ExtendBaseForLevel := NEWSS_FirstMovedPoint,
   SchreierVectorForLevel := NEWSS_SVForLevel,
-  ExtendSchreierVector := NEWSS_ExtendSchreierVector,
+  ExtendSchreierVector := NEWSS_ExtendSV,
 
   perm_representation := NEWSS_PERMWORD_REPRESENTATION,
   fall_back_to_deterministic := true,
@@ -45,7 +45,7 @@ InstallValue(NEWSS_DETERMINISTIC_OPTIONS, Immutable(rec(
   Verify := ReturnTrue,
   ExtendBaseForLevel := NEWSS_PickFromOrbits,
   SchreierVectorForLevel := NEWSS_SVForLevel,
-  ExtendSchreierVector := NEWSS_ExtendSchreierVector,
+  ExtendSchreierVector := NEWSS_ExtendSV,
 
   # We need this here since a user could specify a random algorithm in their
   # options, even in the case where we would have picked a deterministic one,

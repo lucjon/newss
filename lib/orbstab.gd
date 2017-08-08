@@ -75,3 +75,15 @@ DeclareGlobalFunction("SchreierVectorPermFromBasePoint");
 #! <Ref Sect="Chapter_Miscellany_Section_Permutation_words"/> on permutation words.
 #! If <C>beta</C> is not in the given orbit, return <K>false</K>.
 DeclareGlobalFunction("SchreierVectorWordFromBasePoint");
+
+#! @Arguments X, sv, beta
+#! @Returns a permutation in $G_{\rm beta}$, where $G = \langle X \rangle$.
+#! @Description
+#! Given a Schreier vector <C>sv</C> for the orbit of <C>beta</C> under a group
+#! $G$ return a random element of the subgroup of $G$ stabilizing <C>beta</C>.
+#! The parameter <C>X</C> specifies the group $G$ as a list of generators,
+#! as used to construct <C>sv</C>.
+DeclareGlobalFunction("RandomStabilizerElement");
+
+DeclareGlobalFunction("NEWSS_SchreierVector");
+DeclareGlobalFunction("NEWSS_ExtendSchreierVector");
