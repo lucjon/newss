@@ -298,19 +298,9 @@ end);
 
 
 InstallGlobalFunction(ConjugateBSGS, function (bsgs, g)
-  local ConjugateByG;
-  ConjugateByG := function (L)
-    local i;
-    for i in [1 .. Size(L)] do
-      if IsBound(L[i]) then
-        L[i] := L[i] ^ g;
-      fi;
-    od;
-  end;
-
   EnsureBSGSChainComputed(bsgs);
-  ConjugateByG(bsgs.base);
-  ConjugateByG(bsgs.sgs);
+  bsgs.base := List(bsgs.base, b -> b ^ g);
+  bsgs.sgs := List(bsgs.sgs, x -> x ^ g);
   bsgs.group := Group(bsgs.sgs);
   ComputeChainForBSGS(bsgs);
 end);
@@ -318,4 +308,46 @@ end);
 
 InstallGlobalFunction(CopyBSGS, function (bsgs)
   return StructuralCopy(bsgs);
+end);
+
+
+# NEWSS_PerformBaseSwap(bsgs, i)
+# Swap base points base[i] and base[i+1] using a randomised algorithm.
+InstallGlobalFunction(NEWSS_PerformBaseSwap, function (bsgs, i)
+  local T, beta, stab_sv, orb_sv, target_size, gen;
+
+  if i < 1 or i > Size(bsgs.base) - 1 then
+    Error("cannot swap base points out of range");
+  fi;
+  
+  if IsBound(bsgs.stabgens[i + 2]) then
+    T := ShallowCopy(bsgs.stabgens[i + 2]);
+  else
+    T := [];
+  fi;
+
+  # The bulk of the effort is computing the new stabgens[i+1] and orbits[i+1]
+  beta := bsgs.base[i + 1];
+  stab_sv := NEWSS_SchreierVector([], 0, bsgs.stabgens[i], [beta]);
+  orb_sv := NEWSS_SchreierVector([], 0, T, [bsgs.base[i]]);
+  # We know the size to expect by the Orbit-Stabilizer theorem
+  target_size := bsgs.orbitsizes[i] * bsgs.orbitsizes[i + 1] / stab_sv.size;
+
+  while orb_sv.size < target_size do
+    gen := RandomStabilizerElement(bsgs.stabgens[i], stab_sv.sv, beta);
+    if gen <> () then
+      Add(T, gen);
+      Add(bsgs.sgs, gen);
+      orb_sv := NEWSS_ExtendSchreierVector(orb_sv.sv, orb_sv.size, T, gen);
+    fi;
+  od;
+
+  # Now perform the actual swapping
+  bsgs.base[i + 1] := bsgs.base[i];
+  bsgs.base[i] := beta;
+  bsgs.stabgens[i + 1] := T;
+  bsgs.orbits[i] := stab_sv.sv;
+  bsgs.orbitsizes[i + 1] := stab_sv.sv;
+  bsgs.orbits[i + 1] := orb_sv.sv;
+  bsgs.orbitsizes[i + 1] := orb_sv.size;
 end);

@@ -549,6 +549,7 @@ NEWSS_UpdateRecord(WithKnownBaseTests, DefaultTests);
 ChangeOfBaseTests := rec(
   ChangeOfBase := function (bsgs)
     local gens, new_base, i, pt;
+
     # First, we change up the base a bit
     gens := GeneratorsOfGroup(bsgs.group);
     new_base := ShallowCopy(bsgs.base);
@@ -562,6 +563,11 @@ ChangeOfBaseTests := rec(
 
     # Then perform the change of base and do the usual verification step
     ChangeBaseOfBSGS(bsgs, new_base);
+    return DefaultTests.Containment(bsgs);
+  end,
+
+  BaseSwap := function (bsgs)
+    NEWSS_PerformBaseSwap(bsgs, PseudoRandom([1 .. Size(bsgs.base) - 1]));
     return DefaultTests.Containment(bsgs);
   end
 );

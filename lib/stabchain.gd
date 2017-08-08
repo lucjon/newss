@@ -113,3 +113,6 @@ DeclareGlobalFunction("CopyBSGS");
 #! remove any generator in the BSGS structure's <C>initial_gens</C> set (see
 #! <Ref Func="BSGS"/>).
 DeclareGlobalFunction("RemoveRedundantGenerators");
+
+
+DeclareGlobalFunction("NEWSS_PerformBaseSwap");
