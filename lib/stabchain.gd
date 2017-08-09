@@ -85,6 +85,9 @@ DeclareGlobalFunction("EnableNewssOverloads");
 #! attempt to verify that <C>new_base</C> is in fact a base for the group.
 DeclareGlobalFunction("ChangeBaseOfBSGS");
 
+DeclareGlobalFunction("ChangeBaseByPointSwap");
+DeclareGlobalFunction("ChangeBaseByRecomputing");
+
 #! @Arguments bsgs
 #! @Returns nothing
 #! @Description
@@ -118,5 +121,6 @@ DeclareGlobalFunction("CopyBSGS");
 #! <Ref Func="BSGS"/>).
 DeclareGlobalFunction("RemoveRedundantGenerators");
 
-
 DeclareGlobalFunction("NEWSS_PerformBaseSwap");
+DeclareGlobalFunction("NEWSS_AppendTrivialBasePoint");
+DeclareGlobalFunction("NEWSS_InsertRedundantBasePoint");

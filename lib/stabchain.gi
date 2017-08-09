@@ -233,7 +233,95 @@ end);
 ### Functions for manipulating stabiliser chains
 ###
 
+InstallGlobalFunction(ChangeBaseByPointSwap, function (bsgs, new_base)
+  local pt, stabilized, i, j;
+  for j in [1 .. Size(new_base)] do
+    pt := new_base[j];
+    stabilized := false;
+
+    for i in [j .. Size(bsgs.base)] do
+      stabilized := ForAll(bsgs.stabgens[i], g -> pt ^ g = pt);
+      if bsgs.base[i] = pt or stabilized then
+        break;
+      fi;
+    od;
+
+    if bsgs.base[i] = pt then
+      # We still want to swap our point closer to the start, but the index will
+      # be off since the code below assumes we added a point.
+      i := i - 1;
+    elif stabilized then
+      # When we get here, we are able to insert it after point i as a redundant
+      # base point, since we know it is stabilized by the previous group. (This
+      # may be at the end of the list.)
+      Info(NewssInfo, 3, "inserting redundant base point ", pt, " at ", i);
+      NEWSS_InsertRedundantBasePoint(bsgs, i, pt);
+    else
+      # If we weren't even stabilized by some existing subgroup in the chain,
+      # the best we can do is add it to the end of the base, and with trivial
+      # stabilizer group
+      Info(NewssInfo, 3, "appending trivial base point ", pt, " at ", i);
+      NEWSS_AppendTrivialBasePoint(bsgs, pt);
+    fi;
+
+    # Then we swap it back to its intended position.
+    while i >= j do
+      Info(NewssInfo, 3, "swapping ", pt, " at ", i, " with ", bsgs.base[i + 1], " at ", i + 1);
+      NEWSS_PerformBaseSwap(bsgs, i);
+      i := i - 1;
+    od;
+  od;
+
+  # If the list supplied is genuinely a base, then there will be a 'tail' of
+  # extraneous trivial base points which were in the old base but not the new;
+  # we should dispose of them now.
+  i := Size(bsgs.base);
+  while IsTrivial(bsgs.stabilizers[i]) and not (bsgs.base[i] in new_base) do
+    Remove(bsgs.base, i);
+    Remove(bsgs.stabgens, i);
+    Remove(bsgs.stabilizers, i);
+    Remove(bsgs.orbits, i);
+    Remove(bsgs.orbitsizes, i);
+    i := i - 1;
+  od;
+end);
+
+
+# Insert a new point <C>pt</C> at position <C>i + 1</C> in the base of the BSGS
+# structure <C>bsgs</C> with the same stabilizer group as in position i. This
+# function does not check that bsgs.stabilizers[i] does, in fact, stabilise
+# <C>pt</C>.
+InstallGlobalFunction(NEWSS_InsertRedundantBasePoint, function (bsgs, i, pt)
+  local orb;
+  # The stabilizer group is just a copy
+  Add(bsgs.base, pt, i + 1);
+  Add(bsgs.stabgens, ShallowCopy(bsgs.stabgens[i]), i + 1);
+  Add(bsgs.stabilizers, bsgs.stabilizers[i], i + 1);
+  # but the orbit requires some actual computation, since it will be different.
+  orb := NEWSS_SchreierVector([], 0, bsgs.stabgens[i + 1], [pt]);
+  Add(bsgs.orbits, orb.sv, i + 1);
+  Add(bsgs.orbitsizes, orb.size, i + 1);
+end);
+
+# Append a new base point <C>pt</C> with trivial stabilizer to the chain. T
+InstallGlobalFunction(NEWSS_AppendTrivialBasePoint, function (bsgs, pt)
+  local orb;
+  Add(bsgs.base, pt);
+  Add(bsgs.stabgens, [()]);
+  Add(bsgs.stabilizers, Group(()));
+  orb := [];
+  orb[pt] := -1;
+  Add(bsgs.orbits, orb);
+  Add(bsgs.orbitsizes, 1);
+end);
+
+
+
 InstallGlobalFunction(ChangeBaseOfBSGS, function (bsgs, new_base)
+  ChangeBaseByPointSwap(bsgs, new_base);
+end);
+
+InstallGlobalFunction(ChangeBaseByRecomputing, function (bsgs, new_base)
   # For now, we just re-run Schreier–Sims with the given base. Knowing we
   # have a base makes this a lot faster, but in general we can do much better
   # than this.
@@ -351,6 +439,7 @@ InstallGlobalFunction(NEWSS_PerformBaseSwap, function (bsgs, i)
       Add(T, gen);
       Add(bsgs.sgs, gen);
       orb_sv := NEWSS_ExtendSchreierVector(orb_sv.sv, orb_sv.size, T, gen);
+      Print("attempting to adjoin ", gen, "\n");
     fi;
   od;
 
