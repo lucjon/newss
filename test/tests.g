@@ -412,7 +412,7 @@ DEFAULT_TEST_OPTIONS := rec(
 
 PerformTests := function(tests, user_opt)
   local test_results, opt, groups, stab_chains, t, bsgs, result, test, G, i,
-        test_name, success, our_time, gap_time, new_chain;
+        test_name, test_bsgs, success, our_time, gap_time, new_chain;
   test_results := [];
   opt := ShallowCopy(user_opt);
   NEWSS_UpdateRecord(opt, DEFAULT_TEST_OPTIONS);
@@ -506,12 +506,10 @@ FailTests := rec(
   end
 );
 
-DefaultTests := rec(
-  Containment := function (H_sc)
-    local G, H, actually_in_H, think_in_H, x, Sn;
+ContainmentTest := function (H, H_sc, n)
+    local G, actually_in_H, think_in_H, x, Sn;
     Sn := SymmetricGroup(LargestMovedPoint(H_sc.group));
-    G := List([1 .. NUM_RANDOM_TEST_ELTS], i -> PseudoRandom(Sn));
-    H := H_sc.group;
+    G := List([1 .. n], i -> PseudoRandom(Sn));
 
     for x in G do
       actually_in_H := x in H;
@@ -522,6 +520,11 @@ DefaultTests := rec(
     od;
 
     return true;
+end;
+
+DefaultTests := rec(
+  Containment := function (H_sc)
+    return ContainmentTest(H_sc.group, H_sc, NUM_RANDOM_TEST_ELTS);
   end,
 
   Order := function (bsgs)
@@ -588,6 +591,8 @@ ToGAPStabChainTests := rec(
       fi;
     od;
 
-    return StabilizerChainOrder(bsgs) = Size(G) and BaseStabChain(G) = bsgs.base;
+    return StabilizerChainOrder(bsgs) = Size(G) and
+           BaseStabChain(gap_sc) = bsgs.base and
+           ContainmentTest(G, bsgs, NUM_RANDOM_TEST_ELTS / 4);
   end
 );

@@ -144,7 +144,8 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
 end);
 
 InstallGlobalFunction(GAPStabChainFromBSGS, function (bsgs)
-  local top, prev, current, next, i, j, gen;
+  local labels, top, prev, current, pt, gen, image, next, genlabels,
+        generators, i, j, to_compute;
 
   EnsureBSGSChainComputed(bsgs);
 
@@ -164,15 +165,26 @@ InstallGlobalFunction(GAPStabChainFromBSGS, function (bsgs)
     current.generators := ShallowCopy(bsgs.stabgens[i]);
 
     current.orbit := [bsgs.base[i]];
-    current.transversal := [()];
-    current.translabels := [1];
-    for j in [1 .. Size(bsgs.orbits[i])] do
-      if j <> bsgs.base[i] and IsBound(bsgs.orbits[i][j]) then
-        gen := bsgs.stabgens[i][bsgs.orbits[i][j]];
-        Add(current.orbit, j);
-        current.transversal[j] := gen;
-        current.translabels[j] := Position(bsgs.sgs, gen) + 1;
-      fi;
+    current.transversal := [];
+    current.translabels := [];
+    current.transversal[bsgs.base[i]] := ();
+    current.translabels[bsgs.base[i]] := 1;
+
+    # We need to recompute the orbits `the other way around', which is how GAP
+    # expects them. This could be slightly faster than the original computation
+    # since we know the size of orbit to expect.
+    to_compute := [bsgs.base[i]];
+    while Size(to_compute) > 0 and Size(current.orbit) < bsgs.orbitsizes[i] do
+      pt := Remove(to_compute, 1);
+      for gen in bsgs.stabgens[i] do
+        image := pt / gen;
+        if not IsBound(current.transversal[image]) then
+          current.transversal[image] := gen;
+          current.translabels[image] := Position(current.labels, gen);
+          Add(current.orbit, image);
+          Add(to_compute, image);
+        fi;
+      od;
     od;
 
     if i <> Size(bsgs.base) then
