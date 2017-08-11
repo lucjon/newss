@@ -454,7 +454,7 @@ PerformTests := function(tests, user_opt)
                           success_BSGSFromGroup := true,
                           success_StabChain := true,
                           success := true));
-    opt.Print("    ok.\n");
+    opt.Print("    ok in ", our_time, " ms.\n");
   od;
 
   for i in [1 .. Size(stab_chains)] do
@@ -564,9 +564,11 @@ ChangeOfBaseTests := rec(
       fi;
     od;
 
+    Print("( ", new_base, " ...)\n");
+
     # Then perform the change of base and do the usual verification step
     ChangeBaseOfBSGS(bsgs, new_base);
-    return DefaultTests.Containment(bsgs);
+    return bsgs.base = new_base and DefaultTests.Containment(bsgs);
   end,
 
   BaseSwap := function (bsgs)
@@ -596,3 +598,7 @@ ToGAPStabChainTests := rec(
            ContainmentTest(G, bsgs, NUM_RANDOM_TEST_ELTS / 4);
   end
 );
+
+AllTests := ShallowCopy(WithChangeOfBaseTests);
+NEWSS_UpdateRecord(AllTests, KnownBaseTests);
+NEWSS_UpdateRecord(AllTests, ToGAPStabChainTests);
