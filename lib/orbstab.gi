@@ -94,18 +94,6 @@ InstallGlobalFunction(RandomStabilizerElement, function (X, sv, beta)
   return g * Inverse(h);
 end);
 
-InstallGlobalFunction(NOrbit, function (X, alpha)
-  return NOrbitStabilizer(X, alpha, OnPoints, false).orbit;
-end);
-
-InstallGlobalFunction(NStabilizer, function (X, alpha)
-  return NOrbitStabilizer(X, alpha, OnPoints, false).stabilizer;
-end);
-
-InstallGlobalFunction(NSetStabilizer, function (X, A)
-  return NOrbitStabilizer(X, A, OnSets, false).stabilizer;
-end);
-
 InstallGlobalFunction(Stabilizes, function (g, O)
   local o;
 

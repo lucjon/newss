@@ -21,28 +21,6 @@
 #! $\Omega$ is a set of natural numbers.
 DeclareGlobalFunction("NOrbitStabilizer");
 
-#! @Arguments X_or_G, alpha
-#! @Returns the orbit of <C>alpha</C> in $G$
-#! @Description
-#! Given a permutation group $G$ with generating set $X$ acting on $\Omega$,
-#! and an element alpha of $\Omega$, computes the orbit of <C>alpha</C> in $G$.
-DeclareGlobalFunction("NOrbit");
-
-#! @Arguments X_or_G, alpha
-#! @Returns the stabilizer of <C>alpha</C> in $G$
-#! @Description
-#! Given a permutation group $G$ with generating set $X$ acting on $\Omega$, and
-#! an element <C>alpha</C> of $\Omega$, returns the stabilizer of <C>alpha</C>
-#! in $G$; i.e. the subgroup of $G$ whose elements fix <C>alpha</C>.
-DeclareGlobalFunction("NStabilizer");
-
-#! @Arguments X_or_G, A
-#! @Returns the setwise stabilizer of <C>A</C> in $G$
-#! @Description
-#! Given a permutation group $G$ with generating set $X$ acting on $\Omega$, and
-#! a subset $A$ of $\Omega$, return the setwise stabiliser of $A$ in $G$.
-DeclareGlobalFunction("NSetStabilizer");
-
 #! @Arguments g, O
 #! @Returns a boolean
 #! @Description
