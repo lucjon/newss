@@ -2,24 +2,7 @@
 
 #! @Chapter Orbits and Stabilizers
 
-#! @Section Orbit/Stabilizer computation
-
-#! @Arguments X_or_G, alpha, action, compute_sv
-#! @Returns a record with the results of the orbit/stabilizer computation
-#! @Description
-#! Given a permutation group $G$ with generating set $X$ acting on $\Omega$
-#! (by a function <C>action</C>), and an element <C>alpha</C> of $\Omega$,
-#! compute a record with the following members:
-#! * **orbit**: the orbit of alpha in $G$,
-#! * **moves**: the element <C>moves[i]</C> is a permutation such that
-#!              $$ \mathrm{moves}[i]^{\rm alpha} = O[i], $$
-#! * **sv**: a Schreier vector for alpha in $G$ (if <C>compute_sv</C> is
-#!           <K>true</K>),
-#! * **stabilizer**:  the stabiliser of alpha in $G$.
-#! This corresponds to the procedures OrbitStabilizer, OrbitSv in §4.1 of Holt,
-#! et al. Note that this function can only compute the Schreier vector if
-#! $\Omega$ is a set of natural numbers.
-DeclareGlobalFunction("NOrbitStabilizer");
+#! @Section Stabilizers
 
 #! @Arguments g, O
 #! @Returns a boolean
@@ -63,5 +46,17 @@ DeclareGlobalFunction("SchreierVectorWordFromBasePoint");
 #! as used to construct <C>sv</C>.
 DeclareGlobalFunction("RandomStabilizerElement");
 
+#! @Arguments sv, size, gens, to_compute
+#! @Returns a record with fields <C>sv</C> containing a Schreier vector and
+#! <C>size</C>, the number of points in the orbit
+#! @Description
+#! (This is an internal function.)
+#! Extend a Schreier vector <C>sv</C> of size <C>size</C> to include the orbits
+#! of the elements in <C>to_compute</C> under the natural action of the
+#! permutations <C>gens</C>. To compute an orbit afresh, call with an empty
+#! vector, e.g.
+#! <Listing>
+#!   NEWSS_SchreierVector([], 0, gens, [beta]);
+#! </Listing>
 DeclareGlobalFunction("NEWSS_SchreierVector");
 DeclareGlobalFunction("NEWSS_ExtendSchreierVector");

@@ -31,6 +31,10 @@
 #!                     <C>base[i]</C> in $G^{(i)} =$ <C>stabilizers[i]</C>.
 #! * ***orbitsizes**:  A list whose $i$-th element is the number of elements in the orbit
 #!                     of <C>base[i]</C> in $G^{(i)}$.
+#! * ***options**:     If a stabilizer chain was computed for this BSGS using
+#!                     <Ref Func="BSGSFromGroup"/>, then the field <C>options</C>
+#!                     contains the final set of options used in the computation; see
+#!                     <Ref Sect="Chapter_Stabilizer_Chains_Section_Options_for_stabilizer_chain_creation"/>.
 #!
 #! The fields marked * are present only if <C>has_chain = </C><K>true</K>; see the
 #! function <Ref Func="ComputeChainForBSGS"/>. This function does not compute the
