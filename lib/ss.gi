@@ -172,7 +172,7 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs)
     fi;
 
     # We know we're correct if the orders match.
-    if can_verify_order and Product(bsgs.orbitsizes) = Size(bsgs.group) then
+    if can_verify_order and Product(List(bsgs.orbits, O -> O.size)) = Size(bsgs.group) then
       break;
     fi;
   od;
@@ -226,7 +226,7 @@ end);
 ##
 
 InstallGlobalFunction(NEWSS_VerifyByOrder, function (bsgs)
-  return HasSize(bsgs.group) and Product(bsgs.orbitsizes) = Size(bsgs.group);
+  return HasSize(bsgs.group) and Product(List(bsgs.orbits, O -> O.size)) = Size(bsgs.group);
 end);
 
 InstallGlobalFunction(NEWSS_VerifyByDeterministic, function (bsgs)
@@ -305,8 +305,8 @@ InstallGlobalFunction(NEWSS_PickFromOrbits, function (bsgs, level, culprit)
   min_level := Maximum(1, level - bsgs.options.orbits_to_consider - 1);
 
   repeat
-    for i in [1 .. Size(bsgs.orbits[orbit_level])] do
-      if IsBound(bsgs.orbits[orbit_level][i]) and bsgs.orbits[orbit_level][i] <> -1 then
+    for i in [1 .. Size(bsgs.orbits[orbit_level].sv)] do
+      if IsBound(bsgs.orbits[orbit_level].sv[i]) and bsgs.orbits[orbit_level].sv[i] <> -1 then
         if i ^ culprit <> i then
           point := i;
           break;
@@ -338,14 +338,14 @@ end);
 
 InstallGlobalFunction(NEWSS_SVForLevel, function (bsgs, i)
   local sv;
-  sv := NEWSS_SchreierVector([], 0, bsgs.stabgens[i], [bsgs.base[i]]);
-  bsgs.orbits[i] := sv.sv;
-  bsgs.orbitsizes[i] := sv.size;
-  return sv.sv;
+  sv := SchreierVectorForOrbit(bsgs.stabgens[i], bsgs.base[i]);
+  bsgs.orbits[i] := sv;
+  return sv;
 end);
 
 
 if IsBound(ORB) then
+  # XXX since orbit refactor, this no longer works... XXX
   InstallGlobalFunction(NEWSS_SVFromOrb, function (bsgs, i)
     local O, orb_sv, sv, j, size;
     O := Orb(bsgs.stabgens[i], bsgs.base[i], OnPoints, rec( schreier := true ));
@@ -377,8 +377,7 @@ InstallGlobalFunction(NEWSS_ExtendSV, function (bsgs, i, gen)
   if not IsBound(bsgs.orbits[i]) then
     bsgs.options.SchreierVectorForLevel(bsgs, i);
   else
-    sv := NEWSS_ExtendSchreierVector(bsgs.orbits[i], bsgs.orbitsizes[i], bsgs.stabgens[i], gen);
-    bsgs.orbitsizes[i] := sv.size;
+    ExtendSchreierVector(bsgs.orbits[i], gen);
   fi;
 end);
 
@@ -422,29 +421,27 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
     local x, u_beta_x, gen, image;
 
     if iter!.gen_iter = false or IsDoneIterator(iter!.gen_iter) then
-      while iter!.orbit_index <= Size(bsgs.orbits[i]) do
+      while iter!.orbit_index <= Size(bsgs.orbits[i].sv) do
         iter!.orbit_index := iter!.orbit_index + 1;
-        if IsBound(bsgs.orbits[i][iter!.orbit_index]) then
+        if IsBound(bsgs.orbits[i].sv[iter!.orbit_index]) then
           break;
         fi;
       od;
 
-      if iter!.orbit_index > Size(bsgs.orbits[i]) then
+      if iter!.orbit_index > Size(bsgs.orbits[i].sv) then
         # Quite messy. Unfortunately checking for this case properly in
         # IsDoneIterator would get even messier.
         return ();
       fi;
 
-      iter!.u_beta := bsgs.options.PermFromBasePoint(bsgs.stabgens[i],
-                                                     bsgs.orbits[i],
+      iter!.u_beta := bsgs.options.PermFromBasePoint(bsgs.orbits[i],
                                                      iter!.orbit_index);
       iter!.gen_iter := Iterator(bsgs.stabgens[i]);
     fi;
 
     x := bsgs.options.LiftPerm(NextIterator(iter!.gen_iter));
     image := bsgs.options.ImagePerm(iter!.orbit_index, iter!.u_beta);
-    u_beta_x := bsgs.options.PermFromBasePoint(bsgs.stabgens[i],
-                                               bsgs.orbits[i],
+    u_beta_x := bsgs.options.PermFromBasePoint(bsgs.orbits[i],
                                                image);
 
     gen := bsgs.options.MulPerm(iter!.u_beta, x, bsgs.options.InvPerm(u_beta_x));
@@ -457,7 +454,7 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
     orbit_index := 0,
     NextIterator := SchreierGenerators_Next,
     IsDoneIterator := function (iter)
-      return iter!.orbit_index > Size(bsgs.orbits[i]) and
+      return iter!.orbit_index > Size(bsgs.orbits[i].sv) and
              iter!.gen_iter <> false and IsDoneIterator(iter!.gen_iter);
     end,
     ShallowCopy := function (iter)
@@ -484,11 +481,11 @@ InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
 
   for i in [1 .. Size(bsgs.base)] do
     beta := bsgs.base[i] / h;
-    if not IsBound(bsgs.orbits[i][beta]) then
+    if not IsBound(bsgs.orbits[i].sv[beta]) then
       return rec(residue := h, level := i);
     fi;
     
-    u := SchreierVectorPermFromBasePoint(bsgs.stabgens[i], bsgs.orbits[i], beta);
+    u := SchreierVectorPermFromBasePoint(bsgs.orbits[i], beta);
     h := u * h;
   od;
 
@@ -507,11 +504,11 @@ InstallGlobalFunction(StabilizerChainStripWord, function (bsgs, g)
 
   for i in [1 .. Size(bsgs.base)] do
     beta := PermWordPreImage(h, bsgs.base[i]);
-    if not IsBound(bsgs.orbits[i][beta]) then
+    if not IsBound(bsgs.orbits[i].sv[beta]) then
       return rec(residue := h, level := i);
     fi;
     
-    u := SchreierVectorWordFromBasePoint(bsgs.stabgens[i], bsgs.orbits[i], beta);
+    u := SchreierVectorWordFromBasePoint(bsgs.orbits[i], beta);
     h := Concatenation(u, ShallowCopy(h));
   od;
 

@@ -93,7 +93,6 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
     B := BSGS(group, [], [()]);
     B.stabgens := [[]];
     B.orbits := [];
-    B.orbitsizes := [];
     B.have_chain := true;
     return B;
   fi;
@@ -174,7 +173,7 @@ InstallGlobalFunction(GAPStabChainFromBSGS, function (bsgs)
     # expects them. This could be slightly faster than the original computation
     # since we know the size of orbit to expect.
     to_compute := [bsgs.base[i]];
-    while Size(to_compute) > 0 and Size(current.orbit) < bsgs.orbitsizes[i] do
+    while Size(to_compute) > 0 and Size(current.orbit) < bsgs.orbits[i].size do
       pt := Remove(to_compute, 1);
       for gen in bsgs.stabgens[i] do
         image := pt / gen;
@@ -242,7 +241,6 @@ InstallGlobalFunction(ChangeBaseOfBSGS, function (bsgs, new_base)
   bsgs.stabgens := [];
   bsgs.stabilizers := [];
   bsgs.orbits := [];
-  bsgs.orbitsizes := [];
   bsgs.options.known_base := new_base;
   bsgs.options.IsIdentity := NEWSS_IsIdentityByKnownBase;
   bsgs.options.SchreierSims(bsgs);
@@ -261,11 +259,11 @@ InstallGlobalFunction(RemoveRedundantGenerators, function (bsgs, keep_initial_ge
         continue;
       fi;
 
-      sv := NEWSS_SchreierVector([], 0, new_gens, [bsgs.base[i]]).sv;
+      sv := SchreierVectorForOrbit(new_gens, bsgs.base[i]).sv;
 
       have_shrunk := false;
-      for j in [1 .. Size(bsgs.orbits[i])] do
-        if IsBound(bsgs.orbits[j]) and not IsBound(sv[j]) then
+      for j in [1 .. Size(bsgs.orbits[i].sv)] do
+        if IsBound(bsgs.orbits[i].sv[j]) and not IsBound(sv[j]) then
           have_shrunk := true;
           break;
         fi;
@@ -340,17 +338,16 @@ InstallGlobalFunction(NEWSS_PerformBaseSwap, function (bsgs, i)
 
   # The bulk of the effort is computing the new stabgens[i+1] and orbits[i+1]
   beta := bsgs.base[i + 1];
-  stab_sv := NEWSS_SchreierVector([], 0, bsgs.stabgens[i], [beta]);
-  orb_sv := NEWSS_SchreierVector([], 0, T, [bsgs.base[i]]);
+  stab_sv := SchreierVectorForOrbit(bsgs.stabgens[i], beta);
+  orb_sv := SchreierVectorForOrbit(T, bsgs.base[i]);
   # We know the size to expect by the Orbit-Stabilizer theorem
-  target_size := bsgs.orbitsizes[i] * bsgs.orbitsizes[i + 1] / stab_sv.size;
+  target_size := bsgs.orbits[i].size * bsgs.orbits[i + 1].size / stab_sv.size;
 
   while orb_sv.size < target_size do
     gen := RandomStabilizerElement(bsgs.stabgens[i], stab_sv.sv, beta);
     if gen <> () then
-      Add(T, gen);
       Add(bsgs.sgs, gen);
-      orb_sv := NEWSS_ExtendSchreierVector(orb_sv.sv, orb_sv.size, T, gen);
+      ExtendSchreierVector(orb_sv, gen);
     fi;
   od;
 
@@ -358,8 +355,6 @@ InstallGlobalFunction(NEWSS_PerformBaseSwap, function (bsgs, i)
   bsgs.base[i + 1] := bsgs.base[i];
   bsgs.base[i] := beta;
   bsgs.stabgens[i + 1] := T;
-  bsgs.orbits[i] := stab_sv.sv;
-  bsgs.orbitsizes[i + 1] := stab_sv.sv;
-  bsgs.orbits[i + 1] := orb_sv.sv;
-  bsgs.orbitsizes[i + 1] := orb_sv.size;
+  bsgs.orbits[i] := stab_sv;
+  bsgs.orbits[i + 1] := orb_sv;
 end);

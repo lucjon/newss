@@ -8,6 +8,6 @@ end);
 InstallGlobalFunction(StabilizerChainOrder, function (bsgs)
   local order, U;
   EnsureBSGSChainComputed(bsgs);
-  return Product(bsgs.orbitsizes);
+  return Product(List(bsgs.orbits, O -> O.size));
 end);
 
