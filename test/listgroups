@@ -4,7 +4,7 @@ ${GAP:-gap} -q <<EOF
 LoadPackage("newss");;
 ReadPackage("newss", "test/tests.g");;
 for g in LoadGroupsList("$1") do
-	Print(Name(g), " / ", NrMovedPoints(g), "\n");
+	Print(Name(g), " / ", NrMovedPoints(g), " (order known: ", HasSize(g), ")\n");
 od;
 QUIT_GAP(0);;
 EOF
