@@ -27,10 +27,7 @@ DeclareGlobalFunction("PermWordImage");
 #! @Returns the inverse of the given permutation word
 DeclareGlobalFunction("PermWordInverse");
 
-#! @Arguments word, pt
+#! @Arguments pt, word
 #! @Returns the preimage of the point <C>pt</C> under the permutation described
 #! by <C>word</C>
-#! @Description Note that the argument order is reversed from that of
-#! <Ref Func="PermWordImage"/>, to mirror the GAP syntax <C>pt ^ perm</C> for
-#! the image of a point, and <C>perm / pt</C> for the preimage.
 DeclareGlobalFunction("PermWordPreImage");

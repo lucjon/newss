@@ -5,9 +5,12 @@ InstallGlobalFunction(StabilizerChainContains, function (bsgs, g)
   return StabilizerChainStrip(bsgs, g).residue = ();
 end);
 
+InstallGlobalFunction(StabilizerChainOrderNC, function (bsgs)
+  return Product(List(bsgs.chain, c -> c.orbit.size));
+end);
+
 InstallGlobalFunction(StabilizerChainOrder, function (bsgs)
-  local order, U;
   EnsureBSGSChainComputed(bsgs);
-  return Product(List(bsgs.orbits, O -> O.size));
+  return StabilizerChainOrderNC(bsgs);
 end);
 

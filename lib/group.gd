@@ -10,6 +10,14 @@
 #! Return the order of the group $G$ described by the given BSGS structure.
 DeclareGlobalFunction("StabilizerChainOrder");
 
+#! @Arguments bsgs
+#! @Returns the order of $G$
+#! @Description
+#! Return the order of the group $G$ described by the given BSGS structure,
+#! without checking whether the BSGS structure has had a stabilizer chain
+#! computed.
+DeclareGlobalFunction("StabilizerChainOrderNC");
+
 
 #! @Section Permutations
 #! @Arguments bsgs, g

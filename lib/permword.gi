@@ -3,7 +3,7 @@ InstallGlobalFunction(PermWordInverse, function (word)
   return Reversed(List(word, Inverse));
 end);
 
-InstallGlobalFunction(PermWordPreImage, function (word, pt)
+InstallGlobalFunction(PermWordPreImage, function (pt, word)
   local perm;
   for perm in Reversed(word) do
     pt := pt / perm;
