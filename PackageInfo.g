@@ -21,5 +21,5 @@ SetPackageInfo( rec(
 	Dependencies := rec(
 		GAP := "4.5",
 		NeededOtherPackages := [ ["GAPDoc", ">=1.3"] ],
-		SuggestedOtherPackages := [ ["orb", ">=4.7.6"] ] ),
+		SuggestedOtherPackages := [ ["orb", ">=4.7.6"], ["io", ">=4.4.6"] ] ),
 	AvailabilityTest := ReturnTrue));
