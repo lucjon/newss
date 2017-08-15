@@ -1,9 +1,5 @@
 # vim: ft=gap sts=2 et sw=2
 
-# NEWSS_SchreierVector(sv, to_compute)
-# Extend a Schreier vector <C>sv</C> of size <C>size</C> to include the orbits
-# of the elements in <C>to_compute</C> under the natural action of the
-# permutations <C>gens</C>.
 InstallGlobalFunction(NEWSS_SchreierVector, function (sv, to_compute)
   local pt, gen, image, j;
 

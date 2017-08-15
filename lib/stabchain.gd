@@ -27,10 +27,10 @@
 #!                     with $k$ being the size of <C>sgs</C>.
 #! * ***stabgens**:    A list whose $i$-th element is a list of generators for the
 #!                     $i$-th stabilizer group.
-#! * ***orbits**:      A list whose $i$-th element is a Schreier vector for the orbit of
-#!                     <C>base[i]</C> in $G^{(i)} =$ <C>stabilizers[i]</C>.
-#! * ***orbitsizes**:  A list whose $i$-th element is the number of elements in the orbit
-#!                     of <C>base[i]</C> in $G^{(i)}$.
+#! * ***orbits**:      A list whose $i$-th element is a Schreier vector record
+#!                     describing the orbit of <C>base[i]</C> under
+#!                     <C>stabgens[i]</C> --- see section
+#!                     <Ref Sect="Chapter_Orbits_and_Stabilizers_Section_Schreier_vectors"/>.
 #! * ***options**:     If a stabilizer chain was computed for this BSGS using
 #!                     <Ref Func="BSGSFromGroup"/>, then the field <C>options</C>
 #!                     contains the final set of options used in the computation; see

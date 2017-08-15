@@ -80,14 +80,18 @@ DeclareGlobalFunction("SchreierVectorWordFromBasePoint");
 #! <C>beta</C>.
 DeclareGlobalFunction("RandomStabilizerElement");
 
-# @Arguments sv, size, gens, to_compute
-# @Returns a Schreier vector record
-# @Description
-# (This is an internal function.)
-# Extend a Schreier vector <C>sv</C> of size <C>size</C> to include the orbits
-# of the elements in <C>to_compute</C> under the natural action of the
-# permutations <C>gens</C>. To compute an orbit afresh, call with an empty
-# vector, e.g.
+#! @Arguments sv, to_compute
+#! @Returns a Schreier vector record
+#! @Description
+#! (This is an internal function.)
+#! Extend an orbit described by a Schreier vector record <A>sv</A> of the
+#! elements in <C>to_compute</C> under the natural action of the permutations
+#! <C>gens</C>.
 DeclareGlobalFunction("NEWSS_SchreierVector");
 
+#! @Arguments gens, point
+#! @Returns a Schreier vector record
+#! @Description
+#! Construct a Schreier vector record for the orbit of <A>point</A> under the
+#! permutations <A>gens</A>, without actually computing the orbit.
 DeclareGlobalFunction("NEWSS_EmptySchreierVector");
