@@ -6,7 +6,7 @@ InstallGlobalFunction(StabilizerChainContains, function (bsgs, g)
 end);
 
 InstallGlobalFunction(StabilizerChainOrderNC, function (bsgs)
-  return Product(List(bsgs.chain, c -> c.orbit.size));
+  return Product(List(bsgs!.chain, c -> c.orbit.size));
 end);
 
 InstallGlobalFunction(StabilizerChainOrder, function (bsgs)

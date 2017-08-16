@@ -48,19 +48,19 @@
 InstallGlobalFunction(SchreierSims, function (bsgs)
   local i, added_generator, stripped, iterators, g, l, need_to_adjoin, perm, id_result;
 
-  if not IsBound(bsgs.chain) then
-    bsgs.chain := [];
+  if not IsBound(bsgs!.chain) then
+    bsgs!.chain := [];
   fi;
 
-  bsgs.sgs := Filtered(bsgs.sgs, x -> x <> ());
-  if Size(bsgs.sgs) = 0 then
+  bsgs!.sgs := Filtered(bsgs!.sgs, x -> x <> ());
+  if Size(bsgs!.sgs) = 0 then
     # The trivial group!
     return;
   fi;
 
 
-  if Size(bsgs.base) = 0 then
-    bsgs.options.ExtendBaseForLevel(bsgs, 0, false);
+  if Size(bsgs!.base) = 0 then
+    bsgs!.options.ExtendBaseForLevel(bsgs, 0, false);
   fi;
 
   ComputeChainForBSGS(bsgs);
@@ -74,7 +74,7 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
   # since by the time we are here, we know the (k+ 1)th stabiliser is trivial
   # (k being the size of the base). Since this holds, the StabilizerChainStrip
   # procedure can still be used to check membership in the (i+1)th group.
-  i := Size(bsgs.base);
+  i := Size(bsgs!.base);
 
   iterators := [];
   while i >= 1 do
@@ -86,26 +86,26 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
 
     for g in iterators[i] do
       if g = () then continue; fi;
-      stripped := bsgs.options.Strip(bsgs, g);
+      stripped := bsgs!.options.Strip(bsgs, g);
 
       # If the stripped permutation is not the identity, it was not in the next
       # group --- so we adjoin it.
-      id_result := bsgs.options.IsIdentity(bsgs, stripped.residue);
+      id_result := bsgs!.options.IsIdentity(bsgs, stripped.residue);
       if not id_result.is_identity then
         Info(NewssInfo, 3, "Adjoining generator ", g);
         perm := id_result.perm;
-        Add(bsgs.sgs, perm);
+        Add(bsgs!.sgs, perm);
 
         # Additionally, if the strip procedure made it to the last iteration,
         # we know it fixes all the existing base points and that we need to
         # extend our basis again.
-        if stripped.level > Size(bsgs.base) then
-          bsgs.options.ExtendBaseForLevel(bsgs, i, perm);
+        if stripped.level > Size(bsgs!.base) then
+          bsgs!.options.ExtendBaseForLevel(bsgs, i, perm);
         fi;
 
         for l in [i + 1 .. stripped.level] do
-          Add(bsgs.chain[l].gens, perm);
-          bsgs.options.ExtendSchreierVector(bsgs, l, perm);
+          Add(bsgs!.chain[l].gens, perm);
+          bsgs!.options.ExtendSchreierVector(bsgs, l, perm);
           ComputeStabForBSGS(bsgs, l);
           # We might be able to avoid this as well.
           iterators[l] := SchreierGenerators(bsgs, l);
@@ -132,32 +132,32 @@ end);
 InstallGlobalFunction(RandomSchreierSims, function (bsgs)
   local no_sifted_this_round, can_verify_order, verified, g, stripped, l;
 
-  bsgs.sgs := List(bsgs.sgs);
+  bsgs!.sgs := List(bsgs!.sgs);
 
-  if Size(bsgs.base) = 0 then
-    bsgs.options.ExtendBaseForLevel(bsgs, 0, false);
+  if Size(bsgs!.base) = 0 then
+    bsgs!.options.ExtendBaseForLevel(bsgs, 0, false);
   fi;
 
   ComputeChainForBSGS(bsgs);
 
   no_sifted_this_round := 0;
-  can_verify_order := HasSize(bsgs.group);
+  can_verify_order := HasSize(bsgs!.group);
   verified := false;
 
-  while no_sifted_this_round < bsgs.options.sift_threshold do
-    g := PseudoRandom(bsgs.group);
+  while no_sifted_this_round < bsgs!.options.sift_threshold do
+    g := PseudoRandom(bsgs!.group);
     stripped := StabilizerChainStrip(bsgs, g);
 
-    if not bsgs.options.IsIdentity(bsgs, stripped.residue).is_identity then
-      Add(bsgs.sgs, stripped.residue);
+    if not bsgs!.options.IsIdentity(bsgs, stripped.residue).is_identity then
+      Add(bsgs!.sgs, stripped.residue);
 
-      if stripped.level > Size(bsgs.base) then
-        bsgs.options.ExtendBaseForLevel(bsgs, stripped.level, stripped.residue);
+      if stripped.level > Size(bsgs!.base) then
+        bsgs!.options.ExtendBaseForLevel(bsgs, stripped.level, stripped.residue);
       fi;
 
       for l in [2 .. stripped.level] do
-        Add(bsgs.chain[l].gens, stripped.residue);
-        bsgs.options.ExtendSchreierVector(bsgs, l, stripped.residue);
+        Add(bsgs!.chain[l].gens, stripped.residue);
+        bsgs!.options.ExtendSchreierVector(bsgs, l, stripped.residue);
         ComputeStabForBSGS(bsgs, l);
       od;
       no_sifted_this_round := 0;
@@ -166,7 +166,7 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs)
     fi;
 
     # We know we're correct if the orders match.
-    if can_verify_order and StabilizerChainOrderNC(bsgs) = Size(bsgs.group) then
+    if can_verify_order and StabilizerChainOrderNC(bsgs) = Size(bsgs!.group) then
       break;
     fi;
   od;
@@ -180,7 +180,7 @@ end);
 ##
 InstallGlobalFunction(NEWSS_IsIdentityByMul, function (bsgs, perm)
   if not IsPerm(perm) then
-    perm := bsgs.options.AsPerm(perm);
+    perm := bsgs!.options.AsPerm(perm);
   fi;
 
   return rec( is_identity := perm = (), perm := perm );
@@ -193,13 +193,13 @@ InstallGlobalFunction(NEWSS_IsIdentityByKnownBase, function (bsgs, perm_rep)
   if IsPerm(perm_rep) then
     image_fn := OnPoints;
   else
-    image_fn := bsgs.options.ImagePerm;
+    image_fn := bsgs!.options.ImagePerm;
   fi;
 
-  for b in bsgs.options.known_base do
+  for b in bsgs!.options.known_base do
     if image_fn(b, perm_rep) <> b then
       if not IsPerm(perm_rep) then
-        perm_rep := bsgs.options.AsPerm(perm_rep);
+        perm_rep := bsgs!.options.AsPerm(perm_rep);
       fi;
 
       return rec(
@@ -220,7 +220,7 @@ end);
 ##
 
 InstallGlobalFunction(NEWSS_VerifyByOrder, function (bsgs)
-  return HasSize(bsgs.group) and StabilizerChainOrderNC(bsgs) = Size(bsgs.group);
+  return HasSize(bsgs!.group) and StabilizerChainOrderNC(bsgs) = Size(bsgs!.group);
 end);
 
 InstallGlobalFunction(NEWSS_VerifyByDeterministic, function (bsgs)
@@ -238,14 +238,14 @@ InstallGlobalFunction(NEWSS_FirstMovedPoint, function (bsgs, level, culprit)
   if culprit = false then
     if level = 0 then
       # If we have an empty generating set we deserve to bail out here.
-      culprit := bsgs.sgs[1];
+      culprit := bsgs!.sgs[1];
     else
-      i := Size(bsgs.sgs);
-      culprit := bsgs.sgs[i];
+      i := Size(bsgs!.sgs);
+      culprit := bsgs!.sgs[i];
 
-      while Stabilizes(culprit, Reversed(bsgs.base)) and i > 0 do
+      while Stabilizes(culprit, Reversed(bsgs!.base)) and i > 0 do
         i := i - 1;
-        culprit := bsgs.sgs[i];
+        culprit := bsgs!.sgs[i];
       od;
 
       if i = 0 then
@@ -254,13 +254,13 @@ InstallGlobalFunction(NEWSS_FirstMovedPoint, function (bsgs, level, culprit)
     fi;
   fi;
 
-  point := First(MovedPoints(culprit), pt -> not (pt in bsgs.base));
+  point := First(MovedPoints(culprit), pt -> not (pt in bsgs!.base));
 
   if point = fail then
     Error("could not find point not fixed by culprit");
   fi;
 
-  Add(bsgs.base, point);
+  Add(bsgs!.base, point);
   if level > 0 then
     NEWSS_AppendEmptyChain(bsgs);
   fi;
@@ -273,9 +273,9 @@ InstallGlobalFunction(NEWSS_PickAscending, function (bsgs, level, culprit)
   if culprit = false then
     return NEWSS_FirstMovedPoint(bsgs, level, culprit);
   else
-    for i in [1 .. LargestMovedPoint(bsgs.group)] do
+    for i in [1 .. LargestMovedPoint(bsgs!.group)] do
       if i ^ culprit <> i then
-        Add(bsgs.base, i);
+        Add(bsgs!.base, i);
         if level > 0 then
           NEWSS_AppendEmptyChain(bsgs);
         fi;
@@ -290,16 +290,16 @@ end);
 InstallGlobalFunction(NEWSS_PickFromOrbits, function (bsgs, level, culprit)
   local point, orbit_level, min_level, i, sv;
 
-  if culprit = false or not IsBound(bsgs.chain) or Size(bsgs.chain) < level then
+  if culprit = false or not IsBound(bsgs!.chain) or Size(bsgs!.chain) < level then
     return NEWSS_FirstMovedPoint(bsgs, level, culprit);
   fi;
 
   point := 0;
   orbit_level := level;
-  min_level := Maximum(1, level - bsgs.options.orbits_to_consider - 1);
+  min_level := Maximum(1, level - bsgs!.options.orbits_to_consider - 1);
 
   repeat
-    sv := bsgs.chain[orbit_level].orbit.sv;
+    sv := bsgs!.chain[orbit_level].orbit.sv;
     for i in [1 .. Size(sv)] do
       if IsBound(sv[i]) and sv[i] <> -1 then
         if i ^ culprit <> i then
@@ -316,10 +316,10 @@ InstallGlobalFunction(NEWSS_PickFromOrbits, function (bsgs, level, culprit)
   until orbit_level < min_level;
 
   if point = 0 then
-    point := First(MovedPoints(culprit), pt -> not (pt in bsgs.base));
+    point := First(MovedPoints(culprit), pt -> not (pt in bsgs!.base));
   fi;
 
-  Add(bsgs.base, point);
+  Add(bsgs!.base, point);
   NEWSS_AppendEmptyChain(bsgs);
 
   return point;
@@ -333,8 +333,8 @@ end);
 
 InstallGlobalFunction(NEWSS_SVForLevel, function (bsgs, i)
   local sv;
-  sv := SchreierVectorForOrbit(bsgs.chain[i].gens, bsgs.base[i]);
-  bsgs.chain[i].orbit := sv;
+  sv := SchreierVectorForOrbit(bsgs!.chain[i].gens, bsgs!.base[i]);
+  bsgs!.chain[i].orbit := sv;
   return sv;
 end);
 
@@ -342,7 +342,7 @@ end);
 if IsBound(ORB) then
   InstallGlobalFunction(NEWSS_SVFromOrb, function (bsgs, i)
     local O, orb_sv, sv, j, size;
-    O := Orb(bsgs.chain[i].gens, bsgs.base[i], OnPoints, rec( schreier := true ));
+    O := Orb(bsgs!.chain[i].gens, bsgs!.base[i], OnPoints, rec( schreier := true ));
     orb_sv := Enumerate(O)!.schreiergen;
     size := 1;
 
@@ -355,8 +355,8 @@ if IsBound(ORB) then
     od;
 
     # orb uses fail instead of -1 for this sentinel
-    sv[bsgs.base[i]] := -1;
-    bsgs.chain[i].orbit := rec(sv := sv, size := size);
+    sv[bsgs!.base[i]] := -1;
+    bsgs!.chain[i].orbit := rec(sv := sv, size := size);
     return sv;
   end);
 fi;
@@ -367,10 +367,10 @@ fi;
 
 InstallGlobalFunction(NEWSS_ExtendSV, function (bsgs, i, gen)
   local sv;
-  if not IsBound(bsgs.chain[i].orbit) then
-    bsgs.options.SchreierVectorForLevel(bsgs, i);
+  if not IsBound(bsgs!.chain[i].orbit) then
+    bsgs!.options.SchreierVectorForLevel(bsgs, i);
   else
-    ExtendSchreierVector(bsgs.chain[i].orbit, gen);
+    ExtendSchreierVector(bsgs!.chain[i].orbit, gen);
   fi;
 end);
 
@@ -384,7 +384,7 @@ end);
 # they have not already been (see ComputeChainForBSGS). Returns nothing; the
 # chain is stored in the BSGS structure (see the function BSGS).
 InstallGlobalFunction(EnsureBSGSChainComputed, function (bsgs)
-  if not IsBound(bsgs.chain) then
+  if not IsBound(bsgs!.chain) then
     ComputeChainForBSGS(bsgs);
   fi;
 end);
@@ -397,10 +397,10 @@ InstallGlobalFunction(ComputeStabForBSGS, function (bsgs, i)
 
   # We special case the first entry.
   if i = 1 then
-    bsgs.chain[i].gens := bsgs.sgs;
-    bsgs.chain[i].group := bsgs.group;
+    bsgs!.chain[i].gens := bsgs!.sgs;
+    bsgs!.chain[i].group := bsgs!.group;
   else
-    bsgs.chain[i].group := Group(bsgs.chain[i].gens);
+    bsgs!.chain[i].group := Group(bsgs!.chain[i].gens);
   fi;
 end);
 
@@ -412,7 +412,7 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
   SchreierGenerators_Next := function (iter)
     local x, u_beta_x, gen, image, sv, chain;
 
-    chain := bsgs.chain[i];
+    chain := bsgs!.chain[i];
     if iter!.gen_iter = false or IsDoneIterator(iter!.gen_iter) then
       sv := chain.orbit.sv;
       while iter!.orbit_index <= Size(sv) do
@@ -428,16 +428,16 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
         return ();
       fi;
 
-      iter!.u_beta := bsgs.options.PermFromBasePoint(chain.orbit,
+      iter!.u_beta := bsgs!.options.PermFromBasePoint(chain.orbit,
                                                      iter!.orbit_index);
       iter!.gen_iter := Iterator(chain.gens);
     fi;
 
-    x := bsgs.options.LiftPerm(NextIterator(iter!.gen_iter));
-    image := bsgs.options.ImagePerm(iter!.orbit_index, iter!.u_beta);
-    u_beta_x := bsgs.options.PermFromBasePoint(chain.orbit, image);
+    x := bsgs!.options.LiftPerm(NextIterator(iter!.gen_iter));
+    image := bsgs!.options.ImagePerm(iter!.orbit_index, iter!.u_beta);
+    u_beta_x := bsgs!.options.PermFromBasePoint(chain.orbit, image);
 
-    gen := bsgs.options.MulPerm(iter!.u_beta, x, bsgs.options.InvPerm(u_beta_x));
+    gen := bsgs!.options.MulPerm(iter!.u_beta, x, bsgs!.options.InvPerm(u_beta_x));
     return gen;
   end;
 
@@ -446,7 +446,7 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
     orbit_index := 0,
     NextIterator := SchreierGenerators_Next,
     IsDoneIterator := function (iter)
-      return iter!.orbit_index > Size(bsgs.chain[i].orbit.sv) and
+      return iter!.orbit_index > Size(bsgs!.chain[i].orbit.sv) and
              iter!.gen_iter <> false and IsDoneIterator(iter!.gen_iter);
     end,
     ShallowCopy := function (iter)
@@ -471,13 +471,13 @@ InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
   h := g;
   i := 0;
 
-  for i in [1 .. Size(bsgs.base)] do
-    beta := bsgs.base[i] / h;
-    if not IsBound(bsgs.chain[i].orbit.sv[beta]) then
+  for i in [1 .. Size(bsgs!.base)] do
+    beta := bsgs!.base[i] / h;
+    if not IsBound(bsgs!.chain[i].orbit.sv[beta]) then
       return rec(residue := h, level := i);
     fi;
     
-    u := SchreierVectorPermFromBasePoint(bsgs.chain[i].orbit, beta);
+    u := SchreierVectorPermFromBasePoint(bsgs!.chain[i].orbit, beta);
     h := u * h;
   od;
 
@@ -494,14 +494,14 @@ InstallGlobalFunction(StabilizerChainStripWord, function (bsgs, g)
     h := [h];
   fi;
 
-  for i in [1 .. Size(bsgs.base)] do
-    beta := PermWordPreImage(bsgs.base[i], h);
-    if not IsBound(bsgs.chain[i].orbit.sv[beta]) then
+  for i in [1 .. Size(bsgs!.base)] do
+    beta := PermWordPreImage(bsgs!.base[i], h);
+    if not IsBound(bsgs!.chain[i].orbit.sv[beta]) then
       return rec(residue := h, level := i);
     fi;
     
-    u := SchreierVectorWordFromBasePoint(bsgs.chain[i].orbit, beta);
-    h := Concatenation(u, ShallowCopy(h));
+    u := SchreierVectorWordFromBasePoint(bsgs!.chain[i].orbit, beta);
+    h := Concatenation(u, h);
   od;
 
   return rec(residue := h, level := i + 1);

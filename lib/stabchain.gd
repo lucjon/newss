@@ -1,13 +1,24 @@
 # vim: ft=gap sts=2 et sw=2
 #! @Chapter Stabilizer Chains
 
+DeclareCategory("IsBSGS", IsObject);
+DeclareRepresentation("IsBSGSRep", IsComponentObjectRep, [
+  "group",
+  "base",
+  "sgs",
+  "initial_gens",
+  "chain",
+  "options"
+]);
+BSGSType := NewType(NewFamily("BSGSFamily"), IsBSGS and IsBSGSRep);
+
 #! @Section Creating stabilizer chains
 
 #! @Arguments group, sgs
 #! @Returns an initialized BSGS structure
 #! @Description
 #! Initialize a BSGS structure for a group, given a base and strong generating
-#! set for it. A BSGS structure is a record containing the following fields:
+#! set for it. A BSGS structure is an object containing the following components:
 #!
 #! * **group**:        The group $G$ for which <C>base</C> and <C>sgs</C> are a
 #!                     base and SGS,
@@ -27,6 +38,8 @@
 #!                     stabilizes the points $\beta_1, \beta_2, \ldots,
 #!                     \beta_{i-1}$.
 #!
+#! These can be accessed using the accessor function in
+#! <Ref Sect="Chapter_Stabilizer_Chains_Section_Retrieving_data_from_chains"/>.
 #! The chain field may not always be present; it must be computed with either the
 #! <Ref Func="BSGSFromGroup" /> or (for testing purposes) the <Ref Func="BSGSFromGAP"/>
 #! function.
@@ -74,6 +87,24 @@ DeclareGlobalFunction("GAPStabChainFromBSGS");
 #! package.
 DeclareGlobalFunction("EnableNewssOverloads");
 
+
+#! @Section Retrieving data from chains
+
+#! @Arguments bsgs
+#! @Returns the group $G$ that <A>bsgs</A> describes a stabilizer chain for
+DeclareOperation("GroupBSGS", [IsBSGS]);
+#! @Arguments bsgs
+#! @Returns the set of strong generators for $G$ with respect to the base in <A>bsgs</A>
+DeclareOperation("StrongGeneratorsBSGS", [IsBSGS]);
+#! @Arguments bsgs
+#! @Returns the base of <A>bsgs</A>
+DeclareOperation("BaseBSGS", [IsBSGS]);
+#! @Arguments bsgs
+#! @Returns a list of stabilizer chain records for <A>bsgs</A>, if any have been computed
+DeclareOperation("StabilizersBSGS", [IsBSGS]);
+#! @Arguments bsgs, i
+#! @Returns a stabilizer chain record for the <A>i</A>th stabilizer subgroup
+DeclareOperation("StabilizerBSGS", [IsBSGS, IsInt]);
 
 #! @Section Manipulating stabilizer chains
 

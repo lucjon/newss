@@ -4,6 +4,24 @@ LoadPackage("io");
 LoadPackage("atlasrep");
 ReadPackage("newss", "test/timeout.g");
 
+NUM_RANDOM_TEST_ELTS := 2^15;
+ContainmentTest := function (H, H_sc, n)
+    local G, actually_in_H, think_in_H, x, Sn;
+    Sn := SymmetricGroup(LargestMovedPoint(H_sc!.group));
+    G := List([1 .. n], i -> PseudoRandom(Sn));
+
+    for x in G do
+      actually_in_H := x in H;
+      think_in_H := StabilizerChainContains(H_sc, x);
+      if actually_in_H <> think_in_H then
+        return false;
+      fi;
+    od;
+
+    return true;
+end;
+
+
 ###
 ### Group selection
 ###
@@ -448,11 +466,11 @@ PerformTests := function(tests, user_opt)
     Add(test_results, rec(group := PickName(G),
                           group_degree := NrMovedPoints(G),
                           group_order := Size(G),
-                          base_length := Size(bsgs.base),
-                          orbit_top_length := bsgs.chain[1].orbit.size,
+                          base_length := Size(bsgs!.base),
+                          orbit_top_length := bsgs!.chain[1].orbit.size,
                           time_BSGSFromGroup := our_time,
                           time_StabChain := gap_time,
-                          verify := NameFunction(bsgs.options.Verify),
+                          verify := NameFunction(bsgs!.options.Verify),
                           success_BSGSFromGroup := true,
                           success_StabChain := true,
                           success := true));
@@ -463,7 +481,7 @@ PerformTests := function(tests, user_opt)
     bsgs := stab_chains[i];
     result := test_results[i];
 
-    opt.Print(PickName(bsgs.group), ":\n");
+    opt.Print(PickName(bsgs!.group), ":\n");
     for test_name in RecNames(tests) do
       # Some tests modify the BSGS; we want to copy it here so we don't count
       # the copying as part of the time taken by the test
@@ -481,7 +499,7 @@ PerformTests := function(tests, user_opt)
         opt.Print("      done in ", t, " ms.\n");
         opt.Print("    Verify [", test_name, "]:\n");
         vt := Runtime();
-        success := ContainmentTest(bsgs.group, test_bsgs, NUM_RANDOM_TEST_ELTS / 4);
+        success := ContainmentTest(bsgs!.group, test_bsgs, NUM_RANDOM_TEST_ELTS / 4);
         vt := Runtime() - vt;
         opt.Print("      ", success, " in ", vt, " ms.\n");
         result.(Concatenation("vtime_", test_name)) := vt;
@@ -510,7 +528,6 @@ end;
 # NUM_RANDOM_TEST_ELTS
 # An integer specifying how many random elements to pick from a large ambient
 # group to be tested with VerifyContainsPG.
-NUM_RANDOM_TEST_ELTS := 2^15;
 
 NoTests := rec();
 
@@ -520,36 +537,20 @@ FailTests := rec(
   end
 );
 
-ContainmentTest := function (H, H_sc, n)
-    local G, actually_in_H, think_in_H, x, Sn;
-    Sn := SymmetricGroup(LargestMovedPoint(H_sc.group));
-    G := List([1 .. n], i -> PseudoRandom(Sn));
-
-    for x in G do
-      actually_in_H := x in H;
-      think_in_H := StabilizerChainContains(H_sc, x);
-      if actually_in_H <> think_in_H then
-        return false;
-      fi;
-    od;
-
-    return true;
-end;
-
 DefaultTests := rec(
   Containment := function (H_sc)
-    return ContainmentTest(H_sc.group, H_sc, NUM_RANDOM_TEST_ELTS);
+    return ContainmentTest(H_sc!.group, H_sc, NUM_RANDOM_TEST_ELTS);
   end,
 
   Order := function (bsgs)
-    return StabilizerChainOrder(bsgs) = Size(bsgs.group);
+    return StabilizerChainOrder(bsgs) = Size(bsgs!.group);
   end,
 );
 
 KnownBaseTests := rec(
   KnownBase := function (bsgs)
     local new_chain;
-    new_chain := BSGSFromGroup(bsgs.group, rec( known_base := bsgs.base ));
+    new_chain := BSGSFromGroup(bsgs!.group, rec( known_base := bsgs!.base ));
 
     if StabilizerChainOrder(bsgs) <> StabilizerChainOrder(new_chain) then
       return false;
@@ -565,18 +566,18 @@ ChangeOfBaseTests := rec(
     local gens, new_base, i, pt, stab;
 
     # First, we change up the base a bit
-    gens := GeneratorsOfGroup(bsgs.group);
-    new_base := ShallowCopy(bsgs.base);
+    gens := GeneratorsOfGroup(bsgs!.group);
+    new_base := ShallowCopy(bsgs!.base);
     Shuffle(new_base);
-    for i in [1 .. Int(Size(bsgs.base)/10) + 1] do
-      pt := PseudoRandom(MovedPoints(bsgs.group));
+    for i in [1 .. Int(Size(bsgs!.base)/10) + 1] do
+      pt := PseudoRandom(MovedPoints(bsgs!.group));
       if not (pt in new_base) then
-        Add(new_base, PseudoRandom(MovedPoints(bsgs.group)));
+        Add(new_base, PseudoRandom(MovedPoints(bsgs!.group)));
       fi;
     od;
 
     Print("*** ", new_base, "\n");
-    stab := Intersection(List(new_base, b -> Stabilizer(bsgs.group, b)));
+    stab := Intersection(List(new_base, b -> Stabilizer(bsgs!.group, b)));
     if Size(stab) > 1 then
       # XXX not sure what the best thing to do is in this situation
       Print("!! not a base (stabilized by ", stab, ") !!\n");
@@ -585,15 +586,15 @@ ChangeOfBaseTests := rec(
 
     # Then perform the change of base and do the usual verification step
     ChangeBaseOfBSGS(bsgs, new_base);
-    if bsgs.base <> new_base then
-      Print("!! we didn't actually get the right base out, got ", bsgs.base, " instead\n");
+    if bsgs!.base <> new_base then
+      Print("!! we didn't actually get the right base out, got ", bsgs!.base, " instead\n");
       return false;
     fi;
     return VERIFY_CONTAINMENT;
   end,
 
   BaseSwap := function (bsgs)
-    NEWSS_PerformBaseSwap(bsgs, PseudoRandom([1 .. Size(bsgs.base) - 1]));
+    NEWSS_PerformBaseSwap(bsgs, PseudoRandom([1 .. Size(bsgs!.base) - 1]));
     return VERIFY_CONTAINMENT;
   end
 );
@@ -603,24 +604,24 @@ ToGAPStabChainTests := rec(
   ToGAPStabChain := function (bsgs)
     local gap_sc, G, g, i;
     gap_sc := GAPStabChainFromBSGS(bsgs);
-    G := Group(GeneratorsOfGroup(bsgs.group));
+    G := Group(GeneratorsOfGroup(bsgs!.group));
     SetStabChainMutable(G, gap_sc);
 
-    for i in [1 .. Minimum(Size(bsgs.group), 1024)] do
-      g := PseudoRandom(bsgs.group);
+    for i in [1 .. Minimum(Size(bsgs!.group), 1024)] do
+      g := PseudoRandom(bsgs!.group);
       if not (g in G) then
         return false;
       fi;
     od;
 
     if StabilizerChainOrder(bsgs) <> Size(G) or
-       BaseStabChain(gap_sc) <> bsgs.base then
+       BaseStabChain(gap_sc) <> bsgs!.base then
      return false;
     fi;
     return VERIFY_CONTAINMENT;
   end
 );
 
-AllTests := ShallowCopy(WithChangeOfBaseTests);
-NEWSS_UpdateRecord(AllTests, KnownBaseTests);
-NEWSS_UpdateRecord(AllTests, ToGAPStabChainTests);
+#AllTests := ShallowCopy(WithChangeOfBaseTests);
+#NEWSS_UpdateRecord(AllTests, KnownBaseTests);
+#NEWSS_UpdateRecord(AllTests, ToGAPStabChainTests);
