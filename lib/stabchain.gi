@@ -231,7 +231,94 @@ end);
 ### Functions for manipulating stabiliser chains
 ###
 
+InstallGlobalFunction(NEWSS_ChangeBaseByPointSwap, function (bsgs, new_base)
+  local pt, stabilized, i, j;
+  for j in [1 .. Size(new_base)] do
+    pt := new_base[j];
+    stabilized := false;
+
+    Info(NewssInfo, 3, "@", j, "(", pt, "):");
+    Info(NewssInfo, 3, "  ", bsgs.base);
+
+    for i in [j .. Size(bsgs.base)] do
+      stabilized := ForAll(bsgs.chain[i].gens, g -> pt ^ g = pt);
+      if bsgs.base[i] = pt or stabilized then
+        break;
+      fi;
+    od;
+
+    if bsgs.base[i] = pt then
+      # We still want to swap our point closer to the start, but the index will
+      # be off since the code below assumes we added a point.
+      i := i - 1;
+    elif stabilized then
+      # When we get here, we are able to insert it after point i as a redundant
+      # base point, since we know it is stabilized by the previous group. (This
+      # may be at the end of the list.)
+      Info(NewssInfo, 3, "  inserting redundant base point ", pt, " at ", i);
+      NEWSS_InsertRedundantBasePoint(bsgs, i, pt);
+    else
+      # If we weren't even stabilized by some existing subgroup in the chain,
+      # the best we can do is add it to the end of the base, and with trivial
+      # stabilizer group
+      Info(NewssInfo, 3, "  appending trivial base point ", pt, " at ", i);
+      NEWSS_AppendTrivialBasePoint(bsgs, pt);
+    fi;
+
+    # Then we swap it back to its intended position.
+    while i >= j do
+      Info(NewssInfo, 3, "  swapping ", bsgs.base[i], " at ", i, " with ", bsgs.base[i + 1], " at ", i + 1);
+      NEWSS_PerformBaseSwap(bsgs, i);
+      i := i - 1;
+    od;
+  od;
+
+  Info(NewssInfo, 3, "finished swaps with ", bsgs.base);
+
+  # If the list supplied is genuinely a base, then there will be a 'tail' of
+  # extraneous trivial base points which were in the old base but not the new;
+  # we should dispose of them now.
+  i := Size(bsgs.base);
+  while IsTrivial(bsgs.chain[i].group) and not (bsgs.base[i] in new_base) do
+    Info(NewssInfo, 3, "removing trivial base point ", bsgs.base[i]);
+    Remove(bsgs.base, i);
+    Remove(bsgs.chain, i);
+    i := i - 1;
+  od;
+end);
+
+
+# Insert a new point <C>pt</C> at position <C>i + 1</C> in the base of the BSGS
+# structure <C>bsgs</C> with the same stabilizer group as in position i. This
+# function does not check that bsgs.stabilizers[i] does, in fact, stabilise
+# <C>pt</C>.
+InstallGlobalFunction(NEWSS_InsertRedundantBasePoint, function (bsgs, i, pt)
+  local orb;
+  # The stabilizer group is just a copy
+  Add(bsgs.base, pt, i + 1);
+  Add(bsgs.chain, rec(
+    gens := ShallowCopy(bsgs.chain[i].gens),
+    group := bsgs.chain[i].group,
+    orbit := SchreierVectorForOrbit(~.gens, pt)), i + 1);
+end);
+
+# Append a new base point <C>pt</C> with trivial stabilizer to the chain.
+InstallGlobalFunction(NEWSS_AppendTrivialBasePoint, function (bsgs, pt)
+  local orb;
+  Add(bsgs.base, pt);
+  Add(bsgs.chain, rec(
+    gens := [()],
+    group := Group(()),
+    orbit := NEWSS_EmptySchreierVector(~.gens, pt)));
+end);
+
+
+
 InstallGlobalFunction(ChangeBaseOfBSGS, function (bsgs, new_base)
+  NEWSS_ChangeBaseByPointSwap(bsgs, new_base);
+end);
+
+InstallGlobalFunction(NEWSS_ChangeBaseByRecomputing, function (bsgs, new_base)
   # For now, we just re-run Schreier–Sims with the given base. Knowing we
   # have a base makes this a lot faster, but in general we can do much better
   # than this.
@@ -322,27 +409,31 @@ end);
 # NEWSS_PerformBaseSwap(bsgs, i)
 # Swap base points base[i] and base[i+1] using a randomised algorithm.
 InstallGlobalFunction(NEWSS_PerformBaseSwap, function (bsgs, i)
-  local T, beta, stab_sv, orb_sv, target_size, gen;
+  local T, beta, stab_sv, orb_sv, target_size, gen, to_stabilize;
 
   if i < 1 or i > Size(bsgs.base) - 1 then
     Error("cannot swap base points out of range");
   fi;
   
-  if IsBound(bsgs.chain[i + 2]) then
-    T := ShallowCopy(bsgs.chain[i + 2].gens);
-  else
-    T := [];
-  fi;
-
   # The bulk of the effort is computing the new stabgens[i+1] and orbits[i+1]
   beta := bsgs.base[i + 1];
   stab_sv := SchreierVectorForOrbit(bsgs.chain[i].gens, beta);
+
+  # The new group needs to contain G^(i+2);
+  if IsBound(bsgs.chain[i + 2]) then
+    T := ShallowCopy(bsgs.chain[i + 2].gens);
+  else
+    # but it might be trivial.
+    T := [];
+  fi;
+
   orb_sv := SchreierVectorForOrbit(T, bsgs.base[i]);
-  # We know the size to expect by the Orbit-Stabilizer theorem
+
+  # We know the size to expect by the Orbit-Stabilizer theorem; see Seress,
   target_size := bsgs.chain[i].orbit.size * bsgs.chain[i + 1].orbit.size / stab_sv.size;
 
   while orb_sv.size < target_size do
-    gen := RandomStabilizerElement(bsgs.chain[i].orbit);
+    gen := RandomStabilizerElement(stab_sv);
     if gen <> () then
       Add(bsgs.sgs, gen);
       ExtendSchreierVector(orb_sv, gen);
@@ -350,9 +441,14 @@ InstallGlobalFunction(NEWSS_PerformBaseSwap, function (bsgs, i)
   od;
 
   # Now perform the actual swapping
+  if Size(T) = 0 then
+    T := [()];
+  fi;
+
   bsgs.base[i + 1] := bsgs.base[i];
   bsgs.base[i] := beta;
   bsgs.chain[i + 1].gens := T;
+  bsgs.chain[i + 1].group := Group(T);
   bsgs.chain[i].orbit := stab_sv;
   bsgs.chain[i + 1].orbit := orb_sv;
 end);

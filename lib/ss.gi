@@ -78,7 +78,6 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
 
   iterators := [];
   while i >= 1 do
-    Info(NewssInfo, 3, "Starting SS loop (index ", i, ")");
     added_generator := false;
 
     if not IsBound(iterators[i]) then
@@ -439,7 +438,6 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
     u_beta_x := bsgs.options.PermFromBasePoint(chain.orbit, image);
 
     gen := bsgs.options.MulPerm(iter!.u_beta, x, bsgs.options.InvPerm(u_beta_x));
-    Info(NewssInfo, 3, "Yielding Schreier gen. ", gen, " for stab ", i, " = <", chain.gens, ">");
     return gen;
   end;
 

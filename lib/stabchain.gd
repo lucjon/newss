@@ -120,4 +120,8 @@ DeclareGlobalFunction("RemoveRedundantGenerators");
 
 
 DeclareGlobalFunction("NEWSS_AppendEmptyChain");
+DeclareGlobalFunction("NEWSS_ChangeBaseByPointSwap");
+DeclareGlobalFunction("NEWSS_ChangeBaseByRecomputing");
+DeclareGlobalFunction("NEWSS_InsertRedundantBasePoint");
+DeclareGlobalFunction("NEWSS_AppendTrivialBasePoint");
 DeclareGlobalFunction("NEWSS_PerformBaseSwap");
