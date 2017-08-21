@@ -126,16 +126,16 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
     B!.options := arg[2];
   fi;
 
-  if IsBound(B!.options.base) then
-    B!.base := B!.options.base;
-  fi;
-
   if IsBound(B!.options.known_base) then
     B!.options.known_base := Immutable(B!.options.known_base);
     B!.base := ShallowCopy(B!.options.known_base);
     B!.options.IsIdentity := NEWSS_IsIdentityByKnownBase;
   else
     B!.options.IsIdentity := NEWSS_IsIdentityByMul;
+  fi;
+
+  if IsBound(B!.options.base) then
+    B!.base := B!.options.base;
   fi;
 
   NEWSS_UpdateRecord(B!.options, B!.options.perm_representation);
@@ -238,15 +238,15 @@ StabChainNewssOp := function (G, gap_options)
     options := rec();
 
     if IsBound(gap_options.knownBase) then
-      options.known_base := gap_options.base;
+      options.known_base := gap_options.knownBase;
     fi;
+
     if IsBound(gap_options.base) then
       options.base := gap_options.base;
     fi;
 
     S := GAPStabChainFromBSGS(BSGSFromGroup(G, options));
     SetStabChainMutable(G, S);
-    od;
 
     return S;
   fi;

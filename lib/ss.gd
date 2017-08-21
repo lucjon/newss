@@ -43,6 +43,10 @@
 #!   as this parameter speeds up the process of finding a strong generating set
 #!   since we can check whether a product of permutations is the identity by
 #!   checking its action on the base, instead of having to multiply it out.
+#! * **base**. A list which forms the initial base for the stabilizer chain.
+#!    This does not in fact need to be a base; if it is not, then any necessary
+#!    new points will be appended to it. If the <C>known_base</C> parameter is
+#!    specified, then this parameter defaults to the value given there.
 #!
 #! All of these fields are optional; if any are missing, they are taken from
 #! whichever of the following default options structures are chosen by
