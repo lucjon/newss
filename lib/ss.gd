@@ -17,7 +17,7 @@
 #! * **<C>Verify</C>**. The function used to verify the stabilizer chain once
 #!   computed. See
 #!   <Ref Sect="Chapter_Stabilizer_Chains_Section_Verification_procedures"/>.
-#! * **<C>ExtendBaseForLevel</C>**. The function used to select new base points
+#! * **<C>SelectBasePoint</C>**. The function used to select new base points
 #!   when a Schreier generator is found which fixes all the existing ones.
 #! * **<C>SchreierVectorForLevel</C>**. The function used to compute Schreier
 #!   vectors for basic orbits. See
@@ -208,11 +208,13 @@ DeclareGlobalFunction("StabilizerChainStripWord");
 
 DeclareGlobalFunction("ComputeStabForBSGS");
 DeclareGlobalFunction("EnsureBSGSChainComputed");
+DeclareGlobalFunction("ExtendBaseForLevel");
 DeclareGlobalFunction("NEWSS_ExtendSV");
 DeclareGlobalFunction("NEWSS_FirstMovedPoint");
 DeclareGlobalFunction("NEWSS_IsIdentityByKnownBase");
 DeclareGlobalFunction("NEWSS_IsIdentityByMul");
 DeclareGlobalFunction("NEWSS_PickAscending");
 DeclareGlobalFunction("NEWSS_PickFromOrbits");
+DeclareGlobalFunction("NEWSS_SelectFromChosenBase");
 DeclareGlobalFunction("NEWSS_UpdateRecord");
 DeclareInfoClass("NewssInfo");

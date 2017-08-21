@@ -16,7 +16,7 @@
 #        Verify(bsgs)
 #          The verification routine, which generally ensures the resulting
 #          stabiliser chain is correct.
-#        ExtendBaseForLevel(bsgs, level, culprit)
+#        SelectBasePoint(bsgs, level, culprit)
 #          Finds a new base point when adding a new generator at the given
 #          level (or 0 if we are starting from an empty base). If known, the
 #          argument culprit is a permutation which fixes all the existing base
@@ -60,7 +60,7 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
 
 
   if Size(bsgs!.base) = 0 then
-    bsgs!.options.ExtendBaseForLevel(bsgs, 0, false);
+    ExtendBaseForLevel(bsgs, 0, false);
   fi;
 
   ComputeChainForBSGS(bsgs);
@@ -85,14 +85,15 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
     fi;
 
     for g in iterators[i] do
-      if g = () then continue; fi;
       stripped := bsgs!.options.Strip(bsgs, g);
 
       # If the stripped permutation is not the identity, it was not in the next
       # group --- so we adjoin it.
       id_result := bsgs!.options.IsIdentity(bsgs, stripped.residue);
+      Info(NewssInfo, 3, "Considering for ", i, " SG ", bsgs!.options.AsPerm(g), " = ", g, " with residue ", bsgs!.options.AsPerm(stripped.residue));
+      Info(NewssInfo, 3, "   gens: ", StabilizersBSGS(bsgs));
       if not id_result.is_identity then
-        Info(NewssInfo, 3, "Adjoining generator ", g);
+        Info(NewssInfo, 3, "Adjoining generator.");
         perm := id_result.perm;
         Add(bsgs!.sgs, perm);
 
@@ -100,7 +101,7 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
         # we know it fixes all the existing base points and that we need to
         # extend our basis again.
         if stripped.level > Size(bsgs!.base) then
-          bsgs!.options.ExtendBaseForLevel(bsgs, i, perm);
+          ExtendBaseForLevel(bsgs, i, perm);
         fi;
 
         for l in [i + 1 .. stripped.level] do
@@ -135,7 +136,7 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs)
   bsgs!.sgs := List(bsgs!.sgs);
 
   if Size(bsgs!.base) = 0 then
-    bsgs!.options.ExtendBaseForLevel(bsgs, 0, false);
+    ExtendBaseForLevel(bsgs, 0, false);
   fi;
 
   ComputeChainForBSGS(bsgs);
@@ -152,7 +153,7 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs)
       Add(bsgs!.sgs, stripped.residue);
 
       if stripped.level > Size(bsgs!.base) then
-        bsgs!.options.ExtendBaseForLevel(bsgs, stripped.level, stripped.residue);
+        ExtendBaseForLevel(bsgs, stripped.level, stripped.residue);
       fi;
 
       for l in [2 .. stripped.level] do
@@ -229,8 +230,17 @@ InstallGlobalFunction(NEWSS_VerifyByDeterministic, function (bsgs)
 end);
 
 ##
-## ExtendBaseForLevel
+## SelectBasePoint
 ##
+
+InstallGlobalFunction(ExtendBaseForLevel, function (bsgs, level, culprit)
+  local pt;
+  pt := bsgs!.options.SelectBasePoint(bsgs, level, culprit);
+  Add(bsgs!.base, pt);
+  if level > 0 then
+    NEWSS_AppendEmptyChain(bsgs);
+  fi;
+end);
 
 InstallGlobalFunction(NEWSS_FirstMovedPoint, function (bsgs, level, culprit)
   local i, point;
@@ -260,11 +270,6 @@ InstallGlobalFunction(NEWSS_FirstMovedPoint, function (bsgs, level, culprit)
     Error("could not find point not fixed by culprit");
   fi;
 
-  Add(bsgs!.base, point);
-  if level > 0 then
-    NEWSS_AppendEmptyChain(bsgs);
-  fi;
-
   return point;
 end);
 
@@ -275,10 +280,6 @@ InstallGlobalFunction(NEWSS_PickAscending, function (bsgs, level, culprit)
   else
     for i in [1 .. LargestMovedPoint(bsgs!.group)] do
       if i ^ culprit <> i then
-        Add(bsgs!.base, i);
-        if level > 0 then
-          NEWSS_AppendEmptyChain(bsgs);
-        fi;
         return i;
       fi;
     od;
@@ -319,12 +320,16 @@ InstallGlobalFunction(NEWSS_PickFromOrbits, function (bsgs, level, culprit)
     point := First(MovedPoints(culprit), pt -> not (pt in bsgs!.base));
   fi;
 
-  Add(bsgs!.base, point);
-  NEWSS_AppendEmptyChain(bsgs);
-
   return point;
 end);
 
+InstallGlobalFunction(NEWSS_SelectFromChosenBase, function (bsgs, level, culprit)
+  if Size(bsgs!.options.base) >= level + 1 then
+    return bsgs!.options.base[level + 1];
+  else
+    return NEWSS_FirstMovedPoint(bsgs, level, culprit);
+  fi;
+end);
 
 ##
 ## SchreierVectorForLevel
@@ -425,11 +430,11 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
       if iter!.orbit_index > Size(sv) then
         # Quite messy. Unfortunately checking for this case properly in
         # IsDoneIterator would get even messier.
-        return ();
+        return bsgs!.options.LiftPerm(());
       fi;
 
       iter!.u_beta := bsgs!.options.PermFromBasePoint(chain.orbit,
-                                                     iter!.orbit_index);
+                                                      iter!.orbit_index);
       iter!.gen_iter := Iterator(chain.gens);
     fi;
 
@@ -437,6 +442,7 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
     image := bsgs!.options.ImagePerm(iter!.orbit_index, iter!.u_beta);
     u_beta_x := bsgs!.options.PermFromBasePoint(chain.orbit, image);
 
+    Info(NewssInfo, 3, "SG: (", iter!.orbit_index, ") ", iter!.u_beta, ", ", x, ", ", bsgs!.options.InvPerm(u_beta_x));
     gen := bsgs!.options.MulPerm(iter!.u_beta, x, bsgs!.options.InvPerm(u_beta_x));
     return gen;
   end;
@@ -472,13 +478,13 @@ InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
   i := 0;
 
   for i in [1 .. Size(bsgs!.base)] do
-    beta := bsgs!.base[i] / h;
+    beta := bsgs!.base[i] ^ h;
     if not IsBound(bsgs!.chain[i].orbit.sv[beta]) then
       return rec(residue := h, level := i);
     fi;
     
     u := SchreierVectorPermFromBasePoint(bsgs!.chain[i].orbit, beta);
-    h := u * h;
+    h := h * Inverse(u);
   od;
 
   return rec(residue := h, level := i + 1);
@@ -495,13 +501,13 @@ InstallGlobalFunction(StabilizerChainStripWord, function (bsgs, g)
   fi;
 
   for i in [1 .. Size(bsgs!.base)] do
-    beta := PermWordPreImage(bsgs!.base[i], h);
+    beta := PermWordImage(bsgs!.base[i], h);
     if not IsBound(bsgs!.chain[i].orbit.sv[beta]) then
       return rec(residue := h, level := i);
     fi;
     
     u := SchreierVectorWordFromBasePoint(bsgs!.chain[i].orbit, beta);
-    h := Concatenation(u, h);
+    h := Concatenation(h, PermWordInverse(u));
   od;
 
   return rec(residue := h, level := i + 1);

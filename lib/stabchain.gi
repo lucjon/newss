@@ -30,7 +30,7 @@ InstallValue(NEWSS_PERM_REPRESENTATION, Immutable(rec(
 InstallValue(NEWSS_DEFAULT_OPTIONS, Immutable(rec(
   SchreierSims := RandomSchreierSims,
   Verify := NEWSS_VerifyByDeterministic,
-  ExtendBaseForLevel := NEWSS_FirstMovedPoint,
+  SelectBasePoint := NEWSS_FirstMovedPoint,
   SchreierVectorForLevel := NEWSS_SVForLevel,
   ExtendSchreierVector := NEWSS_ExtendSV,
 
@@ -43,7 +43,7 @@ InstallValue(NEWSS_DEFAULT_OPTIONS, Immutable(rec(
 InstallValue(NEWSS_DETERMINISTIC_OPTIONS, Immutable(rec(
   SchreierSims := SchreierSims,
   Verify := ReturnTrue,
-  ExtendBaseForLevel := NEWSS_PickFromOrbits,
+  SelectBasePoint := NEWSS_PickFromOrbits,
   SchreierVectorForLevel := NEWSS_SVForLevel,
   ExtendSchreierVector := NEWSS_ExtendSV,
 
@@ -128,14 +128,16 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
 
   if IsBound(B!.options.known_base) then
     B!.options.known_base := Immutable(B!.options.known_base);
-    B!.base := ShallowCopy(B!.options.known_base);
+    if not IsBound(B!.options.base) then
+      B!.options.base := ShallowCopy(B!.options.known_base);
+    fi;
     B!.options.IsIdentity := NEWSS_IsIdentityByKnownBase;
   else
     B!.options.IsIdentity := NEWSS_IsIdentityByMul;
   fi;
 
   if IsBound(B!.options.base) then
-    B!.base := B!.options.base;
+    B!.options.SelectBasePoint := NEWSS_SelectFromChosenBase;
   fi;
 
   NEWSS_UpdateRecord(B!.options, B!.options.perm_representation);
