@@ -15,7 +15,7 @@ cat > "$script" <<EOF
 LoadPackage("newss");;
 ReadPackage("newss", "test/tests.g");;
 SetInfoLevel(NewssGroupSelInfo, 2);
-SaveGroupsList(PickManyGroups(DefaultGroupSource, false, $count), "$filename");
+SaveGroupsList(PickManyGroups(${source:-DefaultGroupSource}, false, $count), "$filename");
 QUIT_GAP(true);
 EOF
 

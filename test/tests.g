@@ -197,6 +197,7 @@ DirectProductSource := function (source)
   end;
 end;
 
+
 # UnionGroupSource(source1[, source2[, ..., sourcen]])
 # Returns a group source which returns a group from a random one of
 # <C>source1</C>, ..., <C>sourcen</C>.
@@ -258,6 +259,64 @@ LimitSizeOfGroupSource := function (source, range)
     return G;
   end;
 end;
+
+
+# LimitDegreeOfGroupSource(source, max_size_or_range)
+# Returns a group source which returns a group from the given source as long as
+# its largest moved point is less than max_size, or if a range is given, as
+# long as its size is within the given range.
+LimitDegreeOfGroupSource := function (source, range)
+  return function (degree)
+    local G, i, H, size;
+
+    if not IsRange(range) then
+      range := [1 .. range];
+    fi;
+
+    G := fail;
+    i := 1;
+    while i < GROUP_SOURCE_MAX_ATTEMPTS do
+      G := source(degree);
+      i := i + 1;
+
+      if LargestMovedPoint(G) in range then
+        return G;
+      fi;
+    od;
+
+    return fail;
+  end;
+end;
+
+
+# WreathProductSource(source)
+# Returns a group source which returns iterated wreath products of two groups
+# from <A>source</A>.
+WreathProductSource := function (source)
+  local Wr, RandWr;
+
+  Wr := function (F, H)
+    local G;
+    G := WreathProduct(F, H);
+    SetName(G, Concatenation(PickName(F), " wr ", PickName(H)));
+    return G;
+  end;
+    
+
+  RandWr := function ()
+    local H, F;
+    H := LimitSizeOfGroupSource(source, 20)(false);
+    F := DirectProductOp(List([1 .. PseudoRandom([1..Maximum(5, LargestMovedPoint(H))])], i -> H), H);
+    return Wr(H, F);
+  end;
+
+  return function (degree)
+    local G, i;
+    return Wr(RandWr(), RandWr());
+  end;
+end;
+
+
 
 # ConjugatingGroupSource(source, p)
 # Returns a group source which returns groups from <C>source</C>, except with a
