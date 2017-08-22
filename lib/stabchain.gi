@@ -274,16 +274,19 @@ InstallGlobalFunction(NEWSS_ChangeBaseByPointSwap, function (bsgs, new_base)
     Info(NewssInfo, 3, "@", j, "(", pt, "):");
     Info(NewssInfo, 3, "  ", bsgs!.base);
 
-    for i in [j .. Size(bsgs!.base)] do
+    i := j;
+    while i <= Size(bsgs!.base) do
       stabilized := ForAll(bsgs!.chain[i].gens, g -> pt ^ g = pt);
       if bsgs!.base[i] = pt or stabilized then
         break;
       fi;
+      i := i + 1;
     od;
 
-    if bsgs!.base[i] = pt then
+    if i <= Size(bsgs!.base) and bsgs!.base[i] = pt then
       # We still want to swap our point closer to the start, but the index will
       # be off since the code below assumes we added a point.
+      Info(NewssInfo, 3, "  we already found the point ", pt, " at ", i);
       i := i - 1;
     elif stabilized then
       # When we get here, we are able to insert it after point i as a redundant
@@ -300,7 +303,7 @@ InstallGlobalFunction(NEWSS_ChangeBaseByPointSwap, function (bsgs, new_base)
     fi;
 
     # Then we swap it back to its intended position.
-    while i >= j do
+    while i >= j and i < Size(bsgs!.base) do
       Info(NewssInfo, 3, "  swapping ", bsgs!.base[i], " at ", i, " with ", bsgs!.base[i + 1], " at ", i + 1);
       NEWSS_PerformBaseSwap(bsgs, i);
       i := i - 1;
@@ -312,12 +315,15 @@ InstallGlobalFunction(NEWSS_ChangeBaseByPointSwap, function (bsgs, new_base)
   # If the list supplied is genuinely a base, then there will be a 'tail' of
   # extraneous trivial base points which were in the old base but not the new;
   # we should dispose of them now.
-  i := Size(bsgs!.base);
-  while IsTrivial(bsgs!.chain[i].group) and not (bsgs!.base[i] in new_base) do
+  while Size(bsgs!.base) > Size(new_base) do
+    i := Size(new_base) + 1;
+    if not IsTrivial(bsgs!.chain[i].group) then
+      Error("irredundant extraneous base point ", bsgs!.base[i], "; was a base supplied?");
+    fi;
+
     Info(NewssInfo, 3, "removing trivial base point ", bsgs!.base[i]);
     Remove(bsgs!.base, i);
     Remove(bsgs!.chain, i);
-    i := i - 1;
   od;
 end);
 
