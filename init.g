@@ -3,7 +3,7 @@
 #! @Chapter Orbits and Stabilizers
 #! @Chapter Stabilizer Chains
 #! @Section Creating stabilizer chains
-#! @Section Manipulating stabilizer chains
+#! @Section Options for stabilizer chain creation
 #! @Chapter Computing with Stabilizer Chains
 
 ReadPackage("newss", "lib/orbstab.gd");

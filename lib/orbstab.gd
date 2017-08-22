@@ -92,6 +92,7 @@ DeclareGlobalFunction("NEWSS_SchreierVector");
 #! @Arguments gens, point
 #! @Returns a Schreier vector record
 #! @Description
+#! (This is an internal function.)
 #! Construct a Schreier vector record for the orbit of <A>point</A> under the
 #! permutations <A>gens</A>, without actually computing the orbit.
 DeclareGlobalFunction("NEWSS_EmptySchreierVector");

@@ -14,7 +14,7 @@ BSGSType := NewType(NewFamily("BSGSFamily"), IsBSGS and IsBSGSRep);
 
 #! @Section Creating stabilizer chains
 
-#! @Arguments group, sgs
+#! @Arguments group, base, sgs
 #! @Returns an initialized BSGS structure
 #! @Description
 #! Initialize a BSGS structure for a group, given a base and strong generating
