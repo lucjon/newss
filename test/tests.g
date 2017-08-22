@@ -490,9 +490,10 @@ DEFAULT_TEST_OPTIONS := rec(
 VERIFY_CONTAINMENT := "verify_containment";
 
 PerformTests := function(tests, user_opt)
-  local test_results, opt, groups, stab_chains, t, bsgs, result, test, G, i,
-        test_name, test_bsgs, success, our_time, gap_time, new_chain, vt;
-  test_results := [];
+  local test_results, opt, groups, stab_chains, bsgs, result, G, i,
+        tasks, group_task, our_time, gap_time, new_chain, t;
+  tests := Immutable(tests);
+  test_results := AtomicList([]);
   opt := ShallowCopy(user_opt);
   NEWSS_UpdateRecord(opt, DEFAULT_TEST_OPTIONS);
 
@@ -536,40 +537,53 @@ PerformTests := function(tests, user_opt)
     opt.Print("    ok in ", our_time, " ms.\n");
   od;
 
+  tasks := [];
   for i in [1 .. Size(stab_chains)] do
     bsgs := stab_chains[i];
-    result := test_results[i];
+    group_task := RunTask(function (bsgs)
+      local test_bsgs, test, t, success, vt, test_name, result;
+      result := rec(success := true);
+      opt.Print(PickName(bsgs!.group), ":\n");
+      for test_name in RecNames(tests) do
+        # Some tests modify the BSGS; we want to copy it here so we don't count
+        # the copying as part of the time taken by the test
+        test_bsgs := CopyBSGS(bsgs);
 
-    opt.Print(PickName(bsgs!.group), ":\n");
-    for test_name in RecNames(tests) do
-      # Some tests modify the BSGS; we want to copy it here so we don't count
-      # the copying as part of the time taken by the test
-      test_bsgs := CopyBSGS(bsgs);
+        opt.Print("    ", test_name, "\n");
+        test := tests.(test_name);
+        t := Runtime();
+        success := test(test_bsgs);
+        t := Runtime() - t;
 
-      opt.Print("    ", test_name, "\n");
-      test := tests.(test_name);
-      t := Runtime();
-      success := test(test_bsgs);
-      t := Runtime() - t;
+        # We want the timing information not to include the verification in a
+        # lot of cases, so do a routine containment test out here.
+        if success = VERIFY_CONTAINMENT then
+          opt.Print("      done in ", t, " ms.\n");
+          opt.Print("    Verify [", test_name, "]:\n");
+          vt := Runtime();
+          success := ContainmentTest(bsgs!.group, test_bsgs, NUM_RANDOM_TEST_ELTS / 4);
+          vt := Runtime() - vt;
+          opt.Print("      ", success, " in ", vt, " ms.\n");
+          result.(Concatenation("vtime_", test_name)) := vt;
+        else
+          opt.Print("      ", success, " in ", t, " ms.\n");
+        fi;
 
-      # We want the timing information not to include the verification in a
-      # lot of cases, so do a routine containment test out here.
-      if success = VERIFY_CONTAINMENT then
-        opt.Print("      done in ", t, " ms.\n");
-        opt.Print("    Verify [", test_name, "]:\n");
-        vt := Runtime();
-        success := ContainmentTest(bsgs!.group, test_bsgs, NUM_RANDOM_TEST_ELTS / 4);
-        vt := Runtime() - vt;
-        opt.Print("      ", success, " in ", vt, " ms.\n");
-        result.(Concatenation("vtime_", test_name)) := vt;
-      else
-        opt.Print("      ", success, " in ", t, " ms.\n");
-      fi;
+        result.(Concatenation("time_", test_name)) := t;
+        result.(Concatenation("success_", test_name)) := success;
+        result.success := result.success and success;
+      od;
 
-      result.(Concatenation("time_", test_name)) := t;
-      result.(Concatenation("success_", test_name)) := success;
-      result.success := result.success and success;
-    od;
+      return result;
+    end, bsgs);
+    Add(tasks, group_task);
+  od;
+
+  Error("breaaak");
+
+  for i in [1 .. Size(stab_chains)] do
+    result := TaskResult(tasks[i]);
+    NEWSS_UpdateRecord(test_results[i], result);
   od;
 
   if opt.filename <> false then
