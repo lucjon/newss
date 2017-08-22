@@ -635,7 +635,6 @@ ChangeOfBaseTests := rec(
       fi;
     od;
 
-    Print("*** ", new_base, "\n");
     stab := Intersection(List(new_base, b -> Stabilizer(bsgs!.group, b)));
     if Size(stab) > 1 then
       # XXX not sure what the best thing to do is in this situation
@@ -646,6 +645,7 @@ ChangeOfBaseTests := rec(
     # Then perform the change of base and do the usual verification step
     ChangeBaseOfBSGS(bsgs, new_base);
     if bsgs!.base <> new_base then
+      Print("*** ", new_base, "\n");
       Print("!! we didn't actually get the right base out, got ", bsgs!.base, " instead\n");
       return false;
     fi;
