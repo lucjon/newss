@@ -511,42 +511,60 @@ PerformTests := function(tests, user_opt)
   stab_chains := [];
 
   opt.Print("*** Computing stabilizer chains...\n");
-  for G in groups do
-    opt.Print(PickName(G), ":\n");
-    t := Runtime();
-    bsgs := BSGSFromGroup(G, opt.bsgs_options);
-    our_time := Runtime() - t;
+  # First we start computing our chains in parallel.
+  tasks := [];
+  for i in [1 .. Size(groups)] do
+    Add(tasks, RunTask(function (G)
+      local bsgs;
+      opt.Print(PickName(G), ": BSGS started.\n");
+      t := Runtime();
+      bsgs := BSGSFromGroup(G, opt.bsgs_options);
+      our_time := Runtime() - t;
+      opt.Print(PickName(G), ": BSGS done in ", our_time, " ms.\n");
+
+      atomic readonly G do
+        return rec(bsgs := bsgs,
+                   group := PickName(G),
+                   group_degree := NrMovedPoints(G),
+                   base_length := Size(bsgs!.base),
+                   orbit_top_length := bsgs!.chain[1].orbit.size,
+                   time_BSGSFromGroup := our_time,
+                   ss := NameFunction(bsgs!.options.SchreierSims),
+                   verify := NameFunction(bsgs!.options.Verify),
+                   success_BSGSFromGroup := true,
+                   success := true);
+      od;
+    end, groups[i]));
+  od;
+
+  # Now collect the results and compute the GAP chains on the main thread
+  for i in [1 .. Size(groups)] do
+    G := groups[i];
 
     t := Runtime();
     if opt.compute_gap_stabchains then
       StabChain(G);
     fi;
     gap_time := Runtime() - t;
+    result := TaskResult(tasks[i]);
 
-    Add(stab_chains, bsgs);
-    Add(test_results, rec(group := PickName(G),
-                          group_degree := NrMovedPoints(G),
-                          group_order := Size(G),
-                          base_length := Size(bsgs!.base),
-                          orbit_top_length := bsgs!.chain[1].orbit.size,
-                          time_BSGSFromGroup := our_time,
-                          time_StabChain := gap_time,
-                          ss := NameFunction(bsgs!.options.SchreierSims),
-                          verify := NameFunction(bsgs!.options.Verify),
-                          success_BSGSFromGroup := true,
-                          success_StabChain := true,
-                          success := true));
-    opt.Print("    ok in ", our_time, " ms.\n");
+    ShareObj(result.bsgs, Concatenation("bsgs", String(i)));
+    NEWSS_UpdateRecord(result, rec(time_StabChain := gap_time,
+                                   group_order := Size(G),
+                                   success_StabChain := true));
+    Add(test_results, result);
+
+    LockAndMigrateObj(StabChainMutable(G), result.bsgs);
+    Add(stab_chains, result.bsgs);
+    Unbind(result.bsgs);
+
+    opt.Print(PickName(G), ": StabChain done in ", gap_time, " ms.\n");
   od;
 
 
   tasks := [];
   for i in [1 .. Size(stab_chains)] do
     bsgs := stab_chains[i];
-    ShareObj(bsgs, Concatenation("bsgs", String(i)));
-    atomic readwrite bsgs do
-      MigrateObj(StabChainMutable(bsgs!.group), bsgs);
-    od;
     group_task := RunTask(function (i, bsgs)
       local test_bsgs, test, t, success, vt, test_name, result;
 #      SilentErrors := false; BreakOnError := true;
