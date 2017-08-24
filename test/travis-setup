@@ -38,6 +38,7 @@ fetch_hpcgap_packages () {
 fetch_gap_packages () {
 	pushd gap
 	make bootstrap-pkg-full
+	cd pkg
 	popd
 }
 
@@ -48,6 +49,11 @@ build_packages () {
 
 	pushd gap/pkg
 	cd io*
+	./autogen.sh
+	./configure
+	make
+
+	cd ../profiling*
 	./autogen.sh
 	./configure
 	make
