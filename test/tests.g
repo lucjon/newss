@@ -456,7 +456,7 @@ end;
 # functions have the signature (bsgs) and return true or false, depending on
 # whether or not they succeeded.
 
-DEFAULT_TEST_OPTIONS := rec(
+DEFAULT_TEST_OPTIONS := Immutable(rec(
   number_of_groups := 100,
   fixed_groups := [
     GroupWithName(AlternatingGroup(4), "A4"),
@@ -472,7 +472,7 @@ DEFAULT_TEST_OPTIONS := rec(
   group_source := DefaultGroupSource,
   Print := Print,
   bsgs_options := rec()
-);
+));
 
 
 # PerformTests(tests, opt)
@@ -490,11 +490,13 @@ DEFAULT_TEST_OPTIONS := rec(
 VERIFY_CONTAINMENT := "verify_containment";
 
 PerformTests := function(tests, user_opt)
-  local test_results, opt, groups, stab_chains, t, bsgs, result, test, G, i,
-        test_name, test_bsgs, success, our_time, gap_time, new_chain, vt;
+  local test_results, opt, groups, stab_chains, bsgs, result, G, i,
+        tasks, group_task, our_time, gap_time, new_chain, t, region;
+  tests := Immutable(tests);
   test_results := [];
   opt := ShallowCopy(user_opt);
   NEWSS_UpdateRecord(opt, DEFAULT_TEST_OPTIONS);
+  opt := Immutable(opt);
 
   # First pick the groups and compute their stabiliser chains.
   if opt.load_groups_list = false then
@@ -529,6 +531,7 @@ PerformTests := function(tests, user_opt)
                           orbit_top_length := bsgs!.chain[1].orbit.size,
                           time_BSGSFromGroup := our_time,
                           time_StabChain := gap_time,
+                          ss := NameFunction(bsgs!.options.SchreierSims),
                           verify := NameFunction(bsgs!.options.Verify),
                           success_BSGSFromGroup := true,
                           success_StabChain := true,
@@ -536,40 +539,57 @@ PerformTests := function(tests, user_opt)
     opt.Print("    ok in ", our_time, " ms.\n");
   od;
 
+
+  tasks := [];
   for i in [1 .. Size(stab_chains)] do
     bsgs := stab_chains[i];
-    result := test_results[i];
-
-    opt.Print(PickName(bsgs!.group), ":\n");
-    for test_name in RecNames(tests) do
-      # Some tests modify the BSGS; we want to copy it here so we don't count
-      # the copying as part of the time taken by the test
-      test_bsgs := CopyBSGS(bsgs);
-
-      opt.Print("    ", test_name, "\n");
-      test := tests.(test_name);
-      t := Runtime();
-      success := test(test_bsgs);
-      t := Runtime() - t;
-
-      # We want the timing information not to include the verification in a
-      # lot of cases, so do a routine containment test out here.
-      if success = VERIFY_CONTAINMENT then
-        opt.Print("      done in ", t, " ms.\n");
-        opt.Print("    Verify [", test_name, "]:\n");
-        vt := Runtime();
-        success := ContainmentTest(bsgs!.group, test_bsgs, NUM_RANDOM_TEST_ELTS / 4);
-        vt := Runtime() - vt;
-        opt.Print("      ", success, " in ", vt, " ms.\n");
-        result.(Concatenation("vtime_", test_name)) := vt;
-      else
-        opt.Print("      ", success, " in ", t, " ms.\n");
-      fi;
-
-      result.(Concatenation("time_", test_name)) := t;
-      result.(Concatenation("success_", test_name)) := success;
-      result.success := result.success and success;
+    ShareObj(bsgs, Concatenation("bsgs", String(i)));
+    atomic readwrite bsgs do
+      MigrateObj(StabChainMutable(bsgs!.group), bsgs);
     od;
+    group_task := RunTask(function (i, bsgs)
+      local test_bsgs, test, t, success, vt, test_name, result;
+#      SilentErrors := false; BreakOnError := true;
+      atomic readonly bsgs do
+        result := rec(success := true);
+        opt.Print(PickName(bsgs!.group), ":\n");
+        for test_name in RecNames(tests) do
+          # Some tests modify the BSGS; we want to copy it here so we don't count
+          # the copying as part of the time taken by the test
+          test_bsgs := CopyBSGS(bsgs);
+
+          opt.Print(PickName(bsgs!.group), ": ", test_name, ": started.\n");
+          test := tests.(test_name);
+          t := Runtime();
+          success := test(test_bsgs);
+          t := Runtime() - t;
+
+          # We want the timing information not to include the verification in a
+          # lot of cases, so do a routine containment test out here.
+          if success = VERIFY_CONTAINMENT then
+            opt.Print(PickName(bsgs!.group), ": ", test_name, ": done in ", t, " ms.\n");
+
+            vt := Runtime();
+            success := ContainmentTest(bsgs!.group, test_bsgs, NUM_RANDOM_TEST_ELTS / 4);
+            vt := Runtime() - vt;
+            result.(Concatenation("vtime_", test_name)) := vt;
+          fi;
+          opt.Print(PickName(bsgs!.group), ": ", test_name, ": ", success, " in ", t, " ms.\n");
+
+          result.(Concatenation("time_", test_name)) := t;
+          result.(Concatenation("success_", test_name)) := success;
+          result.success := result.success and success;
+        od;
+
+        return result;
+      od;
+    end, i, bsgs);
+    Add(tasks, group_task);
+  od;
+
+  for i in [1 .. Size(stab_chains)] do
+    result := TaskResult(tasks[i]);
+    NEWSS_UpdateRecord(test_results[i], result);
   od;
 
   if opt.filename <> false then
@@ -681,6 +701,8 @@ ToGAPStabChainTests := rec(
   end
 );
 
-#AllTests := ShallowCopy(WithChangeOfBaseTests);
-#NEWSS_UpdateRecord(AllTests, KnownBaseTests);
-#NEWSS_UpdateRecord(AllTests, ToGAPStabChainTests);
+AllTests := ShallowCopy(DefaultTests);
+NEWSS_UpdateRecord(AllTests, KnownBaseTests);
+NEWSS_UpdateRecord(AllTests, ToGAPStabChainTests);
+MakeImmutable(AllTests);
+MakeImmutable(DefaultTests);

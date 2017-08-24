@@ -2,7 +2,7 @@
 #! @Chapter Stabilizer Chains
 
 DeclareCategory("IsBSGS", IsObject);
-DeclareRepresentation("IsBSGSRep", IsComponentObjectRep, [
+DeclareRepresentation("IsBSGSRep", IsNonAtomicComponentObjectRep, [
   "group",
   "base",
   "sgs",
