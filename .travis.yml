@@ -13,4 +13,5 @@ env:
         - HPCGAP=no
 
 install: ./test/travis-setup
-script: ./test/runtests 50 && ./test/runtests ./test/groups.grp
+script: ./test/runtests 50 && ./test/runtests --coverage ./test/groups.grp test AllTests
+after-success: bash -s -- -f ./test.cov.json <(curl -s https://codecov.io/bash)

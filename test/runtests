@@ -8,10 +8,12 @@ while [[ "$1" == -* ]]; do
 		profile=yes
 	elif [ "$1" == "--verbose" ]; then
 		verbose=yes
+	elif [ "$1" == "--coverage" ]; then
+		coverage=yes
 	elif [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
 		cat <<EOF
-Usage: $0 [--profile] [--verbose] [(GROUP_COUNT|GROUP_LIST_FILE)
-                                              [RESULTS_FILENAME [TEST_SUITE]]]
+Usage: $0 [--profile] [--coverage] [--verbose] [(GROUP_COUNT|GROUP_LIST_FILE)
+                                               [RESULTS_FILENAME [TEST_SUITE]]]
 
 Runs the set of tests TEST_SUITE against either GROUP_COUNT randomly picked
 groups, or the groups in the file GROUP_LIST_FILE, saving the resulting timing
@@ -27,6 +29,10 @@ OPTIONS
     --profile:  If given, enable line-by-line profiling using the profiling
                 package (requires very recent GAP). The resulting profile data
                 and report are saved to \$testdir/prof-RESULTS_FILENAME.
+	
+	--coverage:	If given, collect code coverage information. This is saved to
+	            \$testdir/RESULTS_FILENAME.coverage, and a JSON file is
+				saved at \$testdir/RESULTS_FILENAME.cov.json.
 
     --verbose:  Set the info level for the newss package higher, so that
                 progress and debug messages are printed.
@@ -60,9 +66,14 @@ else
 fi
 suite=${3:-DefaultTests}
 if [ -z "$2" ] || [ "$2" == "default" ]; then
-	filename=tests-$(git rev-parse --short HEAD)-$(date "+%s").csv
+	filename=tests-$(git rev-parse --short HEAD)-$(date "+%s")
 else
 	filename="$2"
+fi
+
+if [ "$coverage" == "yes" ]; then
+	coverage_option=(--cover "$testdir/$filename.coverage")
+	echo "Collecting coverage information..."
 fi
 
 script="$(mktemp newss.XXXXXXX.g)"
@@ -77,7 +88,7 @@ EOP
 fi) 
 $(if [ "$verbose" == "yes" ]; then echo "SetInfoLevel(NewssInfo, 2);"; fi)
 results := PerformTests($suite, rec (
-	filename := "$testdir/$filename",
+	filename := "$testdir/$filename.csv",
 	$group_option,
 	bsgs_options := rec($bsgs_options)
 ));;
@@ -87,10 +98,16 @@ LoadPackage("profiling");
 OutputAnnotatedCodeCoverageFiles("$testdir/prof-$filename.gz", "$testdir/prof-$filename");
 EOP
 fi)
+$(if [ "$coverage" == "yes" ]; then cat <<EOP
+UnprofileLineByLine();
+LoadPackage("profiling");
+OutputJsonCoverage("$testdir/$filename.coverage", "$testdir/$filename.cov.json");
+EOP
+fi)
 QUIT_GAP(ForAll(results, t -> t.success));
 EOF
 
-${GAP:-gap} --quitonbreak -o 4G "$script"
+${GAP:-gap} "${coverage_option[@]}" --quitonbreak -o 4G "$script"
 result=$?
 rm $script
 exit $result
