@@ -7,7 +7,7 @@ InstallGlobalFunction(NEWSS_SchreierVector, function (sv, to_compute)
     pt := Remove(to_compute, 1);
     for j in [1 .. Size(sv.gens)] do
       gen := sv.gens[j];
-      image := pt ^ gen;
+      image := pt / gen;
       if not IsBound(sv.sv[image]) then
         Add(to_compute, image);
         sv.sv[image] := j;
@@ -47,7 +47,7 @@ InstallGlobalFunction(ExtendSchreierVector, function (sv, gen)
       continue;
     fi;
 
-    image := pt ^ gen;
+    image := pt / gen;
     if not IsBound(sv.sv[image]) then
       Add(to_compute, image);
       sv.sv[image] := n;
@@ -58,7 +58,7 @@ InstallGlobalFunction(ExtendSchreierVector, function (sv, gen)
   NEWSS_SchreierVector(sv, to_compute);
 end);
 
-InstallGlobalFunction(SchreierVectorPermFromBasePoint, function (sv, beta)
+InstallGlobalFunction(SchreierVectorPermToBasePoint, function (sv, beta)
   local u, k;
 
   # Bail out early if beta is not in the orbit.
@@ -69,15 +69,19 @@ InstallGlobalFunction(SchreierVectorPermFromBasePoint, function (sv, beta)
   u := ();
   k := sv.sv[beta];
   while k <> -1 do
-    u := sv.gens[k] * u;
-    beta := beta / sv.gens[k];
+    u := u * sv.gens[k];
+    beta := beta ^ sv.gens[k];
     k := sv.sv[beta];
   od;
 
   return u;
 end);
 
-InstallGlobalFunction(SchreierVectorWordFromBasePoint, function (sv, beta)
+InstallGlobalFunction(SchreierVectorPermFromBasePoint, function (sv, beta)
+  return Inverse(SchreierVectorPermToBasePoint(sv, beta));
+end);
+
+InstallGlobalFunction(SchreierVectorWordToBasePoint, function (sv, beta)
   local u, k;
 
   if not IsBound(sv.sv[beta]) then
@@ -87,12 +91,16 @@ InstallGlobalFunction(SchreierVectorWordFromBasePoint, function (sv, beta)
   u := [];
   k := sv.sv[beta];
   while k <> -1 do
-    Add(u, sv.gens[k], 1);
-    beta := beta / sv.gens[k];
+    Add(u, sv.gens[k]);
+    beta := beta ^ sv.gens[k];
     k := sv.sv[beta];
   od;
 
   return u;
+end);
+
+InstallGlobalFunction(SchreierVectorWordFromBasePoint, function (sv, beta)
+  return PermWordInverse(SchreierVectorWordToBasePoint(sv, beta));
 end);
 
 InstallGlobalFunction(RandomStabilizerElement, function (sv)

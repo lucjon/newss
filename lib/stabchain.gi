@@ -9,6 +9,7 @@ NEWSS_MIN_DEGREE_RANDOM := 10;
 
 InstallValue(NEWSS_PERMWORD_REPRESENTATION, Immutable(rec(
   PermFromBasePoint := SchreierVectorWordFromBasePoint,
+  PermToBasePoint := SchreierVectorWordToBasePoint,
   Strip := StabilizerChainStripWord,
   AsPerm := PermWordAsPerm,
   MulPerm := Concatenation,
@@ -19,6 +20,7 @@ InstallValue(NEWSS_PERMWORD_REPRESENTATION, Immutable(rec(
 
 InstallValue(NEWSS_PERM_REPRESENTATION, Immutable(rec(
   PermFromBasePoint := SchreierVectorPermFromBasePoint,
+  PermToBasePoint := SchreierVectorPermToBasePoint,
   Strip := StabilizerChainStrip,
   AsPerm := IdFunc,
   MulPerm := function (arg) return Product(arg); end,

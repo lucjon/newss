@@ -440,10 +440,10 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
 
     x := bsgs!.options.LiftPerm(NextIterator(iter!.gen_iter));
     image := bsgs!.options.ImagePerm(iter!.orbit_index, iter!.u_beta);
-    u_beta_x := bsgs!.options.PermFromBasePoint(chain.orbit, image);
+    u_beta_x_inv := bsgs!.options.PermToBasePoint(chain.orbit, image);
 
-    Info(NewssInfo, 3, "SG: (", iter!.orbit_index, ") ", iter!.u_beta, ", ", x, ", ", bsgs!.options.InvPerm(u_beta_x));
-    gen := bsgs!.options.MulPerm(iter!.u_beta, x, bsgs!.options.InvPerm(u_beta_x));
+    Info(NewssInfo, 3, "SG: (", iter!.orbit_index, ") ", iter!.u_beta, ", ", x, ", ", u_beta_x_inv);
+    gen := bsgs!.options.MulPerm(iter!.u_beta, x, u_beta_x_inv);
     return gen;
   end;
 
@@ -483,8 +483,8 @@ InstallGlobalFunction(StabilizerChainStrip, function (bsgs, g)
       return rec(residue := h, level := i);
     fi;
     
-    u := SchreierVectorPermFromBasePoint(bsgs!.chain[i].orbit, beta);
-    h := h * Inverse(u);
+    u := SchreierVectorPermToBasePoint(bsgs!.chain[i].orbit, beta);
+    h := h * u;
   od;
 
   return rec(residue := h, level := i + 1);
@@ -506,8 +506,8 @@ InstallGlobalFunction(StabilizerChainStripWord, function (bsgs, g)
       return rec(residue := h, level := i);
     fi;
     
-    u := SchreierVectorWordFromBasePoint(bsgs!.chain[i].orbit, beta);
-    h := Concatenation(h, PermWordInverse(u));
+    u := SchreierVectorWordToBasePoint(bsgs!.chain[i].orbit, beta);
+    h := PermWordMul(h, u);
   od;
 
   return rec(residue := h, level := i + 1);

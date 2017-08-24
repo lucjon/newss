@@ -59,6 +59,9 @@ DeclareGlobalFunction("ExtendSchreierVector");
 #! <K>false</K>.
 DeclareGlobalFunction("SchreierVectorPermFromBasePoint");
 
+DeclareGlobalFunction("SchreierVectorPermToBasePoint");
+DeclareGlobalFunction("SchreierVectorWordToBasePoint");
+
 
 #! @Arguments sv, beta
 #! @Returns a permutation word $u$ such that the successive image of $\beta_i$
