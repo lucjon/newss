@@ -31,6 +31,7 @@ fetch_hpcgap_packages () {
 	mkdir -p pkg
 	cd pkg
 	git clone https://github.com/gap-packages/io
+	git clone https://github.com/gap-packages/profiling
 	curl "http://www.gap-system.org/pub/gap/gap4/tar.bz2/packages/atlasrep1r5p1.tar.bz2" | tar jxv
 	popd
 }
