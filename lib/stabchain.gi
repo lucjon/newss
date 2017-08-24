@@ -174,7 +174,13 @@ InstallGlobalFunction(GAPStabChainFromBSGS, function (bsgs)
   for i in [1 .. Size(bsgs!.base)] do
     current.identity := ();
     current.labels := prev.labels;
-    current.genlabels := List(bsgs!.chain[i].gens, g -> Position(bsgs!.sgs, g) + 1);
+    current.genlabels := List(bsgs!.chain[i].gens, function (g)
+      if g = () then
+        return 1;
+      else
+        return Position(bsgs!.sgs, g) + 1;
+      fi;
+    end);
     current.generators := ShallowCopy(bsgs!.chain[i].gens);
 
     current.orbit := [bsgs!.base[i]];
