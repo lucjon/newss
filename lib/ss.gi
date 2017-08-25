@@ -415,7 +415,7 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
   # then.
   local SchreierGenerators_Next;
   SchreierGenerators_Next := function (iter)
-    local x, u_beta_x, gen, image, sv, chain;
+    local x, u_beta_x_inv, gen, image, sv, chain;
 
     chain := bsgs!.chain[i];
     if iter!.gen_iter = false or IsDoneIterator(iter!.gen_iter) then
