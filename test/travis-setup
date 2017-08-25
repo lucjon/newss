@@ -13,6 +13,10 @@ install_gap () {
 install_hpcgap () {
 	git clone --depth=1 https://github.com/gap-system/gap
 	pushd gap
+	# We need to work around a bug in the groups library on HPC-GAP; this is a
+	# bit of a shoddy workaround, but PseudoRandom() occasionally produces
+	# access violations which make our tests fail. (GAP issue #1629)
+	patch -p1 < ../test/pseudorandom.patch
 
 	pushd hpcgap
 	git clone --depth=1 https://github.com/gap-system/ward

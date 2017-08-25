@@ -1,0 +1,60 @@
+diff --git a/lib/grp.gi b/lib/grp.gi
+index 08b2c99..603e98d 100644
+--- a/lib/grp.gi
++++ b/lib/grp.gi
+@@ -5135,7 +5135,7 @@ BindGlobal("Group_InitPseudoRandom",function( grp, len, scramble )
+         gens := GeneratorsOfGroup(grp);
+     fi;
+     if 0 = Length(gens)  then
+-        SetPseudoRandomSeed( grp, [[],One(grp),One(grp)] );
++        SetPseudoRandomSeed( grp, ShareKernelObj([[],One(grp),One(grp)]) );
+         return;
+     fi;
+     len := Maximum( len, Length(gens), 2 );
+@@ -5145,7 +5145,7 @@ BindGlobal("Group_InitPseudoRandom",function( grp, len, scramble )
+     for i  in [ Length(gens)+1 .. len ]  do
+         seed[i] := Random(gens);
+     od;
+-    SetPseudoRandomSeed( grp, [seed,One(grp),One(grp)] );
++    SetPseudoRandomSeed( grp, ShareKernelObj([seed,One(grp),One(grp)]) );
+ 
+     # scramble seed
+     for i  in [ 1 .. scramble ]  do
+@@ -5164,21 +5164,24 @@ function( grp )
+         i := Length(GeneratorsOfGroup(grp));
+         Group_InitPseudoRandom( grp, i+10, Maximum( i*10, 100 ) );
+     fi;
++
+     seed := PseudoRandomSeed(grp);
+-    if 0 = Length(seed[1])  then
+-        return One(grp);
+-    fi;
++    atomic readwrite seed, readonly seed[1], readonly seed[2], readonly seed[3] do
++      if 0 = Length(seed[1])  then
++          return One(grp);
++      fi;
+ 
+-    # construct the next element
+-    i := Random([ 1 .. Length(seed[1]) ]);
+-    j := Random([ 1 .. Length(seed[1]) ]);
+-    k := Random([ 1 .. Length(seed[1]) ]);
+-    
+-    seed[3] := seed[3]*seed[1][i];
+-    seed[1][j] := seed[1][j]*seed[3];
+-    seed[2] := seed[2]*seed[1][k];
+-    
+-    return seed[2];
++      # construct the next element
++      i := Random([ 1 .. Length(seed[1]) ]);
++      j := Random([ 1 .. Length(seed[1]) ]);
++      k := Random([ 1 .. Length(seed[1]) ]);
++      
++      seed[3] := seed[3]*seed[1][i];
++      seed[1][j] := seed[1][j]*seed[3];
++      seed[2] := seed[2]*seed[1][k];
++      
++      return seed[2];
++    od;
+ 
+ end );
+ 
