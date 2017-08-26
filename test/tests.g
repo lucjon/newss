@@ -491,7 +491,7 @@ VERIFY_CONTAINMENT := "verify_containment";
 
 PerformTests := function(tests, user_opt)
   local test_results, opt, groups, stab_chains, bsgs, result, G, i,
-        tasks, group_task, our_time, gap_time, new_chain, t, region;
+        tasks, group_task, our_time, gap_time, new_chain, t, region, success;
   tests := Immutable(tests);
   test_results := [];
   opt := ShallowCopy(user_opt);
@@ -531,8 +531,7 @@ PerformTests := function(tests, user_opt)
                    time_BSGSFromGroup := our_time,
                    ss := NameFunction(bsgs!.options.SchreierSims),
                    verify := NameFunction(bsgs!.options.Verify),
-                   success_BSGSFromGroup := true,
-                   success := true);
+                   success_BSGSFromGroup := true);
       od;
     end, groups[i]));
   od;
