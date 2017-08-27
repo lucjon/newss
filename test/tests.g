@@ -692,6 +692,21 @@ ChangeOfBaseTests := rec(
   BaseSwap := function (bsgs)
     NEWSS_PerformBaseSwap(bsgs, PseudoRandom([1 .. Size(bsgs!.base) - 1]));
     return VERIFY_CONTAINMENT;
+  end,
+
+  Stabilizer := function(bsgs)
+    local points, i, pt, gap_stab, our_stab;
+    points := MovedPoints(bsgs!.group);
+
+    for i in [1 .. Minimum(4, Size(points))] do
+      pt := PseudoRandom(points);
+      gap_stab := Stabilizer(bsgs!.group, pt);
+      our_stab := StabilizerChainStabilizer(bsgs, pt);
+      if not ContainmentTest(gap_stab, BSGSFromGroup(our_stab), NUM_RANDOM_TEST_ELTS / 8) then
+        return false;
+      fi;
+    od;
+    return true;
   end
 );
 NEWSS_UpdateRecord(DefaultTests, ChangeOfBaseTests);

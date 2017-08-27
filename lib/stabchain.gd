@@ -8,9 +8,11 @@ DeclareRepresentation("IsBSGSRep", IsNonAtomicComponentObjectRep, [
   "sgs",
   "initial_gens",
   "chain",
-  "options"
+  "options",
+  "tree"
 ]);
-BSGSType := NewType(NewFamily("BSGSFamily"), IsBSGS and IsBSGSRep);
+BindGlobal("BSGSFamily", NewFamily("BSGSFamily"));
+BindGlobal("BSGSType", NewType(BSGSFamily, IsBSGS and IsBSGSRep and IsMutable));
 
 #! @Section Creating stabilizer chains
 
@@ -107,6 +109,24 @@ DeclareOperation("StabilizersBSGS", [IsBSGS]);
 DeclareOperation("StabilizerBSGS", [IsBSGS, IsInt]);
 
 #! @Section Manipulating stabilizer chains
+
+#! @Arguments bsgs, new_base
+#! @Returns a BSGS structure for the same group as <A>bsgs</A>, but with base
+#! <A>new_base</A>
+#! @Description
+#! Finds a stabilizer chain for the group described by <A>bsgs</A> with the
+#! given base, either by starting with a copy of <A>bsgs</A> and performing a
+#! change of base operation, or by retrieving a previously-calculated structure.
+DeclareGlobalFunction("BSGSWithBase");
+
+#! @Returns a BSGS structure for the same group as <A>bsgs</A>, whose base
+#! has initial segment <A>prefix</A>
+#! @Description
+#! Finds a stabilizer chain for the group described by <A>bsgs</A> whose base
+#! starts with the points <A>prefix</A>, either by computing a new chain using
+#! a known-base version of the Schreier-Sims algorithm, or by retrieving a
+#! suitable previously-calculated structure.
+DeclareGlobalFunction("BSGSWithBasePrefix");
 
 #! @Arguments bsgs, new_base
 #! @Returns nothing

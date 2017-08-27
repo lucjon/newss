@@ -19,6 +19,17 @@ DeclareGlobalFunction("StabilizerChainOrder");
 DeclareGlobalFunction("StabilizerChainOrderNC");
 
 
+#! @Section Stabilizers
+
+#! @Argmuents bsgs, point
+#! @Returns the point stabilizer of <A>point</A> in the group described by
+#! <A>bsgs</A>
+#! @Description
+#! Computes the point stabilizer of the given point in the group described by
+#! <A>bsgs</A>, which must act on a set containing <A>point</A>.
+DeclareGlobalFunction("StabilizerChainStabilizer");
+
+
 #! @Section Permutations
 #! @Arguments bsgs, g
 #! @Returns a boolean

@@ -11,3 +11,4 @@ ReadPackage("newss", "lib/ss.gd");
 ReadPackage("newss", "lib/group.gd");
 ReadPackage("newss", "lib/permword.gd");
 ReadPackage("newss", "lib/stabchain.gd");
+ReadPackage("newss", "lib/basetree.gd");

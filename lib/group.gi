@@ -14,3 +14,12 @@ InstallGlobalFunction(StabilizerChainOrder, function (bsgs)
   return StabilizerChainOrderNC(bsgs);
 end);
 
+InstallGlobalFunction(StabilizerChainStabilizer, function (bsgs, point)
+  local fix_bsgs;
+  fix_bsgs := BSGSWithBasePrefix(bsgs, [point]);
+  if Size(fix_bsgs!.chain) >= 2 then
+    return fix_bsgs!.chain[2].group;
+  else
+    return Group(());
+  fi;
+end);

@@ -157,7 +157,6 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs)
       fi;
 
       for l in [2 .. stripped.level] do
-        Add(bsgs!.chain[l].gens, stripped.residue);
         bsgs!.options.ExtendSchreierVector(bsgs, l, stripped.residue);
         ComputeStabForBSGS(bsgs, l);
       od;
@@ -373,6 +372,7 @@ fi;
 InstallGlobalFunction(NEWSS_ExtendSV, function (bsgs, i, gen)
   local sv;
   if not IsBound(bsgs!.chain[i].orbit) then
+    Add(bsgs!.chain[i].gens, gen);
     bsgs!.options.SchreierVectorForLevel(bsgs, i);
   else
     ExtendSchreierVector(bsgs!.chain[i].orbit, gen);

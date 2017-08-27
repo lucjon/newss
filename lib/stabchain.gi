@@ -58,9 +58,20 @@ InstallValue(NEWSS_DETERMINISTIC_OPTIONS, Immutable(rec(
 
 
 InstallGlobalFunction(BSGS, function (group, base, sgs)
-  return Objectify(BSGSType,
+  local obj, tree;
+  obj := Objectify(BSGSType,
                    rec(group := group, base := base, sgs := sgs,
-                       initial_gens := Immutable(Set(sgs))));
+                       initial_gens := Immutable(Set(sgs)),
+                       tree := rec(children := [],
+                                   count := 0,
+                                   depth := NEWSS_MAX_TREE_DEPTH)));
+
+  if Size(base) > 0 then
+    # If we haven't actually got a base, wait until we calculate one.
+    NEWSS_AddChainToTree(obj!.tree, obj);
+  fi;
+
+  return obj;
 end);
 
 InstallMethod(ViewString, "method for BSGS structures", [IsBSGS],
@@ -71,6 +82,23 @@ function (bsgs)
     return Concatenation("<BSGS with base ", ViewString(bsgs!.base), ", ", String(Size(bsgs!.sgs)), " strong gens>");
   fi;
 end);
+
+NEWSS_CopyMethod := function (meth)
+  return function (bsgs)
+    local new_record, try;
+    new_record := rec();
+    try := function (name)
+      if IsBound(bsgs!.(name)) then
+        new_record.(name) := meth(bsgs!.(name));
+      fi;
+    end;
+    Perform(["group", "base", "sgs", "initial_gens", "chain", "options", "tree"], try);
+    return Objectify(BSGSType, new_record);
+  end;
+end;
+
+# XXX This should probably be installed for StructuralCopy but I couldn't get it to work...
+InstallGlobalFunction(CopyBSGS, NEWSS_CopyMethod(StructuralCopy));
 
 InstallGlobalFunction(BSGSFromGAP, function (group)
   local sc;
@@ -153,6 +181,7 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
     Info(NewssInfo, 2, "Finished deterministic pass");
   fi;
 
+  NEWSS_AddChainToTree(B!.tree, B);
   return B;
 end);
 
@@ -360,19 +389,49 @@ end);
 
 
 
-InstallGlobalFunction(ChangeBaseOfBSGS, function (bsgs, new_base)
-  NEWSS_ChangeBaseByPointSwap(bsgs, new_base);
+InstallGlobalFunction(ChangeBaseOfBSGS, function (bsgs, base)
+  NEWSS_ChangeBaseByPointSwap(bsgs, base);
 end);
 
-InstallGlobalFunction(NEWSS_ChangeBaseByRecomputing, function (bsgs, new_base)
+InstallGlobalFunction(BSGSWithBase, function (bsgs, new_base)
+  return BSGSWithBasePrefix(bsgs, new_base, true);
+end);
+
+InstallGlobalFunction(BSGSWithBasePrefix, function (bsgs, new_base, rest...)
+  local known_base, chain, new_bsgs;
+  known_base := false;
+  if Size(rest) > 0 then
+    known_base := rest[1];
+  fi;
+
+  chain := NEWSS_FindChainWithBasePrefix(bsgs!.tree, new_base);
+  if chain = fail then
+    new_bsgs := CopyBSGS(bsgs);
+    if known_base then
+      ChangeBaseOfBSGS(new_bsgs, new_base);
+    else
+      NEWSS_ChangeBaseByRecomputing(new_bsgs, new_base, false);
+    fi;
+    NEWSS_AddChainToTree(new_bsgs!.tree, new_bsgs);
+    return new_bsgs;
+  else
+    return chain;
+  fi;
+end);
+
+InstallGlobalFunction(NEWSS_ChangeBaseByRecomputing, function (bsgs, new_base, known_base)
   # For now, we just re-run Schreier–Sims with the given base. Knowing we
   # have a base makes this a lot faster, but in general we can do much better
   # than this.
-  bsgs!.base := new_base;
+  local old_base;
+  old_base := bsgs!.base;
+  bsgs!.base := [];
   bsgs!.sgs := GeneratorsOfGroup(bsgs!.group);
   bsgs!.chain := [];
-  bsgs!.options.known_base := new_base;
+  bsgs!.options.base := new_base;
+  bsgs!.options.known_base := old_base;
   bsgs!.options.IsIdentity := NEWSS_IsIdentityByKnownBase;
+  bsgs!.options.SelectBasePoint := NEWSS_SelectFromChosenBase;
   bsgs!.options.SchreierSims(bsgs);
 end);
 
@@ -446,10 +505,6 @@ InstallGlobalFunction(ConjugateBSGS, function (bsgs, g)
   ComputeChainForBSGS(bsgs);
 end);
 
-
-InstallGlobalFunction(CopyBSGS, function (bsgs)
-  return StructuralCopy(bsgs);
-end);
 
 
 # NEWSS_PerformBaseSwap(bsgs, i)

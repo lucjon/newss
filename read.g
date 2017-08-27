@@ -5,6 +5,7 @@ ReadPackage("newss", "lib/orbstab.gi");
 ReadPackage("newss", "lib/group.gi");
 ReadPackage("newss", "lib/permword.gi");
 ReadPackage("newss", "lib/stabchain.gi");
+ReadPackage("newss", "lib/basetree.gi");
 
 rlnewss := function ()
   RereadPackage("newss", "lib/ss.gd");
