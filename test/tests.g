@@ -471,7 +471,11 @@ DEFAULT_TEST_OPTIONS := Immutable(rec(
   load_groups_list := false,
   group_source := DefaultGroupSource,
   Print := Print,
-  bsgs_options := rec()
+  bsgs_options := rec(
+    # We do this to make sure that, while we hit the cache code, we also hit
+    # the expiry code in DefaultTests.Stabilizer.
+    cache_bound := 3
+  )
 ));
 
 

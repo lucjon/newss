@@ -109,5 +109,10 @@ EOF
 
 ${GAP:-gap} "${coverage_option[@]}" --quitonbreak -o 4G "$script"
 result=$?
+
 rm $script
+if [ "$coverage" == "yes" ]; then
+	test/fixup-coverage "$testdir/$filename.cov.json"
+fi
+
 exit $result
