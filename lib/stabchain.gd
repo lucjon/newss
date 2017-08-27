@@ -6,6 +6,7 @@ DeclareRepresentation("IsBSGSRep", IsNonAtomicComponentObjectRep, [
   "group",
   "base",
   "sgs",
+  "invsgs",
   "initial_gens",
   "chain",
   "options",

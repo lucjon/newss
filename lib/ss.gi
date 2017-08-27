@@ -24,9 +24,9 @@
 #        SchreierVectorForLevel(bsgs, level)
 #          Finds a Schreier vector for the basic orbit of the level-th base
 #          point in the level-th stabilizer group.
-#        ExtendSchreierVector(bsgs, level, gen)
+#        ExtendSchreierVector(bsgs, level, gen, invgen)
 #          Extend the level-th basic orbit after adding a Schreier generator
-#          gen.
+#          gen. (Here, invgen = gen^-1.)
 #        IsIdentity(bsgs, perm_rep)
 #          Takes a permutation in our working representation and determines if
 #          it is the identity. If it is, return rec(is_identity := true). If
@@ -46,13 +46,14 @@
 ##
 
 InstallGlobalFunction(SchreierSims, function (bsgs)
-  local i, added_generator, stripped, iterators, g, l, need_to_adjoin, perm, id_result;
+  local i, added_generator, stripped, iterators, g, l, need_to_adjoin, perm, id_result, invperm;
 
   if not IsBound(bsgs!.chain) then
     bsgs!.chain := [];
   fi;
 
   bsgs!.sgs := Filtered(bsgs!.sgs, x -> x <> ());
+  bsgs!.invsgs := Filtered(bsgs!.invsgs, x -> x <> ());
   if Size(bsgs!.sgs) = 0 then
     # The trivial group!
     return;
@@ -95,7 +96,9 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
       if not id_result.is_identity then
         Info(NewssInfo, 3, "Adjoining generator.");
         perm := id_result.perm;
+        invperm := Inverse(perm);
         Add(bsgs!.sgs, perm);
+        Add(bsgs!.invsgs, invperm);
 
         # Additionally, if the strip procedure made it to the last iteration,
         # we know it fixes all the existing base points and that we need to
@@ -105,8 +108,7 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
         fi;
 
         for l in [i + 1 .. stripped.level] do
-          Add(bsgs!.chain[l].gens, perm);
-          bsgs!.options.ExtendSchreierVector(bsgs, l, perm);
+          bsgs!.options.ExtendSchreierVector(bsgs, l, perm, invperm);
           ComputeStabForBSGS(bsgs, l);
           # We might be able to avoid this as well.
           iterators[l] := SchreierGenerators(bsgs, l);
@@ -131,7 +133,7 @@ end);
 
 
 InstallGlobalFunction(RandomSchreierSims, function (bsgs)
-  local no_sifted_this_round, can_verify_order, verified, g, stripped, l;
+  local no_sifted_this_round, can_verify_order, verified, g, stripped, l, invperm;
 
   bsgs!.sgs := List(bsgs!.sgs);
 
@@ -150,14 +152,16 @@ InstallGlobalFunction(RandomSchreierSims, function (bsgs)
     stripped := StabilizerChainStrip(bsgs, g);
 
     if not bsgs!.options.IsIdentity(bsgs, stripped.residue).is_identity then
+      invperm := Inverse(stripped.residue);
       Add(bsgs!.sgs, stripped.residue);
+      Add(bsgs!.invsgs, invperm);
 
       if stripped.level > Size(bsgs!.base) then
         ExtendBaseForLevel(bsgs, stripped.level, stripped.residue);
       fi;
 
       for l in [2 .. stripped.level] do
-        bsgs!.options.ExtendSchreierVector(bsgs, l, stripped.residue);
+        bsgs!.options.ExtendSchreierVector(bsgs, l, stripped.residue, invperm);
         ComputeStabForBSGS(bsgs, l);
       od;
       no_sifted_this_round := 0;
@@ -337,7 +341,7 @@ end);
 
 InstallGlobalFunction(NEWSS_SVForLevel, function (bsgs, i)
   local sv;
-  sv := SchreierVectorForOrbit(bsgs!.chain[i].gens, bsgs!.base[i]);
+  sv := SchreierVectorForOrbit(bsgs!.chain[i].gens, bsgs!.chain[i].invgens, bsgs!.base[i]);
   bsgs!.chain[i].orbit := sv;
   return sv;
 end);
@@ -369,13 +373,14 @@ fi;
 ### ExtendSchreierVector
 ###
 
-InstallGlobalFunction(NEWSS_ExtendSV, function (bsgs, i, gen)
+InstallGlobalFunction(NEWSS_ExtendSV, function (bsgs, i, gen, invgen)
   local sv;
   if not IsBound(bsgs!.chain[i].orbit) then
     Add(bsgs!.chain[i].gens, gen);
+    Add(bsgs!.chain[i].invgens, invgen);
     bsgs!.options.SchreierVectorForLevel(bsgs, i);
   else
-    ExtendSchreierVector(bsgs!.chain[i].orbit, gen);
+    ExtendSchreierVector(bsgs!.chain[i].orbit, gen, invgen);
   fi;
 end);
 
@@ -403,6 +408,7 @@ InstallGlobalFunction(ComputeStabForBSGS, function (bsgs, i)
   # We special case the first entry.
   if i = 1 then
     bsgs!.chain[i].gens := bsgs!.sgs;
+    bsgs!.chain[i].invgens := bsgs!.invsgs;
     bsgs!.chain[i].group := bsgs!.group;
   else
     bsgs!.chain[i].group := Group(bsgs!.chain[i].gens);

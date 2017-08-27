@@ -6,8 +6,8 @@ InstallGlobalFunction(NEWSS_SchreierVector, function (sv, to_compute)
   while Size(to_compute) > 0 do
     pt := Remove(to_compute, 1);
     for j in [1 .. Size(sv.gens)] do
-      gen := sv.gens[j];
-      image := pt / gen;
+      gen := sv.invgens[j];
+      image := pt ^ gen;
       if not IsBound(sv.sv[image]) then
         Add(to_compute, image);
         sv.sv[image] := j;
@@ -17,29 +17,32 @@ InstallGlobalFunction(NEWSS_SchreierVector, function (sv, to_compute)
   od;
 end);
 
-InstallGlobalFunction(NEWSS_EmptySchreierVector, function (gens, point)
-  local sv;
+InstallGlobalFunction(NEWSS_EmptySchreierVector, function (gens, invgens, point)
+  local sv, j;
+
   sv := [];
   sv[point] := -1;
   return rec(
     gens := gens,
+    invgens := invgens,
     point := point,
     size := 1,
     sv := sv
   );
 end);
 
-InstallGlobalFunction(SchreierVectorForOrbit, function (gens, point)
+InstallGlobalFunction(SchreierVectorForOrbit, function (gens, invgens, point)
   local sv;
-  sv := NEWSS_EmptySchreierVector(gens, point);
+  sv := NEWSS_EmptySchreierVector(gens, invgens, point);
   NEWSS_SchreierVector(sv, [point]);
   return sv;
 end);
 
-InstallGlobalFunction(ExtendSchreierVector, function (sv, gen)
+InstallGlobalFunction(ExtendSchreierVector, function (sv, gen, invgen)
   local to_compute, image, n, pt;
   to_compute := [];
   Add(sv.gens, gen);
+  Add(sv.invgens, invgen);
   n := Size(sv.gens);
 
   for pt in [1 .. Size(sv.sv)] do
@@ -47,7 +50,7 @@ InstallGlobalFunction(ExtendSchreierVector, function (sv, gen)
       continue;
     fi;
 
-    image := pt / gen;
+    image := pt ^ invgen;
     if not IsBound(sv.sv[image]) then
       Add(to_compute, image);
       sv.sv[image] := n;
