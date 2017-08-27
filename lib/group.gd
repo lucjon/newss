@@ -21,7 +21,7 @@ DeclareGlobalFunction("StabilizerChainOrderNC");
 
 #! @Section Stabilizers
 
-#! @Argmuents bsgs, point
+#! @Arguments bsgs, point
 #! @Returns the point stabilizer of <A>point</A> in the group described by
 #! <A>bsgs</A>
 #! @Description
