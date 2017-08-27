@@ -645,6 +645,17 @@ DefaultTests := rec(
   Order := function (bsgs)
     return StabilizerChainOrder(bsgs) = Size(bsgs!.group);
   end,
+
+  Accessors := function (bsgs)
+    # We just want to make sure these don't error
+    ViewString(bsgs);
+    GroupBSGS(bsgs);
+    StrongGeneratorsBSGS(bsgs);
+    BaseBSGS(bsgs);
+    StabilizersBSGS(bsgs);
+    StabilizerBSGS(bsgs, 1);
+    return true;
+  end
 );
 
 KnownBaseTests := rec(
@@ -698,7 +709,7 @@ ChangeOfBaseTests := rec(
     return VERIFY_CONTAINMENT;
   end,
 
-  Stabilizer := function(bsgs)
+  Stabilizer := function (bsgs)
     local points, i, pt, gap_stab, our_stab;
     points := MovedPoints(bsgs!.group);
 
@@ -711,6 +722,14 @@ ChangeOfBaseTests := rec(
       fi;
     od;
     return true;
+  end,
+
+  Conjugate := function (bsgs)
+    local el, G, conj;
+    el := PseudoRandom(SymmetricGroup(LargestMovedPoint(bsgs!.group)));
+    G := bsgs!.group ^ el;
+    conj := ConjugateBSGS(bsgs, el);
+    return ContainmentTest(G, conj, NUM_RANDOM_TEST_ELTS / 8);
   end
 );
 NEWSS_UpdateRecord(DefaultTests, ChangeOfBaseTests);
@@ -718,9 +737,9 @@ NEWSS_UpdateRecord(DefaultTests, ChangeOfBaseTests);
 ToGAPStabChainTests := rec(
   ToGAPStabChain := function (bsgs)
     local gap_sc, G, g, i;
-    gap_sc := GAPStabChainFromBSGS(bsgs);
     G := Group(GeneratorsOfGroup(bsgs!.group));
-    SetStabChainMutable(G, gap_sc);
+    StabChainNewssOp(G, rec());
+    gap_sc := StabChainMutable(G);
 
     for i in [1 .. Minimum(Size(bsgs!.group), 1024)] do
       g := PseudoRandom(bsgs!.group);
