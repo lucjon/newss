@@ -2,5 +2,7 @@
 
 DeclareGlobalFunction("NEWSS_AddChainToTree");
 DeclareGlobalFunction("NEWSS_FindChainWithBasePrefix");
+DeclareGlobalFunction("NEWSS_RemoveOldChain");
 
-BindGlobal("NEWSS_MAX_TREE_DEPTH", 5);
+BindGlobal("NEWSS_DEFAULT_TREE_DEPTH", 5);
+BindGlobal("NEWSS_DEFAULT_TREE_BOUND", 2);

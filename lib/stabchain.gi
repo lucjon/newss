@@ -59,12 +59,16 @@ InstallValue(NEWSS_DETERMINISTIC_OPTIONS, Immutable(rec(
 
 InstallGlobalFunction(BSGS, function (group, base, sgs)
   local obj, tree;
+  tree := rec(children := [],
+              members := [],
+              tree := ~,
+              count := 0,
+              bound := NEWSS_DEFAULT_TREE_BOUND,
+              depth := NEWSS_DEFAULT_TREE_DEPTH);
   obj := Objectify(BSGSType,
                    rec(group := group, base := base, sgs := sgs,
                        initial_gens := Immutable(Set(sgs)),
-                       tree := rec(children := [],
-                                   count := 0,
-                                   depth := NEWSS_MAX_TREE_DEPTH)));
+                       tree := tree));
 
   if Size(base) > 0 then
     # If we haven't actually got a base, wait until we calculate one.
