@@ -503,10 +503,15 @@ end);
 
 InstallGlobalFunction(ConjugateBSGS, function (bsgs, g)
   EnsureBSGSChainComputed(bsgs);
-  bsgs!.base := List(bsgs!.base, b -> b ^ g);
-  bsgs!.sgs := List(bsgs!.sgs, x -> x ^ g);
-  bsgs!.group := Group(bsgs!.sgs);
-  ComputeChainForBSGS(bsgs);
+
+  new_bsgs := CopyBSGS(bsgs);
+  new_bsgs!.base := List(bsgs!.base, b -> b ^ g);
+  new_bsgs!.sgs := List(bsgs!.sgs, x -> x ^ g);
+  new_bsgs!.group := Group(bsgs!.sgs);
+  ComputeChainForBSGS(new_bsgs);
+  NEWSS_AddChainToTree(bsgs!.tree, new_bsgs);
+
+  return new_bsgs;
 end);
 
 

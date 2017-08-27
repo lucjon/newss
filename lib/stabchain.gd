@@ -145,12 +145,12 @@ DeclareGlobalFunction("ChangeBaseOfBSGS");
 DeclareGlobalFunction("ComputeChainForBSGS");
 
 #! @Arguments bsgs, g
-#! @Returns nothing
+#! @Returns a new BSGS structure
 #! @Description
-#! Conjugates the given stabilizer chain <C>bsgs</C> for a group $G$ by the
-#! permutation <C>g</C>, such that its base $[\beta_1, \ldots, \beta_n]$
-#! is now $[\beta_1^g, \ldots, \beta_n^g]$, and we have a stabilizer chain for
-#! $G^g$.
+#! Returns the result of conjugating the stabilizer chain <A>bsgs</A> for a
+#! group $G$ by the permutation <A>g</A>, such that its base $[\beta_1, \ldots,
+#! \beta_n]$ is now $[\beta_1^g, \ldots, \beta_n^g]$, and we have a stabilizer
+#! chain for $G^g$.
 DeclareGlobalFunction("ConjugateBSGS");
 
 #! @Arguments bsgs
