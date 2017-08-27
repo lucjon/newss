@@ -47,6 +47,15 @@
 #!    This does not in fact need to be a base; if it is not, then any necessary
 #!    new points will be appended to it. If the <C>known_base</C> parameter is
 #!    specified, then this parameter defaults to the value given there.
+#! * **cache_bound**. The maximum number of stabilizer chains for this group to
+#!    store in the cache at any one time, or 0 for no limit. The cache is added
+#!    to when, for example, a change of base operation is performed using
+#!    <Ref Func="BSGSWithBase"/> or the structure is conjugated with
+#!    <Ref Func="ConjugateBSGS"/>. When the cache is full, the entry looked up
+#!    least recently will be evicted. A value of 1 for this parameter
+#!    effectively disables this caching.
+#! * **cache_depth**. The maximum depth of the prefix tree used to cache
+#!   stabilizer chains.
 #!
 #! All of these fields are optional; if any are missing, they are taken from
 #! whichever of the following default options structures are chosen by

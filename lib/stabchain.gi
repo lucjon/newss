@@ -37,7 +37,9 @@ InstallValue(NEWSS_DEFAULT_OPTIONS, Immutable(rec(
   perm_representation := NEWSS_PERMWORD_REPRESENTATION,
   fall_back_to_deterministic := true,
   sift_threshold := 8,
-  orbits_to_consider := 3
+  orbits_to_consider := 3,
+  cache_bound := NEWSS_DEFAULT_TREE_BOUND,
+  cache_depth := NEWSS_DEFAULT_TREE_DEPTH
 )));
 
 InstallValue(NEWSS_DETERMINISTIC_OPTIONS, Immutable(rec(
@@ -53,7 +55,9 @@ InstallValue(NEWSS_DETERMINISTIC_OPTIONS, Immutable(rec(
   perm_representation := NEWSS_PERMWORD_REPRESENTATION,
   fall_back_to_deterministic := NEWSS_DEFAULT_OPTIONS.fall_back_to_deterministic,
   sift_threshold := NEWSS_DEFAULT_OPTIONS.sift_threshold,
-  orbits_to_consider := NEWSS_DEFAULT_OPTIONS.orbits_to_consider
+  orbits_to_consider := NEWSS_DEFAULT_OPTIONS.orbits_to_consider,
+  cache_bound := NEWSS_DEFAULT_OPTIONS.cache_bound,
+  cache_depth := NEWSS_DEFAULT_OPTIONS.cache_depth
 )));
 
 
@@ -170,6 +174,12 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
 
   if IsBound(B!.options.base) then
     B!.options.SelectBasePoint := NEWSS_SelectFromChosenBase;
+  fi;
+
+  # Configure the cache, unless it already has been.
+  if B!.tree.count <= 1 then
+    B!.tree!.bound := B!.options.cache_bound;
+    B!.tree!.depth := B!.options.cache_depth;
   fi;
 
   NEWSS_UpdateRecord(B!.options, B!.options.perm_representation);
@@ -502,6 +512,7 @@ end);
 
 
 InstallGlobalFunction(ConjugateBSGS, function (bsgs, g)
+  local new_bsgs;
   EnsureBSGSChainComputed(bsgs);
 
   new_bsgs := CopyBSGS(bsgs);
