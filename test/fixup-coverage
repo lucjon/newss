@@ -15,6 +15,12 @@ def fixup(cov):
             for index, line in enumerate(handle):
                 if re.match(SKIP_RE, line):
                     cov['coverage'][filename][str(index + 1)] = None
+            max_line = index + 1
+        
+        for line in lines.keys():
+            if int(line) > max_line:
+                del lines[line]
+
     return cov
 
 if __name__ == '__main__':
