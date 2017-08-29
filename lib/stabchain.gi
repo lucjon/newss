@@ -203,8 +203,7 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
 end);
 
 InstallGlobalFunction(GAPStabChainFromBSGS, function (bsgs)
-  local labels, top, prev, current, pt, gen, image, next, genlabels,
-        generators, i, j, to_compute;
+  local labels, top, prev, current, chain, gen, next, genlabels, generators, i, j;
 
   EnsureBSGSChainComputed(bsgs);
 
@@ -218,16 +217,17 @@ InstallGlobalFunction(GAPStabChainFromBSGS, function (bsgs)
   top.labels := Concatenation([()], bsgs!.sgs);
 
   for i in [1 .. Size(bsgs!.base)] do
+    chain := bsgs!.chain[i];
     current.identity := ();
     current.labels := prev.labels;
-    current.genlabels := List(bsgs!.chain[i].gens, function (g)
+    current.genlabels := List(chain.gens, function (g)
       if g = () then
         return 1;
       else
         return Position(bsgs!.sgs, g) + 1;
       fi;
     end);
-    current.generators := ShallowCopy(bsgs!.chain[i].gens);
+    current.generators := ShallowCopy(chain.gens);
 
     current.orbit := [bsgs!.base[i]];
     current.transversal := [];
@@ -235,21 +235,13 @@ InstallGlobalFunction(GAPStabChainFromBSGS, function (bsgs)
     current.transversal[bsgs!.base[i]] := ();
     current.translabels[bsgs!.base[i]] := 1;
 
-    # We need to recompute the orbits `the other way around', which is how GAP
-    # expects them. This could be slightly faster than the original computation
-    # since we know the size of orbit to expect.
-    to_compute := [bsgs!.base[i]];
-    while Size(to_compute) > 0 and Size(current.orbit) < bsgs!.chain[i].orbit.size do
-      pt := Remove(to_compute, 1);
-      for gen in bsgs!.chain[i].gens do
-        image := pt / gen;
-        if not IsBound(current.transversal[image]) then
-          current.transversal[image] := gen;
-          current.translabels[image] := Position(current.labels, gen);
-          Add(current.orbit, image);
-          Add(to_compute, image);
-        fi;
-      od;
+    for j in [1 .. Size(chain.orbit.sv)] do
+      if j <> bsgs!.base[i] and IsBound(chain.orbit.sv[j]) then
+        gen := chain.gens[chain.orbit.sv[j]];
+        Add(current.orbit, j);
+        current.transversal[j] := gen;
+        current.translabels[j] := chain.orbit.sv[j] + 1;
+      fi;
     od;
 
     if i <> Size(bsgs!.base) then
@@ -338,25 +330,21 @@ InstallGlobalFunction(NEWSS_ChangeBaseByPointSwap, function (bsgs, new_base)
     if i <= Size(bsgs!.base) and bsgs!.base[i] = pt then
       # We still want to swap our point closer to the start, but the index will
       # be off since the code below assumes we added a point.
-      Info(NewssInfo, 3, "  we already found the point ", pt, " at ", i);
       i := i - 1;
     elif stabilized then
       # When we get here, we are able to insert it after point i as a redundant
       # base point, since we know it is stabilized by the previous group. (This
       # may be at the end of the list.)
-      Info(NewssInfo, 3, "  inserting redundant base point ", pt, " at ", i);
       NEWSS_InsertRedundantBasePoint(bsgs, i, pt);
     else
       # If we weren't even stabilized by some existing subgroup in the chain,
       # the best we can do is add it to the end of the base, and with trivial
       # stabilizer group
-      Info(NewssInfo, 3, "  appending trivial base point ", pt, " at ", i);
       NEWSS_AppendTrivialBasePoint(bsgs, pt);
     fi;
 
     # Then we swap it back to its intended position.
     while i >= j and i < Size(bsgs!.base) do
-      Info(NewssInfo, 3, "  swapping ", bsgs!.base[i], " at ", i, " with ", bsgs!.base[i + 1], " at ", i + 1);
       NEWSS_PerformBaseSwap(bsgs, i);
       i := i - 1;
     od;
@@ -380,10 +368,6 @@ InstallGlobalFunction(NEWSS_ChangeBaseByPointSwap, function (bsgs, new_base)
 end);
 
 
-# Insert a new point <C>pt</C> at position <C>i + 1</C> in the base of the BSGS
-# structure <C>bsgs</C> with the same stabilizer group as in position i. This
-# function does not check that bsgs!.stabilizers[i] does, in fact, stabilise
-# <C>pt</C>.
 InstallGlobalFunction(NEWSS_InsertRedundantBasePoint, function (bsgs, i, pt)
   local orb;
   # The stabilizer group is just a copy
@@ -395,7 +379,6 @@ InstallGlobalFunction(NEWSS_InsertRedundantBasePoint, function (bsgs, i, pt)
     orbit := SchreierVectorForOrbit(~.gens, ~.invgens, pt)), i + 1);
 end);
 
-# Append a new base point <C>pt</C> with trivial stabilizer to the chain.
 InstallGlobalFunction(NEWSS_AppendTrivialBasePoint, function (bsgs, pt)
   local orb;
   Add(bsgs!.base, pt);

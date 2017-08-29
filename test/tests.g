@@ -591,7 +591,7 @@ PerformTests := function(tests, user_opt)
             opt.Print(PickName(bsgs!.group), ": ", test_name, ": done in ", t, " ms.\n");
 
             vt := Runtime();
-            success := ContainmentTest(bsgs!.group, test_bsgs, NUM_RANDOM_TEST_ELTS / 4);
+            success := ContainmentTest(bsgs!.group, test_bsgs, NUM_RANDOM_TEST_ELTS / 2);
             vt := Runtime() - vt;
             result.(Concatenation("vtime_", test_name)) := vt;
           fi;
@@ -748,11 +748,10 @@ ToGAPStabChainTests := rec(
       fi;
     od;
 
-    if StabilizerChainOrder(bsgs) <> Size(G) or
-       BaseStabChain(gap_sc) <> bsgs!.base then
-     return false;
+    if not IsBound(gap_sc.from_newss) or StabilizerChainOrder(bsgs) <> Size(G) then
+      return false;
     fi;
-    return VERIFY_CONTAINMENT;
+    return ContainmentTest(G, bsgs, NUM_RANDOM_TEST_ELTS / 4);
   end
 );
 
