@@ -740,17 +740,18 @@ ToGAPStabChainTests := rec(
     G := Group(GeneratorsOfGroup(bsgs!.group));
     StabChainNewssOp(G, rec());
     gap_sc := StabChainMutable(G);
-
-    for i in [1 .. Minimum(Size(bsgs!.group), 1024)] do
-      g := PseudoRandom(bsgs!.group);
-      if not (g in G) then
-        return false;
-      fi;
-    od;
+    bsgs := gap_sc.from_newss;
 
     if not IsBound(gap_sc.from_newss) or StabilizerChainOrder(bsgs) <> Size(G) then
       return false;
     fi;
+
+    if bsgs!.base <> BaseStabChain(gap_sc) then
+      Print("*** BSGS BASE: ", bsgs!.base, "\n");
+      Print("*** GAP BASE: ", BaseStabChain(gap_sc), "\n");
+      return false;
+    fi;
+
     return ContainmentTest(G, bsgs, NUM_RANDOM_TEST_ELTS / 4);
   end
 );
