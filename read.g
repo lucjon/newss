@@ -4,7 +4,7 @@ NEWSS_TryModule := function (name)
   local fn;
   fn := Filename(DirectoriesPackageLibrary("newss"), Concatenation("../src/", name, ".so"));
   if fn = fail then
-    ReadPackage("newss", Concatenation("lib", name, ".gi"));
+    ReadPackage("newss", Concatenation("lib/", name, ".gi"));
   else
     BindGlobal(Concatenation("NEWSS_C_", name), true);
     LoadDynamicModule(fn);
