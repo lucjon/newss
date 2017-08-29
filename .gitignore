@@ -2,5 +2,4 @@ tags
 doc/*
 *.csv
 gap/*
-
 *.so
