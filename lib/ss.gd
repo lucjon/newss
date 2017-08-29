@@ -148,7 +148,7 @@ DeclareGlobalVariable("BSGS_RANDOM_SS_THRESHOLD");
 #! * If we are using the randomized algorithm and we know the order of the
 #!   group a priori, we use <Ref Func="NEWSS_VerifyByOrder"/>. You can inform
 #!   GAP, and hence the package, of a group's order by using the builtin
-#!   <Ref Func="SetSize"/> function.
+#!   <Ref BookName="ref" Func="SetSize"/> function.
 #! * Otherwise, we use <Ref Func="NEWSS_VerifyByDeterministic"/>.
 
 #! @Arguments bsgs

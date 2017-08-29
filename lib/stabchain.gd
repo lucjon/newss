@@ -30,6 +30,7 @@ BindGlobal("BSGSType", NewType(BSGSFamily, IsBSGS and IsBSGSRep and IsMutable));
 #!                     the final set of options used in the computation; see
 #!                     <Ref Sect="Chapter_Stabilizer_Chains_Section_Options_for_stabilizer_chain_creation"/>,
 #! * **sgs**:          A strong generating set for $G$ relative to <C>base</C>,
+#! * **invsgs**:       A list whose $i$-th element is the inverse of <C>sgs[i]</C>,
 #! * **base**:         A base for $G$,
 #! * **chain**:        A list of <C>newss</C> stabilizer chain records
 #!                     corresponding to a stabilizer chain with respect to base
@@ -57,6 +58,7 @@ BindGlobal("BSGSType", NewType(BSGSFamily, IsBSGS and IsBSGSRep and IsMutable));
 #! containing the following fields describing the group $G^{(i)}$:
 #! * **group**:     The group $G^{(i)}$, as a &GAP; group object.
 #! * **gens**:      A list of generators for the group $G^{(i)}$.
+#! * **invgens**:   A list whose $i$-th element is the inverse of <C>gens[i]</C>.
 #! * **orbit**:     A list whose $i$-th element is a Schreier vector record
 #!                  describing the orbit of <C>base[i]</C> under
 #!                  <C>stabgens[i]</C> --- see section
@@ -178,9 +180,46 @@ DeclareGlobalFunction("CopyBSGS");
 DeclareGlobalFunction("RemoveRedundantGenerators");
 
 
-DeclareGlobalFunction("NEWSS_AppendEmptyChain");
+#! @Section Internal functions
+#! @Arguments bsgs, new_base
+#! @Returns nothing
+#! @Description
+#! Changes the base of <A>bsgs</A> to <A>new_base</A> by inserting and swapping
+#! base points (see <Ref Func="NEWSS_PerformBaseSwap" />).
 DeclareGlobalFunction("NEWSS_ChangeBaseByPointSwap");
+
+#! @Arguments bsgs, new_base
+#! @Returns nothing
+#! @Description
+#! Changes the base of <A>bsgs</A> to <A>new_base</A> by recomputing the
+#! stabilizer chain, using the known-base Schreier–Sims algorithm.
 DeclareGlobalFunction("NEWSS_ChangeBaseByRecomputing");
+
+#! @Arguments bsgs, i, pt
+#! @Returns nothing
+#! @Description
+#! Inserts a redundant base point <A>pt</A> after the <A>i</A>th entry in the
+#! BSGS structure <A>bsgs</A>. This function does not verify that <A>pt</A> is
+#! fixed by the subsequent stabilizer subgroups.
 DeclareGlobalFunction("NEWSS_InsertRedundantBasePoint");
+
+#! @Arguments bsgs, pt
+#! @Returns nothing
+#! @Description
+#! Appends a point <A>pt</A> to the base of <A>bsgs</A>, as well as a
+#! corresponding trivial entry to the stabilizer chain. This function is
+#! necessary since, unlike &GAP;, we do not generally keep around a trivial
+#! entry in the chain which could be copied by e.g.
+#! <Ref Func="NEWSS_InsertRedundantBasePoint"/>.
 DeclareGlobalFunction("NEWSS_AppendTrivialBasePoint");
+
+#! @Arguments bsgs, i
+#! @Returns nothing
+#! @Description
+#! Swaps points $i$ and $i + 1$ in the base of <A>bsgs</A>, computing the new
+#! stabilizer subgroups as required using a randomised variation of Sims' base
+#! swap algorithm (§4.4.7 of Holt, et al.). This randomised variant is
+#! discussed in §5.4 of Seress.
 DeclareGlobalFunction("NEWSS_PerformBaseSwap");
+
+DeclareGlobalFunction("NEWSS_AppendEmptyChain");
