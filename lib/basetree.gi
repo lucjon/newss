@@ -10,6 +10,10 @@
 InstallGlobalFunction(NEWSS_AddChainToTree, function (tree, bsgs)
   local current, base, depth, pt, next, new_record;
 
+  if Size(bsgs.base) = 0 then
+    return fail;
+  fi;
+
   if tree.bound <> 0 and tree.count >= tree.bound then
     NEWSS_RemoveOldChain(tree);
   fi;

@@ -26,8 +26,8 @@ comment:
   require_changes: no
 
 fixes:
-    - "gap/lib/**::"
-    - "gap/pkg/autpgrp*/**::"
-    - "gap/pkg/cryst*/**::"
-    - "gap/pkg/polycyclic*/**::"
+    - "^gap/lib/.*::"
+    - "^gap/pkg/autpgrp/.*::"
+    - "^gap/pkg/cryst/.*::"
+    - "^gap/pkg/polycyclic*/.*::"
 
