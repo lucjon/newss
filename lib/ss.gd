@@ -222,8 +222,6 @@ DeclareGlobalFunction("NEWSS_ExtendSV");
 DeclareGlobalFunction("NEWSS_FirstMovedPoint");
 DeclareGlobalFunction("NEWSS_IsIdentityByKnownBase");
 DeclareGlobalFunction("NEWSS_IsIdentityByMul");
-DeclareGlobalFunction("NEWSS_PickAscending");
-DeclareGlobalFunction("NEWSS_PickFromOrbits");
 DeclareGlobalFunction("NEWSS_SelectFromChosenBase");
 DeclareGlobalFunction("NEWSS_UpdateRecord");
 DeclareInfoClass("NewssInfo");

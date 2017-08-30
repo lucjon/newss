@@ -47,7 +47,7 @@ InstallValue(NEWSS_DEFAULT_OPTIONS, Immutable(rec(
 InstallValue(NEWSS_DETERMINISTIC_OPTIONS, Immutable(rec(
   SchreierSims := SchreierSims,
   Verify := ReturnTrue,
-  SelectBasePoint := NEWSS_PickFromOrbits,
+  SelectBasePoint := NEWSS_FirstMovedPoint,
   SchreierVectorForLevel := NEWSS_SVForLevel,
   ExtendSchreierVector := NEWSS_ExtendSV,
 

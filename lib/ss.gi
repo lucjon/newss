@@ -276,56 +276,6 @@ InstallGlobalFunction(NEWSS_FirstMovedPoint, function (bsgs, level, culprit)
   return point;
 end);
 
-InstallGlobalFunction(NEWSS_PickAscending, function (bsgs, level, culprit)
-  local i;
-  if culprit = false then
-    return NEWSS_FirstMovedPoint(bsgs, level, culprit);
-  else
-    for i in [1 .. LargestMovedPoint(bsgs!.group)] do
-      if i ^ culprit <> i then
-        return i;
-      fi;
-    od;
-    
-    Error("could not find point not fixed by culprit");
-  fi;
-end);
-
-InstallGlobalFunction(NEWSS_PickFromOrbits, function (bsgs, level, culprit)
-  local point, orbit_level, min_level, i, sv;
-
-  if culprit = false or not IsBound(bsgs!.chain) or Size(bsgs!.chain) < level then
-    return NEWSS_FirstMovedPoint(bsgs, level, culprit);
-  fi;
-
-  point := 0;
-  orbit_level := level;
-  min_level := Maximum(1, level - bsgs!.options.orbits_to_consider - 1);
-
-  repeat
-    sv := bsgs!.chain[orbit_level].orbit.sv;
-    for i in [1 .. Size(sv)] do
-      if IsBound(sv[i]) and sv[i] <> -1 then
-        if i ^ culprit <> i then
-          point := i;
-          break;
-        fi;
-      fi;
-    od;
-
-    if point <> 0 then
-      break;
-    fi;
-    orbit_level := orbit_level - 1;
-  until orbit_level < min_level;
-
-  if point = 0 then
-    point := First(MovedPoints(culprit), pt -> not (pt in bsgs!.base));
-  fi;
-
-  return point;
-end);
-
 InstallGlobalFunction(NEWSS_SelectFromChosenBase, function (bsgs, level, culprit)
   if Size(bsgs!.options.base) >= level + 1 then
     return bsgs!.options.base[level + 1];
