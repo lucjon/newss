@@ -471,6 +471,9 @@ DEFAULT_TEST_OPTIONS := Immutable(rec(
   filename := false,
   load_groups_list := false,
   group_source := DefaultGroupSource,
+  # This is the percentage of groups for which we also force a deterministic
+  # Schreier-Sims runthrough as well.
+  deterministic_proportion := 10,
   Print := Print,
   bsgs_options := rec(
     # We do this to make sure that, while we hit the cache code, we also hit
@@ -496,7 +499,8 @@ VERIFY_CONTAINMENT := "verify_containment";
 
 PerformTests := function(tests, user_opt)
   local test_results, opt, groups, stab_chains, bsgs, result, G, i,
-        tasks, group_task, our_time, gap_time, new_chain, t, region, success;
+        tasks, group_task, our_time, gap_time, new_chain, t, region, success,
+        deterministic_interval;
   tests := Immutable(tests);
   test_results := [];
   opt := ShallowCopy(user_opt);
@@ -520,6 +524,7 @@ PerformTests := function(tests, user_opt)
   opt.Print("*** Computing stabilizer chains...\n");
   # First we start computing our chains in parallel.
   tasks := [];
+  deterministic_interval := Int(Size(groups) * opt.deterministic_proportion / 100) + 1;
   for i in [1 .. Size(groups)] do
     Add(tasks, RunTask(function (G)
       local bsgs, orbit_length;
@@ -578,18 +583,27 @@ PerformTests := function(tests, user_opt)
   for i in [1 .. Size(stab_chains)] do
     bsgs := stab_chains[i];
     group_task := RunTask(function (i, bsgs)
-      local test_bsgs, test, t, success, vt, test_name, result;
+      local test_bsgs, test, t, success, vt, test_name, result, these_tests;
 #      SilentErrors := false; BreakOnError := true;
       atomic readonly bsgs do
         result := rec(success := true);
         opt.Print(PickName(bsgs!.group), ":\n");
-        for test_name in RecNames(tests) do
+
+        these_tests := ShallowCopy(tests);
+        if i mod deterministic_interval = 0 and i <> 0 then
+          these_tests.Deterministic := function (bsgs)
+            bsgs := BSGSFromGroup(bsgs!.group, NEWSS_DETERMINISTIC_OPTIONS);
+            return ContainmentTest(bsgs!.group, bsgs, NUM_RANDOM_TEST_ELTS / 2);
+          end;
+        fi;
+
+        for test_name in RecNames(these_tests) do
           # Some tests modify the BSGS; we want to copy it here so we don't count
           # the copying as part of the time taken by the test
           test_bsgs := CopyBSGS(bsgs);
 
           opt.Print(PickName(bsgs!.group), ": ", test_name, ": started.\n");
-          test := tests.(test_name);
+          test := these_tests.(test_name);
           t := Runtime();
           success := test(test_bsgs);
           t := Runtime() - t;
