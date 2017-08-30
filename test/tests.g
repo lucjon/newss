@@ -603,8 +603,11 @@ PerformTests := function(tests, user_opt)
             success := ContainmentTest(bsgs!.group, test_bsgs, NUM_RANDOM_TEST_ELTS / 2);
             vt := Runtime() - vt;
             result.(Concatenation("vtime_", test_name)) := vt;
+
+            opt.Print(PickName(bsgs!.group), ": ", test_name, ": ", success, " in ", vt, " ms.\n");
+          else
+            opt.Print(PickName(bsgs!.group), ": ", test_name, ": ", success, " in ", t, " ms.\n");
           fi;
-          opt.Print(PickName(bsgs!.group), ": ", test_name, ": ", success, " in ", t, " ms.\n");
 
           result.(Concatenation("time_", test_name)) := t;
           result.(Concatenation("success_", test_name)) := success;
