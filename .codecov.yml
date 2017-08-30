@@ -26,4 +26,8 @@ comment:
   require_changes: no
 
 fixes:
-  - "*/pkg/newss/::"
+    - "gap/lib/**::"
+    - "gap/pkg/autpgrp*/**::"
+    - "gap/pkg/cryst*/**::"
+    - "gap/pkg/polycyclic*/**::"
+
