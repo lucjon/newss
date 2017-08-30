@@ -506,8 +506,10 @@ PerformTests := function(tests, user_opt)
   # First pick the groups and compute their stabiliser chains.
   if opt.load_groups_list = false then
     groups := ShallowCopy(opt.fixed_groups);
-    opt.Print("*** Picking ", opt.number_of_groups - Size(groups), " random groups\n");
-    Append(groups, PickManyGroups(opt.group_source, false, opt.number_of_groups - Size(groups)));
+    if opt.number_of_groups > Size(groups) then
+      opt.Print("*** Picking ", opt.number_of_groups - Size(groups), " random groups\n");
+      Append(groups, PickManyGroups(opt.group_source, false, opt.number_of_groups - Size(groups)));
+    fi;
   else
     opt.Print("*** Loading groups from file\n");
     groups := LoadGroupsList(opt.load_groups_list);
@@ -520,19 +522,25 @@ PerformTests := function(tests, user_opt)
   tasks := [];
   for i in [1 .. Size(groups)] do
     Add(tasks, RunTask(function (G)
-      local bsgs;
+      local bsgs, orbit_length;
       opt.Print(PickName(G), ": BSGS started.\n");
       t := Runtime();
       bsgs := BSGSFromGroup(G, opt.bsgs_options);
       our_time := Runtime() - t;
       opt.Print(PickName(G), ": BSGS done in ", our_time, " ms.\n");
 
+      if Size(bsgs!.chain) > 0 then
+        orbit_length := bsgs!.chain[1].orbit.size;
+      else
+        orbit_length := 0;
+      fi;
+
       atomic readonly G do
         return rec(bsgs := bsgs,
                    group := PickName(G),
                    group_degree := NrMovedPoints(G),
                    base_length := Size(bsgs!.base),
-                   orbit_top_length := bsgs!.chain[1].orbit.size,
+                   orbit_top_length := orbit_length,
                    time_BSGSFromGroup := our_time,
                    ss := NameFunction(bsgs!.options.SchreierSims),
                    verify := NameFunction(bsgs!.options.Verify),
@@ -653,8 +661,9 @@ DefaultTests := rec(
     GroupBSGS(bsgs);
     StrongGeneratorsBSGS(bsgs);
     BaseBSGS(bsgs);
-    StabilizersBSGS(bsgs);
-    StabilizerBSGS(bsgs, 1);
+    if Size(StabilizersBSGS(bsgs)) > 0 then;
+      StabilizerBSGS(bsgs, 1);
+    fi;
     return true;
   end
 );
@@ -676,6 +685,11 @@ NEWSS_UpdateRecord(WithKnownBaseTests, DefaultTests);
 ChangeOfBaseTests := rec(
   ChangeOfBase := function (bsgs)
     local gens, new_base, i, pt, stab;
+
+    if Size(bsgs!.base) = 0 then
+      # Not much more we can do here
+      return true;
+    fi;
 
     # First, we change up the base a bit
     gens := GeneratorsOfGroup(bsgs!.group);
@@ -706,6 +720,9 @@ ChangeOfBaseTests := rec(
   end,
 
   BaseSwap := function (bsgs)
+    if Size(bsgs!.base) = 0 then
+      return true;
+    fi;
     NEWSS_PerformBaseSwap(bsgs, PseudoRandom([1 .. Size(bsgs!.base) - 1]));
     return VERIFY_CONTAINMENT;
   end,
@@ -727,6 +744,11 @@ ChangeOfBaseTests := rec(
 
   Conjugate := function (bsgs)
     local el, G, conj;
+
+    if IsTrivial(bsgs!.group) then
+      return true;
+    fi;
+
     el := PseudoRandom(SymmetricGroup(LargestMovedPoint(bsgs!.group)));
     G := bsgs!.group ^ el;
     conj := ConjugateBSGS(bsgs, el);
