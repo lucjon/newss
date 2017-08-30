@@ -34,18 +34,20 @@ DeclareGlobalFunction("Stabilizes");
 #!  * **<C>sv</C>**. The list <C>L</C> as above.
 #!  * **<C>size</C>**. The size of the orbit.
 
-#! @Arguments X, pt
+#! @Arguments gens, invgens, pt
 #! @Returns a Schreier vector record
 #! @Description
-#! Computes the orbit of the point <A>pt</A> under the permutations <A>X</A>,
-#! returning a Schreier vector record describing it.
+#! Computes the orbit of the point <A>pt</A> under the permutations
+#! <A>gens</A>, with inverses <A>invgens</A>, returning a Schreier vector
+#! record describing it.
 DeclareGlobalFunction("SchreierVectorForOrbit");
 
-#! @Arguments sv, gen
+#! @Arguments sv, gen, invgen
 #! @Returns nothing
 #! @Description
 #! Given a Schreier vector record <A>sv</A>, extends the orbit to include
-#! images under a new generator <A>gen</A>.
+#! images under a new generator <A>gen</A> (with <A>invgen</A><C> =
+#! Inverse(gen)</C>).
 DeclareGlobalFunction("ExtendSchreierVector");
 
 
@@ -92,10 +94,11 @@ DeclareGlobalFunction("RandomStabilizerElement");
 #! <C>gens</C>.
 DeclareGlobalFunction("NEWSS_SchreierVector");
 
-#! @Arguments gens, point
+#! @Arguments gens, invgens, point
 #! @Returns a Schreier vector record
 #! @Description
 #! (This is an internal function.)
 #! Construct a Schreier vector record for the orbit of <A>point</A> under the
-#! permutations <A>gens</A>, without actually computing the orbit.
+#! permutations <A>gens</A> (with inverses <A>invgens</A>), without actually
+#! computing the orbit.
 DeclareGlobalFunction("NEWSS_EmptySchreierVector");
