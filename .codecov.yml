@@ -28,3 +28,11 @@ comment:
 fixes:
     - "./gap/**::"
 
+ignore:
+    - "**/init.g"
+    - "**/read.g"
+    - "**/PackageInfo.g"
+    # I'm not too interested in the coverage for the test suite, especially
+    # since we don't expect 100% coverage (e.g. load/save code in some runs,
+    # the failure cases, etc.)
+    - "**/test/*.g"
