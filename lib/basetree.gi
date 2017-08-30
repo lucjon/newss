@@ -10,7 +10,7 @@
 InstallGlobalFunction(NEWSS_AddChainToTree, function (tree, bsgs)
   local current, base, depth, pt, next, new_record;
 
-  if Size(bsgs.base) = 0 then
+  if Size(bsgs!.base) = 0 then
     return fail;
   fi;
 

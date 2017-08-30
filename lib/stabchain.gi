@@ -198,7 +198,11 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
     Info(NewssInfo, 2, "Finished deterministic pass");
   fi;
 
-  NEWSS_AddChainToTree(B!.tree, B);
+  # This can still happen here if we are given the trivial group.
+  if Size(B!.base) > 0 then
+    NEWSS_AddChainToTree(B!.tree, B);
+  fi;
+
   return B;
 end);
 
@@ -276,7 +280,7 @@ end);
 
 
 StabChainNewssOp := function (G, gap_options)
-  local options, S;
+  local options, name, S;
 
   if HasStabChainMutable(G) then
     return StabChainMutable(G);
@@ -290,6 +294,12 @@ StabChainNewssOp := function (G, gap_options)
     if IsBound(gap_options.base) then
       options.base := gap_options.base;
     fi;
+
+    for name in RecNames(gap_options) do
+      if not (name in ["base", "knownBase"]) then
+        Info(InfoWarning, 1, "unhandled StabChain option ",  name, " = ", gap_options.(name));
+      fi;
+    od;
 
     S := GAPStabChainFromBSGS(BSGSFromGroup(G, options));
     SetStabChainMutable(G, S);
