@@ -68,6 +68,11 @@ build_packages () {
 	popd
 }
 
+install_newss () {
+	mkdir -p /tmp/gaproot/pkg
+	ln -s "$PWD" /tmp/gaproot/pkg/newss
+}
+
 
 if [ "$HPCGAP" == "yes" ]; then
 	install_hpcgap
@@ -77,4 +82,4 @@ else
 	fetch_gap_packages
 fi
 build_packages
-ln -s $PWD gap/pkg/newss
+install_newss

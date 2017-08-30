@@ -459,6 +459,7 @@ end;
 DEFAULT_TEST_OPTIONS := Immutable(rec(
   number_of_groups := 100,
   fixed_groups := [
+    GroupWithName(Group(()), "trivial group"),
     GroupWithName(AlternatingGroup(4), "A4"),
     GroupWithName(MathieuGroup(9), "MathieuGroup(9)"),
     GroupWithName(SymmetricGroup(11), "S11"),

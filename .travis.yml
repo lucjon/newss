@@ -6,7 +6,7 @@ compiler:
 
 env:
     global:
-        - GAP="./gap/gap -l ./gap"
+        - GAP="./gap/gap -l /tmp/gaproot;./gap"
         - testdir=.
     matrix:
         - HPCGAP=yes
