@@ -103,7 +103,8 @@ NEWSS_CopyMethod := function (meth)
         new_record.(name) := meth(bsgs!.(name));
       fi;
     end;
-    Perform(["group", "base", "sgs", "invsgs", "initial_gens", "chain", "options", "tree"], try);
+    Perform(["group", "base", "sgs", "invsgs", "initial_gens", "chain", "options"], try);
+    new_record.tree := bsgs!.tree;
     return Objectify(BSGSType, new_record);
   end;
 end;
@@ -408,14 +409,14 @@ InstallGlobalFunction(BSGSWithBase, function (bsgs, new_base)
 end);
 
 InstallGlobalFunction(BSGSWithBasePrefix, function (bsgs, new_base, rest...)
-  local known_base, chain, new_bsgs;
+  local known_base, node, new_bsgs;
   known_base := false;
   if Size(rest) > 0 then
     known_base := rest[1];
   fi;
 
-  chain := NEWSS_FindChainWithBasePrefix(bsgs!.tree, new_base);
-  if chain = fail then
+  node := NEWSS_FindChainWithBasePrefix(bsgs!.tree, new_base);
+  if node = fail then
     new_bsgs := CopyBSGS(bsgs);
     if known_base then
       ChangeBaseOfBSGS(new_bsgs, new_base);
@@ -425,7 +426,7 @@ InstallGlobalFunction(BSGSWithBasePrefix, function (bsgs, new_base, rest...)
     NEWSS_AddChainToTree(new_bsgs!.tree, new_bsgs);
     return new_bsgs;
   else
-    return chain;
+    return node.chain;
   fi;
 end);
 
