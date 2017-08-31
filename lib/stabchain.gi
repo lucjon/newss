@@ -448,8 +448,13 @@ InstallGlobalFunction(NEWSS_ChangeBaseByRecomputing, function (bsgs, new_base, k
   bsgs!.options.SchreierSims(bsgs);
 end);
 
-InstallGlobalFunction(RemoveRedundantGenerators, function (bsgs, keep_initial_gens)
-  local i, new_gens, generator, sv, have_shrunk, j, k, pos, new_invgens;
+InstallGlobalFunction(RemoveRedundantGenerators, function (bsgs, rest...)
+  local i, new_gens, generator, sv, have_shrunk, j, k, pos, new_invgens, keep_initial_gens;
+
+  keep_initial_gens := false;
+  if Size(rest) > 0 then
+    keep_initial_gens := rest[1];
+  fi;
 
   i := Size(bsgs!.base) - 1;
   while i >= 1 do

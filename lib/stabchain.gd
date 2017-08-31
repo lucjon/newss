@@ -169,14 +169,14 @@ DeclareGlobalFunction("ConjugateBSGS");
 #! Creates a deep copy of the given BSGS structure.
 DeclareGlobalFunction("CopyBSGS");
 
-#! @Arguments bsgs, keep_initial_gens
+#! @Arguments bsgs[, keep_initial_gens]
 #! @Returns a BSGS structure
 #! @Description
 #! Attempts to remove redundant generators from the given BSGS structure with
 #! stabilizer chain, to produce a smaller strong generating set. If the
 #! <C>keep_initial_gens</C> parameter is <K>true</K>, then do not attempt to
 #! remove any generator in the BSGS structure's <C>initial_gens</C> set (see
-#! <Ref Func="BSGS"/>).
+#! <Ref Func="BSGS"/>). This parameter defaults to <K>false</K>.
 DeclareGlobalFunction("RemoveRedundantGenerators");
 
 
