@@ -120,9 +120,7 @@ end);
 InstallGlobalFunction(NEWSS_UpdateRecord, function (base, new)
   local name;
   for name in RecNames(new) do
-    if not IsBound(base.(name)) then
-      base.(name) := new.(name);
-    fi;
+    base.(name) := new.(name);
   od;
 end);
 
@@ -161,8 +159,7 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
   # from the heuristically-determined one.
   if Size(arg) > 1 then
     arg[2] := ShallowCopy(arg[2]);
-    NEWSS_UpdateRecord(arg[2], B!.options);
-    B!.options := arg[2];
+    NEWSS_UpdateRecord(B!.options, arg[2]);
   fi;
 
   if IsBound(B!.options.known_base) then
@@ -179,10 +176,11 @@ InstallGlobalFunction(BSGSFromGroup, function (arg)
     B!.options.SelectBasePoint := NEWSS_SelectFromChosenBase;
   fi;
 
-  # Configure the cache, unless it already has been.
-  if B!.tree.count <= 1 then
-    B!.tree!.bound := B!.options.cache_bound;
-    B!.tree!.depth := B!.options.cache_depth;
+  if IsBound(B!.options.cache_bound) then
+    B!.tree.bound := B!.options.cache_bound;
+  fi;
+  if IsBound(B!.options.cache_depth) then
+    B!.tree.depth := B!.options.cache_depth;
   fi;
 
   NEWSS_UpdateRecord(B!.options, B!.options.perm_representation);
