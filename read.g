@@ -18,4 +18,6 @@ rlnewss := function ()
   RereadPackage("newss", "lib/permword.gi");
   RereadPackage("newss", "lib/stabchain.gd");
   RereadPackage("newss", "lib/stabchain.gi");
+  RereadPackage("newss", "lib/basetree.gi");
+  RereadPackage("newss", "lib/basetree.gi");
 end;

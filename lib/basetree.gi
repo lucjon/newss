@@ -1,17 +1,12 @@
 # vim: ft=gap sts=2 et sw=2
 
-# A tree record contains the following fields:
-#  * **children**. A list of child nodes indexed by the first base point.
-#  * **depth**. The maximum depth of the tree.
-# 
-
-# NEWSS_AddChainToTree(tree, bsgs[, base])
-# Add a BSGS to the given BSGS tree, with the given base point.
-InstallGlobalFunction(NEWSS_AddChainToTree, function (tree, bsgs)
+InstallGlobalFunction(NEWSS_AddChainToTree, function(tree, bsgs)
   local current, base, depth, pt, next, new_record;
 
+  Info(NewssInfo, 2, "Adding ", ViewString(bsgs), " to tree (", tree.count, "/", tree.bound, ")");
+
   if Size(bsgs!.base) = 0 then
-    return fail;
+    return false;
   fi;
 
   if tree.bound <> 0 and tree.count >= tree.bound then
@@ -27,7 +22,7 @@ InstallGlobalFunction(NEWSS_AddChainToTree, function (tree, bsgs)
     if not IsBound(current.children[pt]) then
       current.children[pt] := [];
     fi;
-    next := rec(point := pt, children := []);
+    next := rec(point := pt, children := [], parent := current);
     Add(current.children[pt], next);
     current := next;
     depth := depth + 1;
@@ -35,8 +30,10 @@ InstallGlobalFunction(NEWSS_AddChainToTree, function (tree, bsgs)
 
   if not IsBound(current.children[base[1]]) then
     current.children[base[1]] := [];
+  elif bsgs in current.children[base[1]] then
+    return false;
   fi;
-  new_record := rec(point := base[1], chain := bsgs, tree := tree);
+  new_record := rec(point := base[1], chain := bsgs, tree := tree, parent := current);
   Add(current.children[base[1]], new_record);
   Add(tree.members, bsgs);
   tree.count := tree.count + 1;
@@ -44,88 +41,95 @@ InstallGlobalFunction(NEWSS_AddChainToTree, function (tree, bsgs)
 end);
 
 
-# NEWSS_RemoveOldChain(tree)
-# Remove an 'old' chain (one which hasn't been used in a while). The precise
-# semantics here are not guaranteed; we will choose the least recently used.
 InstallGlobalFunction(NEWSS_RemoveOldChain, function (tree)
-  local target, container;
+  local target, container, node;
   target := Remove(tree.members, 1);
-  container := NEWSS_FindChainWithBasePrefix(tree, target!.base, 1, true);
-  Remove(container, Position(container, target));
+  Info(NewssInfo, 3, "Evicting ", ViewString(target), " from the base tree");
+  node := NEWSS_FindChainWithBasePrefix(tree, target!.base, 1);
+  container := node.parent.children[node.point];
+  Remove(container, Position(container, node));
+  tree.count := tree.count - 1;
 end);
 
 
-# NEWSS_FindChainWithBasePrefix(tree, prefix[, offset[, return_enclosing_list]])
-# Find a BSGS with the given prefix in the tree, or fail if no such BSGS has
-# been calculated.
-InstallGlobalFunction(NEWSS_FindChainWithBasePrefix, function (node, prefix, rest...)
-  local current, i, pt, found, child, result, return_container, container;
+NEWSS_NodeLevel := function (node)
+  if IsBound(node.parent) then
+    return 1 + NEWSS_NodeLevel(node.parent);
+  else
+    return 0;
+  fi;
+end;
 
-  i := 1;
-  return_container := false;
-  if Size(rest) > 0 then
+InstallGlobalFunction(NEWSS_FindChainWithBasePrefix, function(tree, prefix, rest...)
+  local current, pt, found, child, children, result, i;
+  current := tree;
+
+  if Size(rest) = 0 then
+    i := 1;
+  else
     i := rest[1];
-    if Size(rest) > 1 then
-      return_container := true;
-    fi;
+  fi;
+
+  if i > Size(prefix) then
+    return fail;
   fi;
   pt := prefix[i];
 
   # We are either a root or intermediate node...
-  if IsBound(node.children) then
-    # Are there any edges labelled with our node point?
-    if IsBound(node.children[pt]) then
+  if IsBound(current.children) then
+    # Are there any edges labelled with our current point?
+    if IsBound(current.children[pt]) then
       # Yes!
-      if Size(prefix) > 1 then
+      if Size(prefix) - i > 1 then
         # If we have any more points in our prefix, then we need to continue
         # our search. Any subtree labelled `pt' could lead to a suitable chain.
-        for child in node.children[pt] do
+        for child in current.children[pt] do
           result := NEWSS_FindChainWithBasePrefix(child, prefix, i + 1);
           if result <> fail then
-            if return_container then
-              result := node.children[pt];
-            fi;
-            break;
+            return result;
           fi;
         od;
         # If we get here though, none did.
+        return fail;
       else
         # If we don't have any more points in our prefix, then *any* chain in
         # this subtree will suffice. So we just drill down until we reach a
         # leaf node.
-        container := node.children[pt];
-        child := node.children[pt][1];
-        while not IsBound(child.chain) do
-          container := child.children;
-          child := First(container, ReturnTrue)[1];
+        for i in [1 .. Size(current.children[pt])] do
+          if not IsBound(current.children[pt][i]) then
+            continue;
+          fi;
+
+          child := current.children[pt][i];
+          while not IsBound(child.chain) do
+            children := First(child.children, x -> Size(x) > 0);
+            if children = fail then
+              child := fail;
+              break;
+            else
+              child := children[1];
+            fi;
+          od;
+
+          if child <> fail then
+            return child;
+          fi;
         od;
-        if return_container then
-          result := container;
-        else
-          result := child.chain;
-        fi;
+        return fail;
       fi;
-    # If no edges are labelled with the node point, then there can't be any
+    # If no edges are labelled with the current point, then there can't be any
     # suitable chains.
     else
-      result := fail;
+      return fail;
     fi;
   # We might also be a leaf node. If so, then check if its base has our desired
   # prefix.
-  elif IsBound(node.chain) and StartsWith(node.chain!.base, prefix) and not return_container then
-    result := node.chain;
+  elif IsBound(current.chain) and StartsWith(current.chain!.base, prefix) then
+    return current;
   # If it doesn't then we've reached a dead end.
   else
-    result := fail;
+    return fail;
   fi;
-
-  # Update the most-recently-used list
-  if result <> fail and not return_container then
-    Remove(node.tree.members, Position(node.tree.members, result));
-    Add(node.tree.members, result);
-  fi;
-
-  return result;
 end);
 
 

@@ -7,7 +7,7 @@
 #! @Returns <C>true</C> if <A>bsgs</A> was successfully added to the tree, or
 #! <C>false</C> otherwise
 #! @Description
-#! Add <A>bsgs</A>, to the stabilizer chain cache tree <A>tree</A>, indexed by
+#! Add <A>bsgs</A> to the stabilizer chain cache tree <A>tree</A>, indexed by
 #! its base. This may not succeed if there is already a stabilizer chain with
 #! this base in the tree, or if the given BSGS has an empty base.
 DeclareGlobalFunction("NEWSS_AddChainToTree");
