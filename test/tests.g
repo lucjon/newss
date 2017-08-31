@@ -475,11 +475,7 @@ DEFAULT_TEST_OPTIONS := Immutable(rec(
   # Schreier-Sims runthrough as well.
   deterministic_proportion := 10,
   Print := Print,
-  bsgs_options := rec(
-    # We do this to make sure that, while we hit the cache code, we also hit
-    # the expiry code in DefaultTests.Stabilizer.
-    cache_bound := 3
-  )
+  bsgs_options := rec()
 ));
 
 
@@ -503,8 +499,18 @@ PerformTests := function(tests, user_opt)
         deterministic_interval;
   tests := Immutable(tests);
   test_results := [];
-  opt := ShallowCopy(user_opt);
-  NEWSS_UpdateRecord(opt, DEFAULT_TEST_OPTIONS);
+  opt := ShallowCopy(DEFAULT_TEST_OPTIONS);
+  NEWSS_UpdateRecord(opt, user_opt);
+
+  if not IsBound(opt.bsgs_options.cache_bound) then
+    # We do this to make sure that, while we hit the cache code, we also hit
+    # the expiry code in DefaultTests.Stabilizer.
+    opt.bsgs_options := rec(cache_bound := 2);
+    if IsBound(user_opt.bsgs_options) then
+      NEWSS_UpdateRecord(opt.bsgs_options, user_opt.bsgs_options);
+    fi;
+  fi;
+
   opt := Immutable(opt);
 
   # First pick the groups and compute their stabiliser chains.
@@ -699,43 +705,54 @@ KnownBaseTests := rec(
 WithKnownBaseTests := ShallowCopy(KnownBaseTests);
 NEWSS_UpdateRecord(WithKnownBaseTests, DefaultTests);
 
-ChangeOfBaseTests := rec(
-  ChangeOfBase := function (bsgs)
-    local gens, new_base, i, pt, stab;
 
-    if Size(bsgs!.base) = 0 then
-      # Not much more we can do here
-      return true;
+SingleChangeOfBaseTest := function (bsgs)
+  local gens, new_base, i, pt, stab;
+
+  if Size(bsgs!.base) = 0 then
+    # Not much more we can do here
+    return true;
+  fi;
+
+  # First, we change up the base a bit
+  gens := GeneratorsOfGroup(bsgs!.group);
+  new_base := ShallowCopy(bsgs!.base);
+  Shuffle(new_base);
+  for i in [1 .. Int(Size(bsgs!.base)/10) + 1] do
+    pt := PseudoRandom(MovedPoints(bsgs!.group));
+    if not (pt in new_base) then
+      Add(new_base, PseudoRandom(MovedPoints(bsgs!.group)));
     fi;
+  od;
 
-    # First, we change up the base a bit
-    gens := GeneratorsOfGroup(bsgs!.group);
-    new_base := ShallowCopy(bsgs!.base);
-    Shuffle(new_base);
-    for i in [1 .. Int(Size(bsgs!.base)/10) + 1] do
-      pt := PseudoRandom(MovedPoints(bsgs!.group));
-      if not (pt in new_base) then
-        Add(new_base, PseudoRandom(MovedPoints(bsgs!.group)));
+  stab := Intersection(List(new_base, b -> Stabilizer(bsgs!.group, b)));
+  if Size(stab) > 1 then
+    # XXX not sure what the best thing to do is in this situation
+    Print("!! not a base (stabilized by ", stab, ") !!\n");
+    return true;
+  fi;
+
+  # Then perform the change of base and do the usual verification step
+  bsgs := BSGSWithBase(bsgs, new_base);
+  if bsgs!.base <> new_base then
+    Print("*** ", new_base, "\n");
+    Print("!! we didn't actually get the right base out, got ", bsgs!.base, " instead\n");
+    return false;
+  fi;
+  return ContainmentTest(bsgs!.group, bsgs, NUM_RANDOM_TEST_ELTS / 4);
+end;
+
+ChangeOfBaseTests := rec(
+  ChangesOfBase := function (bsgs)
+    local i;
+    for i in [1 .. 3] do
+      if not SingleChangeOfBaseTest(bsgs) then
+        return false;
       fi;
     od;
-
-    stab := Intersection(List(new_base, b -> Stabilizer(bsgs!.group, b)));
-    if Size(stab) > 1 then
-      # XXX not sure what the best thing to do is in this situation
-      Print("!! not a base (stabilized by ", stab, ") !!\n");
-      return true;
-    fi;
-
-    # Then perform the change of base and do the usual verification step
-    ChangeBaseOfBSGS(bsgs, new_base);
-    if bsgs!.base <> new_base then
-      Print("*** ", new_base, "\n");
-      Print("!! we didn't actually get the right base out, got ", bsgs!.base, " instead\n");
-      return false;
-    fi;
-    return VERIFY_CONTAINMENT;
+    return true;
   end,
-
+  
   BaseSwap := function (bsgs)
     if Size(bsgs!.base) = 0 then
       return true;
