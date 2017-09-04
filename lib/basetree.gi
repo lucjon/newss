@@ -80,7 +80,7 @@ InstallGlobalFunction(NEWSS_FindChainWithBasePrefix, function(tree, prefix, rest
     # Are there any edges labelled with our current point?
     if IsBound(current.children[pt]) then
       # Yes!
-      if Size(prefix) - i > 1 then
+      if Size(prefix) - i > 0 then
         # If we have any more points in our prefix, then we need to continue
         # our search. Any subtree labelled `pt' could lead to a suitable chain.
         for child in current.children[pt] do
