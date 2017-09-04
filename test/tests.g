@@ -692,6 +692,32 @@ DefaultTests := rec(
       StabilizerBSGS(bsgs, 1);
     fi;
     return true;
+  end,
+
+  PermWord := function (bsgs)
+    local factors, perm, pt;
+    factors := List([1 .. 3], i -> PseudoRandom(bsgs!.group));
+    perm := Product(factors);
+
+    if PermWordAsPerm(factors) <> perm then
+      return false;
+    fi;
+
+    if PermWordAsPerm(PermWordInverse(factors)) <> Inverse(perm) then
+      return false;
+    fi;
+
+    pt := PseudoRandom(MovedPoints(bsgs!.group));
+    if PermWordImage(pt, factors) <> pt ^ perm then
+      return false;
+    fi;
+
+    pt := PseudoRandom(MovedPoints(bsgs!.group));
+    if PermWordPreImage(pt, factors) <> pt / perm then
+      return false;
+    fi;
+
+    return true;
   end
 );
 
