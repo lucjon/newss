@@ -459,7 +459,8 @@ InstallGlobalFunction(RemoveRedundantGenerators, function (bsgs, rest...)
   while i >= 1 do
     new_gens := Difference(bsgs!.chain[i].gens, bsgs!.chain[i + 1].gens);
     new_invgens := Difference(bsgs!.chain[i].invgens, bsgs!.chain[i + 1].invgens);
-    for j in [1 .. Size(new_gens)] do
+    j := 1;
+    while j <= Size(new_gens) do
       generator := Remove(new_gens, j);
       Remove(new_invgens, j);
 
@@ -467,11 +468,11 @@ InstallGlobalFunction(RemoveRedundantGenerators, function (bsgs, rest...)
         continue;
       fi;
 
-      sv := SchreierVectorForOrbit(new_gens, bsgs!.base[i]).sv;
+      sv := SchreierVectorForOrbit(new_gens, new_invgens, bsgs!.base[i]).sv;
 
       have_shrunk := false;
-      for j in [1 .. Size(bsgs!.chain[i].orbit.sv)] do
-        if IsBound(bsgs!.chain[i].orbit.sv[j]) and not IsBound(sv[j]) then
+      for k in [1 .. Size(bsgs!.chain[i].orbit.sv)] do
+        if IsBound(bsgs!.chain[i].orbit.sv[k]) and not IsBound(sv[k]) then
           have_shrunk := true;
           break;
         fi;
@@ -480,6 +481,7 @@ InstallGlobalFunction(RemoveRedundantGenerators, function (bsgs, rest...)
       if have_shrunk then
         Add(new_gens, generator, j);
         Add(new_invgens, Inverse(generator), j);
+        j := j + 1;
       else
         pos := Position(bsgs!.sgs, generator);
         Remove(bsgs!.sgs, pos);

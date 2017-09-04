@@ -725,6 +725,11 @@ DefaultTests := rec(
     fi;
 
     return true;
+  end,
+
+  RemoveRedundantGens := function (bsgs)
+    RemoveRedundantGenerators(bsgs);
+    return VERIFY_CONTAINMENT;
   end
 );
 
