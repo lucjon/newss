@@ -12,15 +12,17 @@
 #! this base in the tree, or if the given BSGS has an empty base.
 DeclareGlobalFunction("NEWSS_AddChainToTree");
 
-#! @Arguments tree, prefix[, offset]
+#! @Arguments tree, prefix[, match_exact [, offset]]
 #! @Returns a tree node whose base starts with <A>prefix</A>, or
 #! <C>fail</C>
 #! @Description
-#! Attempt to find a stabilizer chain whose base starts with <A>prefix</A> if
+#! Attempt to find a stabilizer chain whose base matches <A>prefix</A> if
 #! one exists in the tree, comparing base points starting at index
-#! <A>offset</A> (which defaults to <C>1</C>). If no such stabilizer chain
-#! exists, return <C>fail</C>. Otherwise, return a leaf node containing the
-#! chain. A leaf node is a record containing the following fields:
+#! <A>offset</A> (which defaults to <C>1</C>). Here, `matches' means `equals'
+#! if <A>match_exact</A> is true; otherwise, it means `starts with', which is
+#! the default behaviour. If no such stabilizer chain exists, return
+#! <C>fail</C>.  Otherwise, return a leaf node containing the chain. A leaf
+#! node is a record containing the following fields:
 #!  * **chain**. The BSGS object with the suitable base.
 #!  * **point**. The base point under which the node was indexed; this is
 #!    either the last point in the stabilizer chain's base, or the point at

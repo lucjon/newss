@@ -45,7 +45,7 @@ InstallGlobalFunction(NEWSS_RemoveOldChain, function (tree)
   local target, container, node;
   target := Remove(tree.members, 1);
   Info(NewssInfo, 3, "Evicting ", ViewString(target), " from the base tree");
-  node := NEWSS_FindChainWithBasePrefix(tree, target!.base, 1);
+  node := NEWSS_FindChainWithBasePrefix(tree, target!.base, true);
   container := node.parent.children[node.point];
   Remove(container, Position(container, node));
   tree.count := tree.count - 1;
@@ -60,14 +60,25 @@ NEWSS_NodeLevel := function (node)
   fi;
 end;
 
+# NEWSS_FindChainWithBasePrefix(tree, prefix[, match_exact[, offset]])
 InstallGlobalFunction(NEWSS_FindChainWithBasePrefix, function(tree, prefix, rest...)
-  local current, pt, found, child, children, result, i;
+  local current, pt, found, child, children, result, matches, match_exact, i;
   current := tree;
+  i := 1;
+  match_exact := false;
 
-  if Size(rest) = 0 then
-    i := 1;
+  if Size(rest) >= 1 then
+    match_exact := rest[1];
+  fi;
+
+  if Size(rest) >= 2 then
+    i := rest[2];
+  fi;
+
+  if match_exact then
+    matches := \=;
   else
-    i := rest[1];
+    matches := StartsWith;
   fi;
 
   if i > Size(prefix) then
@@ -84,7 +95,7 @@ InstallGlobalFunction(NEWSS_FindChainWithBasePrefix, function(tree, prefix, rest
         # If we have any more points in our prefix, then we need to continue
         # our search. Any subtree labelled `pt' could lead to a suitable chain.
         for child in current.children[pt] do
-          result := NEWSS_FindChainWithBasePrefix(child, prefix, i + 1);
+          result := NEWSS_FindChainWithBasePrefix(child, prefix, match_exact, i + 1);
           if result <> fail then
             return result;
           fi;
@@ -92,15 +103,24 @@ InstallGlobalFunction(NEWSS_FindChainWithBasePrefix, function(tree, prefix, rest
         # If we get here though, none did.
         return fail;
       else
-        # If we don't have any more points in our prefix, then *any* chain in
-        # this subtree will suffice. So we just drill down until we reach a
-        # leaf node.
+        Print("  run out of prefix points case.\n");
+        # If we don't have any more points left, then we have two cases. If we
+        # are simply matching prefixes, *any* chain in this subtree will
+        # suffice, so we can just drill down until we reach a leaf node. On the
+        # other hand, if we are matching exactly, then we can only go one level
+        # deep.
         for i in [1 .. Size(current.children[pt])] do
           if not IsBound(current.children[pt][i]) then
             continue;
           fi;
 
           child := current.children[pt][i];
+
+          # (The exact match case discussed above.)
+          if match_exact and child.chain!.base <> prefix then
+            continue;
+          fi;
+
           while not IsBound(child.chain) do
             children := First(child.children, x -> Size(x) > 0);
             if children = fail then
@@ -124,7 +144,7 @@ InstallGlobalFunction(NEWSS_FindChainWithBasePrefix, function(tree, prefix, rest
     fi;
   # We might also be a leaf node. If so, then check if its base has our desired
   # prefix.
-  elif IsBound(current.chain) and StartsWith(current.chain!.base, prefix) then
+  elif IsBound(current.chain) and matches(current.chain!.base, prefix) then
     return current;
   # If it doesn't then we've reached a dead end.
   else

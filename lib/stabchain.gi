@@ -415,7 +415,7 @@ InstallGlobalFunction(BSGSWithBasePrefix, function (bsgs, new_base, rest...)
     known_base := rest[1];
   fi;
 
-  node := NEWSS_FindChainWithBasePrefix(bsgs!.tree, new_base);
+  node := NEWSS_FindChainWithBasePrefix(bsgs!.tree, new_base, known_base);
   if node = fail then
     new_bsgs := CopyBSGS(bsgs);
     if known_base then
