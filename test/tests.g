@@ -470,6 +470,7 @@ DEFAULT_TEST_OPTIONS := Immutable(rec(
   test_known_base := true,
   filename := false,
   load_groups_list := false,
+  truncate_groups_list := false,
   group_source := DefaultGroupSource,
   # This is the percentage of groups for which we also force a deterministic
   # Schreier-Sims runthrough as well.
@@ -523,6 +524,9 @@ PerformTests := function(tests, user_opt)
   else
     opt.Print("*** Loading groups from file\n");
     groups := LoadGroupsList(opt.load_groups_list);
+    if IsBound(opt.truncate_groups_list) and opt.truncate_groups_list <> false then
+      groups := groups { [1 .. Minimum(Size(groups), opt.truncate_groups_list)] };
+    fi;
   fi;
 
   stab_chains := [];
