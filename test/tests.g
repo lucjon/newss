@@ -459,7 +459,7 @@ end;
 DEFAULT_TEST_OPTIONS := Immutable(rec(
   number_of_groups := 100,
   fixed_groups := [
-    GroupWithName(Group(()), "trivial group"),
+    GroupWithName(TrivialGroup(IsPermGroup), "trivial group"),
     GroupWithName(AlternatingGroup(4), "A4"),
     GroupWithName(MathieuGroup(9), "MathieuGroup(9)"),
     GroupWithName(SymmetricGroup(11), "S11"),
@@ -537,7 +537,7 @@ PerformTests := function(tests, user_opt)
   deterministic_interval := Int(Size(groups) * opt.deterministic_proportion / 100) + 1;
   for i in [1 .. Size(groups)] do
     Add(tasks, RunTask(function (G)
-      local bsgs, orbit_length;
+      local bsgs, orbit_length, result;
       opt.Print(PickName(G), ": BSGS started.\n");
       t := Runtime();
       bsgs := BSGSFromGroup(G, opt.bsgs_options);
@@ -551,15 +551,18 @@ PerformTests := function(tests, user_opt)
       fi;
 
       atomic readonly G do
-        return rec(bsgs := bsgs,
-                   group := PickName(G),
-                   group_degree := NrMovedPoints(G),
-                   base_length := Size(bsgs!.base),
-                   orbit_top_length := orbit_length,
-                   time_BSGSFromGroup := our_time,
-                   ss := NameFunction(bsgs!.options.SchreierSims),
-                   verify := NameFunction(bsgs!.options.Verify),
-                   success_BSGSFromGroup := true);
+        result := rec(bsgs := bsgs,
+                      group := PickName(G),
+                      group_degree := NrMovedPoints(G),
+                      base_length := Size(bsgs!.base),
+                      orbit_top_length := orbit_length,
+                      time_BSGSFromGroup := our_time,
+                      success_BSGSFromGroup := true);
+        if IsBound(bsgs!.options) then
+          result.ss := NameFunction(bsgs!.options.SchreierSims);
+          result.verify := NameFunction(bsgs!.options.Verify);
+        fi;
+        return result;
       od;
     end, groups[i]));
   od;
@@ -707,6 +710,10 @@ DefaultTests := rec(
       return false;
     fi;
 
+    if NrMovedPoints(bsgs!.group) = 0 then
+      return true;
+    fi;
+
     pt := PseudoRandom(MovedPoints(bsgs!.group));
     if PermWordImage(pt, factors) <> pt ^ perm then
       return false;
@@ -739,7 +746,7 @@ NEWSS_UpdateRecord(WithKnownBaseTests, DefaultTests);
 SingleChangeOfBaseTest := function (bsgs)
   local gens, new_base, i, pt, stab;
 
-  if Size(bsgs!.base) = 0 then
+  if Size(bsgs!.base) = 0 or NrMovedPoints(bsgs!.group) = 0 then
     # Not much more we can do here
     return true;
   fi;

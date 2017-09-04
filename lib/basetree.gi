@@ -103,7 +103,6 @@ InstallGlobalFunction(NEWSS_FindChainWithBasePrefix, function(tree, prefix, rest
         # If we get here though, none did.
         return fail;
       else
-        Print("  run out of prefix points case.\n");
         # If we don't have any more points left, then we have two cases. If we
         # are simply matching prefixes, *any* chain in this subtree will
         # suffice, so we can just drill down until we reach a leaf node. On the
@@ -117,7 +116,7 @@ InstallGlobalFunction(NEWSS_FindChainWithBasePrefix, function(tree, prefix, rest
           child := current.children[pt][i];
 
           # (The exact match case discussed above.)
-          if match_exact and child.chain!.base <> prefix then
+          if match_exact and not (IsBound(child.chain) and child.chain!.base = prefix) then
             continue;
           fi;
 
