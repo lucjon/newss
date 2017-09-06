@@ -29,10 +29,10 @@ OPTIONS
     --profile:  If given, enable line-by-line profiling using the profiling
                 package (requires very recent GAP). The resulting profile data
                 and report are saved to \$testdir/prof-RESULTS_FILENAME.
-	
-	--coverage:	If given, collect code coverage information. This is saved to
-	            \$testdir/RESULTS_FILENAME.coverage, and a JSON file is
-				saved at \$testdir/RESULTS_FILENAME.cov.json.
+
+    --coverage: If given, collect code coverage information. This is saved to
+                \$testdir/RESULTS_FILENAME.coverage, and a JSON file is
+                saved at \$testdir/RESULTS_FILENAME.cov.json.
 
     --verbose:  Set the info level for the newss package higher, so that
                 progress and debug messages are printed.
@@ -86,7 +86,7 @@ NUM_RANDOM_TEST_ELTS := 2^14;
 ProfileLineByLine("$testdir/prof-$filename.gz");
 EOP
 fi) 
-$(if [ "$verbose" == "yes" ]; then echo "SetInfoLevel(NewssInfo, 2);"; fi)
+$(if [ "$verbose" == "yes" ]; then echo "SetInfoLevel(NewssInfo, 3);"; fi)
 results := PerformTests($suite, rec (
 	filename := "$testdir/$filename.csv",
 	$group_option,
@@ -102,6 +102,7 @@ $(if [ "$coverage" == "yes" ]; then cat <<EOP
 UnprofileLineByLine();
 LoadPackage("profiling");
 OutputJsonCoverage("$testdir/$filename.coverage", "$testdir/$filename.cov.json");
+OutputAnnotatedCodeCoverageFiles("$testdir/$filename.coverage", "$testdir/cov-$filename");
 EOP
 fi)
 QUIT_GAP(ForAll(results, t -> t.success));
