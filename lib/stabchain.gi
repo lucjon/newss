@@ -320,6 +320,9 @@ end);
 
 InstallGlobalFunction(NEWSS_ChangeBaseByPointSwap, function (bsgs, new_base)
   local pt, stabilized, i, j;
+
+  Info(NewssInfo, 3, "changing base from ", bsgs!.base, " to ", new_base);
+
   for j in [1 .. Size(new_base)] do
     pt := new_base[j];
     stabilized := false;
@@ -344,23 +347,27 @@ InstallGlobalFunction(NEWSS_ChangeBaseByPointSwap, function (bsgs, new_base)
       # When we get here, we are able to insert it after point i as a redundant
       # base point, since we know it is stabilized by the previous group. (This
       # may be at the end of the list.)
+      Info(NewssInfo, 3, "  inserting redundant base point ", pt, " at ", i);
       NEWSS_InsertRedundantBasePoint(bsgs, i, pt);
     else
       # If we weren't even stabilized by some existing subgroup in the chain,
       # the best we can do is add it to the end of the base, and with trivial
       # stabilizer group
+      Info(NewssInfo, 3, "  appending trivial base point ", pt);
       NEWSS_AppendTrivialBasePoint(bsgs, pt);
       i := i - 1;
     fi;
 
     # Then we swap it back to its intended position.
+    Info(NewssInfo, 3, "  (we have j = ", j, ", i = ", i, ")");
     while i >= j and i < Size(bsgs!.base) do
+      Info(NewssInfo, 3, "  swapping [", i, "] ", bsgs!.base[i], " with [", i + 1, "] ", bsgs!.base[i + 1]);
       NEWSS_PerformBaseSwap(bsgs, i);
       i := i - 1;
     od;
   od;
 
-  Info(NewssInfo, 3, "finished swaps with ", bsgs!.base);
+  Info(NewssInfo, 3, "  finished swaps with ", bsgs!.base);
 
   # If the list supplied is genuinely a base, then there will be a 'tail' of
   # extraneous trivial base points which were in the old base but not the new;

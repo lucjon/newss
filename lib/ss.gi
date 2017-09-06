@@ -91,10 +91,7 @@ InstallGlobalFunction(SchreierSims, function (bsgs)
       # If the stripped permutation is not the identity, it was not in the next
       # group --- so we adjoin it.
       id_result := bsgs!.options.IsIdentity(bsgs, stripped.residue);
-      Info(NewssInfo, 3, "Considering for ", i, " SG ", bsgs!.options.AsPerm(g), " = ", g, " with residue ", bsgs!.options.AsPerm(stripped.residue));
-      Info(NewssInfo, 3, "   gens: ", StabilizersBSGS(bsgs));
       if not id_result.is_identity then
-        Info(NewssInfo, 3, "Adjoining generator.");
         perm := id_result.perm;
         invperm := Inverse(perm);
         Add(bsgs!.sgs, perm);
@@ -398,7 +395,6 @@ InstallGlobalFunction(SchreierGenerators, function (bsgs, i)
     image := bsgs!.options.ImagePerm(iter!.orbit_index, iter!.u_beta);
     u_beta_x_inv := bsgs!.options.PermToBasePoint(chain.orbit, image);
 
-    Info(NewssInfo, 3, "SG: (", iter!.orbit_index, ") ", iter!.u_beta, ", ", x, ", ", u_beta_x_inv);
     gen := bsgs!.options.MulPerm(iter!.u_beta, x, u_beta_x_inv);
     return gen;
   end;
