@@ -749,7 +749,7 @@ NEWSS_UpdateRecord(WithKnownBaseTests, DefaultTests);
 
 
 SingleChangeOfBaseTest := function (bsgs)
-  local gens, new_base, i, pt, stab;
+  local gens, new_base, i, pt, stab, stabilised_pts;
 
   if Size(bsgs!.base) = 0 or NrMovedPoints(bsgs!.group) = 0 then
     # Not much more we can do here
@@ -766,6 +766,13 @@ SingleChangeOfBaseTest := function (bsgs)
       Add(new_base, PseudoRandom(MovedPoints(bsgs!.group)));
     fi;
   od;
+
+  if Size(bsgs!.base) > 2 then
+    stabilised_pts := Difference(MovedPoints(bsgs!.chain[2].group), [bsgs!.base[1]]);
+    if Size(stabilised_pts) > 0 then
+      Add(new_base, PseudoRandom(stabilised_pts), 2);
+    fi;
+  fi;
 
   stab := Intersection(List(new_base, b -> Stabilizer(bsgs!.group, b)));
   if Size(stab) > 1 then

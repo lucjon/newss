@@ -350,6 +350,7 @@ InstallGlobalFunction(NEWSS_ChangeBaseByPointSwap, function (bsgs, new_base)
       # the best we can do is add it to the end of the base, and with trivial
       # stabilizer group
       NEWSS_AppendTrivialBasePoint(bsgs, pt);
+      i := i - 1;
     fi;
 
     # Then we swap it back to its intended position.
