@@ -467,6 +467,7 @@ DEFAULT_TEST_OPTIONS := Immutable(rec(
     TransitiveGroup(10,37)
   ],
   compute_gap_stabchains := true,
+  gap_stabchain_options := rec(),
   test_known_base := true,
   filename := false,
   load_groups_list := false,
@@ -573,7 +574,7 @@ PerformTests := function(tests, user_opt)
 
     t := Runtime();
     if opt.compute_gap_stabchains then
-      StabChain(G);
+      StabChain(G, ShallowCopy(opt.gap_stabchain_options));
     fi;
     gap_time := Runtime() - t;
     result := TaskResult(tasks[i]);

@@ -42,6 +42,10 @@ ENVIRONMENT VARIABLES
 
     bsgs_options: Any options to pass to the BSGSFromGroup function when
                   creating stabilizer chains (see the package manual).
+	
+	sc_options:   Any options to pass to the StabChain function when creating
+                  stabilizer chains using the GAP implementation (see the
+				  GAP reference manual, v4.8.8 section 43.8).
 
 EXAMPLES
     $0
@@ -90,7 +94,8 @@ $(if [ "$verbose" == "yes" ]; then echo "SetInfoLevel(NewssInfo, 3);"; fi)
 results := PerformTests($suite, rec (
 	filename := "$testdir/$filename.csv",
 	$group_option,
-	bsgs_options := rec($bsgs_options)
+	bsgs_options := rec($bsgs_options),
+	gap_stabchain_options := rec($sc_options)
 ));;
 $(if [ "$profile" == "yes" ]; then cat <<EOP
 UnprofileLineByLine();
