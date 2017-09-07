@@ -1,5 +1,5 @@
 GAPROOT ?= ../..
-CFLAGS += -fPIC -DPIC -DCONFIG_H -DHAVE_CONFIG_H -g -O2 -I$(GAPROOT) -I$(GAPROOT)/extern/install/libatomic_ops/include
+CFLAGS += -fPIC -DPIC -DCONFIG_H -DHAVE_CONFIG_H -O3 -I$(GAPROOT) -I$(GAPROOT)/extern/install/libatomic_ops/include
 OBJECTS = src/inner.o
 
 src/inner.so: $(OBJECTS)
@@ -9,6 +9,6 @@ src/%.o: src/%.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 clean:
-	rm -f src/inner.so
+	rm -f $(OBJECTS) src/inner.so
 
 .PHONY: clean

@@ -856,12 +856,12 @@ static Int InitLibrary(StructInitInfo *module) {
 
 /* <name> returns the description of this module */
 static StructInitInfo module = {
-    /* type        = */ 3,
+    /* type        = */ MODULE_DYNAMIC,
     /* name        = */ "lib/inner.gi",
     /* revision_c  = */ 0,
     /* revision_h  = */ 0,
     /* version     = */ 0,
-    /* crc         = */ -15641547,
+    /* crc         = */ 0,
     /* initKernel  = */ InitKernel,
     /* initLibrary = */ InitLibrary,
     /* checkInit   = */ 0,
