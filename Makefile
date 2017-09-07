@@ -1,5 +1,5 @@
 GAPROOT ?= ../..
-CFLAGS += -fPIC -DPIC -DCONFIG_H -DHAVE_CONFIG_H -g -O2 -I$(GAPROOT)
+CFLAGS += -fPIC -DPIC -DCONFIG_H -DHAVE_CONFIG_H -g -O2 -I$(GAPROOT) -I$(GAPROOT)/extern/install/libatomic_ops/include
 OBJECTS = src/inner.o
 
 src/inner.so: $(OBJECTS)
