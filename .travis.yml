@@ -9,8 +9,10 @@ env:
         - GAP="./gap/gap -l /tmp/gaproot;./gap"
         - testdir=.
     matrix:
-        - HPCGAP=yes
-        - HPCGAP=no
+        - HPCGAP=yes COMPILE=yes
+        - HPCGAP=yes COMPILE=no
+        - HPCGAP=no COMPILE=yes
+        - HPCGAP=no COMPILE=no
 
 install: ./test/travis-setup
 script: ./test/runtests 50 && ./test/runtests --coverage ./test/groups.grp test AllTests

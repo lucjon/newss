@@ -73,6 +73,10 @@ install_newss () {
 	ln -s "$PWD" /tmp/gaproot/pkg/newss
 }
 
+compile_newss () {
+	make GAPROOT=./gap
+}
+
 
 if [ "$HPCGAP" == "yes" ]; then
 	install_hpcgap
@@ -82,4 +86,7 @@ else
 	fetch_gap_packages
 fi
 build_packages
+if [ "$COMPILE" == "yes" ]; then
+	compile_newss
+fi
 install_newss
