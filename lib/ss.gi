@@ -264,9 +264,13 @@ InstallGlobalFunction(NEWSS_FirstMovedPoint, function (bsgs, level, culprit)
     fi;
   fi;
 
-  point := First(MovedPoints(culprit), pt -> not (pt in bsgs!.base));
+  point := 1;
+  largest := LargestMovedPoint(perm);
+  while point <= largest and (point ^ perm = point or point in bsgs!.base) do
+    point := point + 1;
+  od;
 
-  if point = fail then
+  if point = largest and point ^ perm = point then
     Error("could not find point not fixed by culprit");
   fi;
 
