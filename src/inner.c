@@ -645,22 +645,6 @@ static Obj HdlrFunc1(Obj self) {
     REM_BRK_CURR_STAT();
     SET_BRK_CURR_STAT(0);
 
-    /* InstallGlobalFunction( NEWSS_SchreierVector, function ( sv, to_compute )
-         local  pt, gen, image, j;
-         while Size( to_compute ) > 0  do
-             pt := Remove( to_compute, 1 );
-             for j  in [ 1 .. Size( sv.gens ) ]  do
-                 gen := sv.invgens[j];
-                 image := pt ^ gen;
-                 if not IsBound( sv.sv[image] )  then
-                     Add( to_compute, image );
-                     sv.sv[image] := j;
-                     sv.size := sv.size + 1;
-                 fi;
-             od;
-         od;
-         return;
-     end ); */
     t_1 = GF_InstallGlobalFunction;
     t_2 = GC_NEWSS__SchreierVector;
     CHECK_BOUND(t_2, "NEWSS_SchreierVector")
@@ -674,26 +658,6 @@ static Obj HdlrFunc1(Obj self) {
     CHANGED_BAG(STATE(CurrLVars));
     CALL_2ARGS(t_1, t_2, t_3);
 
-    /* InstallGlobalFunction( ExtendSchreierVector, function ( sv, gen, invgen )
-         local  to_compute, image, n, pt;
-         to_compute := [  ];
-         Add( sv.gens, gen );
-         Add( sv.invgens, invgen );
-         n := Size( sv.gens );
-         for pt  in [ 1 .. Size( sv.sv ) ]  do
-             if not IsBound( sv.sv[pt] )  then
-                 continue;
-             fi;
-             image := pt ^ invgen;
-             if not IsBound( sv.sv[image] )  then
-                 Add( to_compute, image );
-                 sv.sv[image] := n;
-                 sv.size := sv.size + 1;
-             fi;
-         od;
-         NEWSS_SchreierVector( sv, to_compute );
-         return;
-     end ); */
     t_1 = GF_InstallGlobalFunction;
     t_2 = GC_ExtendSchreierVector;
     CHECK_BOUND(t_2, "ExtendSchreierVector")
@@ -707,21 +671,6 @@ static Obj HdlrFunc1(Obj self) {
     CHANGED_BAG(STATE(CurrLVars));
     CALL_2ARGS(t_1, t_2, t_3);
 
-    /* InstallGlobalFunction( SchreierVectorPermToBasePoint, function ( sv, beta
-     )
-         local  u, k;
-         if not IsBound( sv.sv[beta] )  then
-             return false;
-         fi;
-         u := ();
-         k := sv.sv[beta];
-         while k <> -1  do
-             u := u * sv.gens[k];
-             beta := beta ^ sv.gens[k];
-             k := sv.sv[beta];
-         od;
-         return u;
-     end ); */
     t_1 = GF_InstallGlobalFunction;
     t_2 = GC_SchreierVectorPermToBasePoint;
     CHECK_BOUND(t_2, "SchreierVectorPermToBasePoint")
@@ -735,21 +684,6 @@ static Obj HdlrFunc1(Obj self) {
     CHANGED_BAG(STATE(CurrLVars));
     CALL_2ARGS(t_1, t_2, t_3);
 
-    /* InstallGlobalFunction( SchreierVectorWordToBasePoint, function ( sv, beta
-     )
-         local  u, k;
-         if not IsBound( sv.sv[beta] )  then
-             return false;
-         fi;
-         u := [  ];
-         k := sv.sv[beta];
-         while k <> -1  do
-             Add( u, sv.gens[k] );
-             beta := beta ^ sv.gens[k];
-             k := sv.sv[beta];
-         od;
-         return u;
-     end ); */
     t_1 = GF_InstallGlobalFunction;
     t_2 = GC_SchreierVectorWordToBasePoint;
     CHECK_BOUND(t_2, "SchreierVectorWordToBasePoint")
@@ -763,24 +697,6 @@ static Obj HdlrFunc1(Obj self) {
     CHANGED_BAG(STATE(CurrLVars));
     CALL_2ARGS(t_1, t_2, t_3);
 
-	/* InstallGlobalFunction( StabilizerChainStrip, function ( bsgs, g )
-	     local  h, i, beta, u;
-	     h := g;
-	     i := 0;
-	     for i  in [ 1 .. Size( bsgs!.base ) ]  do
-	   	  beta := bsgs!.base[i] ^ h;
-	   	  if not IsBound( bsgs!.chain[i].orbit.sv[beta] )  then
-	   		  return rec(
-	   			  residue := h,
-	   			  level := i );
-	   	  fi;
-	   	  u := SchreierVectorPermToBasePoint( bsgs!.chain[i].orbit, beta );
-	   	  h := h * u;
-	     od;
-	     return rec(
-	   	  residue := h,
-	   	  level := i + 1 );
-	 end ); */
 	t_1 = GF_InstallGlobalFunction;
 	t_2 = GC_StabilizerChainStrip;
 	CHECK_BOUND( t_2, "StabilizerChainStrip" )
@@ -794,27 +710,6 @@ static Obj HdlrFunc1(Obj self) {
 	CHANGED_BAG( STATE(CurrLVars) );
 	CALL_2ARGS( t_1, t_2, t_3 );
 
-	/* InstallGlobalFunction( StabilizerChainStripWord, function ( bsgs, g )
-		 local  h, i, beta, u;
-		 h := g;
-		 i := 0;
-		 if not IsList( h )  then
-			 h := [ h ];
-		 fi;
-		 for i  in [ 1 .. Size( bsgs!.base ) ]  do
-			 beta := PermWordImage( bsgs!.base[i], h );
-			 if not IsBound( bsgs!.chain[i].orbit.sv[beta] )  then
-				 return rec(
-					 residue := h,
-					 level := i );
-			 fi;
-			 u := SchreierVectorWordToBasePoint( bsgs!.chain[i].orbit, beta );
-			 h := PermWordMul( h, u );
-		 od;
-		 return rec(
-			 residue := h,
-			 level := i + 1 );
-	 end ); */
 	t_1 = GF_InstallGlobalFunction;
 	t_2 = GC_StabilizerChainStripWord;
 	CHECK_BOUND( t_2, "StabilizerChainStripWord" )
@@ -828,10 +723,6 @@ static Obj HdlrFunc1(Obj self) {
 	CHANGED_BAG( STATE(CurrLVars) );
 	CALL_2ARGS( t_1, t_2, t_3 );
 
-    /* return; */
-    RES_BRK_CURR_STAT();
-    SWITCH_TO_OLD_FRAME(oldFrame);
-    return 0;
 
     /* return; */
     RES_BRK_CURR_STAT();
@@ -914,26 +805,26 @@ static Int InitKernel(StructInitInfo *module) {
     InitHandlerFunc(HdlrFunc1, "lib/orbstab.gi:HdlrFunc1(-15641547)");
     InitGlobalBag(&(NameFunc[1]), "lib/orbstab.gi:NameFunc[1](-15641547)");
     InitHandlerFunc(Impl_NEWSS_SchreierVector,
-                    "lib/orbstab.gi:Impl_NEWSS_SchreierVector(-15641547)");
+                    "src/inner.c:Impl_NEWSS_SchreierVector(-15641547)");
     InitGlobalBag(&(NameFunc[4]), "lib/orbstab.gi:NameFunc[4](-15641547)");
     InitHandlerFunc(Impl_ExtendSchreierVector,
-                    "lib/orbstab.gi:Impl_ExtendSchreierVector(-15641547)");
+                    "src/inner.c:Impl_ExtendSchreierVector(-15641547)");
     InitGlobalBag(&(NameFunc[5]), "lib/orbstab.gi:NameFunc[5](-15641547)");
     InitHandlerFunc(
         Impl_SchreierVectorPermToBasePoint,
-        "lib/orbstab.gi:Impl_SchreierVectorPermToBasePoint(-15641547)");
+        "src/inner.c:Impl_SchreierVectorPermToBasePoint(-15641547)");
     InitGlobalBag(&(NameFunc[6]), "lib/orbstab.gi:NameFunc[6](-15641547)");
     InitHandlerFunc(
         Impl_SchreierVectorWordToBasePoint,
-        "lib/orbstab.gi:Impl_SchreierVectorWordToBasePoint(-15641547)");
+        "src/inner.c:Impl_SchreierVectorWordToBasePoint(-15641547)");
     InitGlobalBag(&(NameFunc[8]), "lib/orbstab.gi:NameFunc[8](-15641547)");
 	InitHandlerFunc(
 		Impl_StabilizerChainStrip,
-		"lib/ss.gi:Impl_StabilizerChainStrip(-15641547)");
+		"src/inner.c:Impl_StabilizerChainStrip(-15641547)");
 	InitGlobalBag(&(NameFunc[2]), "lib/ss.gi:NameFunc[2](-15641547)");
 	InitHandlerFunc(
 		Impl_StabilizerChainStrip,
-		"lib/ss.gi:Impl_StabilizerChainStripWord(-15641547)");
+		"src/inner.c:Impl_StabilizerChainStripWord(-15641547)");
 	InitGlobalBag(&(NameFunc[3]), "lib/ss.gi:NameFunc[3](-15641547)");
 
     /* return success */
